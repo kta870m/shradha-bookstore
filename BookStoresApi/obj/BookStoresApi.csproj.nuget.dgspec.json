@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/Users/kta87m/Documents/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj": {}
+    "D:\\OneDrive\\All_of_inf\\Aptech\\Sem3\\eProject\\prj\\BookStoresApi\\BookStoresApi.csproj": {}
   },
   "projects": {
-    "/Users/kta87m/Documents/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj": {
+    "D:\\OneDrive\\All_of_inf\\Aptech\\Sem3\\eProject\\prj\\BookStoresApi\\BookStoresApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/kta87m/Documents/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj",
+        "projectUniqueName": "D:\\OneDrive\\All_of_inf\\Aptech\\Sem3\\eProject\\prj\\BookStoresApi\\BookStoresApi.csproj",
         "projectName": "BookStoresApi",
-        "projectPath": "/Users/kta87m/Documents/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj",
-        "packagesPath": "/Users/kta87m/.nuget/packages/",
-        "outputPath": "/Users/kta87m/Documents/eProject3/shradha-bookstore/BookStoresApi/obj/",
+        "projectPath": "D:\\OneDrive\\All_of_inf\\Aptech\\Sem3\\eProject\\prj\\BookStoresApi\\BookStoresApi.csproj",
+        "packagesPath": "C:\\Users\\Dell\\.nuget\\packages\\",
+        "outputPath": "D:\\OneDrive\\All_of_inf\\Aptech\\Sem3\\eProject\\prj\\BookStoresApi\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/kta87m/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\Dell\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -47,9 +47,29 @@
               "target": "Package",
               "version": "[8.0.18, )"
             },
+            "Microsoft.Data.SqlClient": {
+              "target": "Package",
+              "version": "[6.1.2, )"
+            },
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.0.10, )"
+            },
+            "Microsoft.EntityFrameworkCore.SqlServer": {
+              "target": "Package",
+              "version": "[9.0.10, )"
+            },
+            "Microsoft.IdentityModel": {
+              "target": "Package",
+              "version": "[7.0.0, )"
+            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[6.6.2, )"
+            },
+            "System.IdentityModel.Tokens.Jwt": {
+              "target": "Package",
+              "version": "[8.14.0, )"
             }
           },
           "imports": [
@@ -71,7 +91,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.412/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.408/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
