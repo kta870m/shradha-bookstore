@@ -21,8 +21,7 @@ namespace BookStoresApi.Controllers
         public async Task<ActionResult<IEnumerable<FeedbackQuery>>> GetFeedbackQueries()
         {
             return await _context.FeedbackQueries
-                .Include(fq => fq.Customer)
-                .Include(fq => fq.Admin)
+                .Include(fq => fq.User)
                 .OrderByDescending(fq => fq.SubmittedAt)
                 .ToListAsync();
         }
@@ -32,8 +31,7 @@ namespace BookStoresApi.Controllers
         public async Task<ActionResult<FeedbackQuery>> GetFeedbackQuery(int id)
         {
             var feedbackQuery = await _context.FeedbackQueries
-                .Include(fq => fq.Customer)
-                .Include(fq => fq.Admin)
+                .Include(fq => fq.User)
                 .FirstOrDefaultAsync(fq => fq.FeedbackId == id);
 
             if (feedbackQuery == null)
@@ -44,13 +42,13 @@ namespace BookStoresApi.Controllers
             return feedbackQuery;
         }
 
-        // GET: api/feedbackqueries/customer/{customerId}
-        [HttpGet("customer/{customerId}")]
-        public async Task<ActionResult<IEnumerable<FeedbackQuery>>> GetFeedbackByCustomer(int customerId)
+        // GET: api/feedbackqueries/user/{userId}
+        [HttpGet("user/{userId}")]
+        public async Task<ActionResult<IEnumerable<FeedbackQuery>>> GetFeedbackByUser(int userId)
         {
             return await _context.FeedbackQueries
-                .Include(fq => fq.Admin)
-                .Where(fq => fq.CustomerId == customerId)
+                .Include(fq => fq.User)
+                .Where(fq => fq.UserId == userId)
                 .OrderByDescending(fq => fq.SubmittedAt)
                 .ToListAsync();
         }
@@ -60,8 +58,7 @@ namespace BookStoresApi.Controllers
         public async Task<ActionResult<IEnumerable<FeedbackQuery>>> GetFeedbackByStatus(string status)
         {
             return await _context.FeedbackQueries
-                .Include(fq => fq.Customer)
-                .Include(fq => fq.Admin)
+                .Include(fq => fq.User)
                 .Where(fq => fq.FeedbackStatus == status)
                 .OrderByDescending(fq => fq.SubmittedAt)
                 .ToListAsync();
@@ -73,8 +70,6 @@ namespace BookStoresApi.Controllers
         {
             feedbackQuery.SubmittedAt = DateTime.Now;
             feedbackQuery.FeedbackStatus = "Pending"; // Default status
-            feedbackQuery.CreatedAt = DateTime.Now;
-            feedbackQuery.UpdatedAt = DateTime.Now;
 
             _context.FeedbackQueries.Add(feedbackQuery);
             await _context.SaveChangesAsync();
@@ -99,9 +94,6 @@ namespace BookStoresApi.Controllers
 
             existingFeedback.Content = feedbackQuery.Content;
             existingFeedback.FeedbackStatus = feedbackQuery.FeedbackStatus;
-            existingFeedback.AdminId = feedbackQuery.AdminId;
-            existingFeedback.UpdatedAt = DateTime.Now;
-            existingFeedback.UpdatedBy = feedbackQuery.UpdatedBy;
 
             try
             {
@@ -130,7 +122,6 @@ namespace BookStoresApi.Controllers
             }
 
             feedback.FeedbackStatus = status;
-            feedback.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -148,7 +139,6 @@ namespace BookStoresApi.Controllers
 
             // Soft delete
             feedbackQuery.IsDeleted = true;
-            feedbackQuery.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return NoContent();

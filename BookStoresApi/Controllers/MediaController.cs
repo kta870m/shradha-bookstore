@@ -55,8 +55,6 @@ namespace BookStoresApi.Controllers
         public async Task<ActionResult<Media>> CreateMedia(Media media)
         {
             media.UploadedAt = DateTime.Now;
-            media.CreatedAt = DateTime.Now;
-            media.UpdatedAt = DateTime.Now;
 
             _context.Media.Add(media);
             await _context.SaveChangesAsync();
@@ -81,8 +79,6 @@ namespace BookStoresApi.Controllers
 
             existingMedia.MediaUrl = media.MediaUrl;
             existingMedia.MediaType = media.MediaType;
-            existingMedia.UpdatedAt = DateTime.Now;
-            existingMedia.UpdatedBy = media.UpdatedBy;
 
             try
             {
@@ -112,7 +108,6 @@ namespace BookStoresApi.Controllers
 
             // Soft delete
             media.IsDeleted = true;
-            media.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return NoContent();

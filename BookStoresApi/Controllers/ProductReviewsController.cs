@@ -22,7 +22,7 @@ namespace BookStoresApi.Controllers
         {
             return await _context.ProductReviews
                 .Include(pr => pr.Product)
-                .Include(pr => pr.Customer)
+                .Include(pr => pr.User)
                 .OrderByDescending(pr => pr.ReviewDate)
                 .ToListAsync();
         }
@@ -33,7 +33,7 @@ namespace BookStoresApi.Controllers
         {
             var productReview = await _context.ProductReviews
                 .Include(pr => pr.Product)
-                .Include(pr => pr.Customer)
+                .Include(pr => pr.User)
                 .FirstOrDefaultAsync(pr => pr.ReviewId == id);
 
             if (productReview == null)
@@ -49,19 +49,19 @@ namespace BookStoresApi.Controllers
         public async Task<ActionResult<IEnumerable<ProductReview>>> GetReviewsByProduct(int productId)
         {
             return await _context.ProductReviews
-                .Include(pr => pr.Customer)
+                .Include(pr => pr.User)
                 .Where(pr => pr.ProductId == productId)
                 .OrderByDescending(pr => pr.ReviewDate)
                 .ToListAsync();
         }
 
-        // GET: api/productreviews/customer/{customerId}
-        [HttpGet("customer/{customerId}")]
-        public async Task<ActionResult<IEnumerable<ProductReview>>> GetReviewsByCustomer(int customerId)
+        // GET: api/productreviews/user/{userId}
+        [HttpGet("user/{userId}")]
+        public async Task<ActionResult<IEnumerable<ProductReview>>> GetReviewsByUser(int userId)
         {
             return await _context.ProductReviews
                 .Include(pr => pr.Product)
-                .Where(pr => pr.CustomerId == customerId)
+                .Where(pr => pr.UserId == userId)
                 .OrderByDescending(pr => pr.ReviewDate)
                 .ToListAsync();
         }
@@ -71,8 +71,6 @@ namespace BookStoresApi.Controllers
         public async Task<ActionResult<ProductReview>> CreateProductReview(ProductReview productReview)
         {
             productReview.ReviewDate = DateTime.Now;
-            productReview.CreatedAt = DateTime.Now;
-            productReview.UpdatedAt = DateTime.Now;
 
             _context.ProductReviews.Add(productReview);
             await _context.SaveChangesAsync();
@@ -100,8 +98,6 @@ namespace BookStoresApi.Controllers
 
             existingReview.Rating = productReview.Rating;
             existingReview.Comment = productReview.Comment;
-            existingReview.UpdatedAt = DateTime.Now;
-            existingReview.UpdatedBy = productReview.UpdatedBy;
 
             try
             {
@@ -135,7 +131,6 @@ namespace BookStoresApi.Controllers
 
             // Soft delete
             productReview.IsDeleted = true;
-            productReview.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             // Update product average rating

@@ -67,7 +67,7 @@ namespace BookStoresApi.Controllers
                 BirthDate = model.BirthDate,
                 Gender = model.Gender,
                 UserType = model.UserType,
-            }; // Set MaDV property
+            };
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)
@@ -88,7 +88,7 @@ namespace BookStoresApi.Controllers
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
-                new Claim(JwtRegisteredClaimNames.Sid, user.Id),
+                new Claim(JwtRegisteredClaimNames.Sid, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };
 

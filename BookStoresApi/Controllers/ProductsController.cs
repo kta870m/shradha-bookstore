@@ -112,9 +112,6 @@ namespace BookStoresApi.Controllers
                 product.ProductCode = codeProperty?.GetValue(codeValue)?.ToString() ?? "PR000001";
             }
 
-            product.CreatedAt = DateTime.Now;
-            product.UpdatedAt = DateTime.Now;
-
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
@@ -145,8 +142,6 @@ namespace BookStoresApi.Controllers
             existingProduct.CategoryId = product.CategoryId;
             existingProduct.ReleaseDate = product.ReleaseDate;
             existingProduct.StockQuantity = product.StockQuantity;
-            existingProduct.UpdatedAt = DateTime.Now;
-            existingProduct.UpdatedBy = product.UpdatedBy;
 
             try
             {
@@ -176,7 +171,6 @@ namespace BookStoresApi.Controllers
 
             // Soft delete
             product.IsDeleted = true;
-            product.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return NoContent();

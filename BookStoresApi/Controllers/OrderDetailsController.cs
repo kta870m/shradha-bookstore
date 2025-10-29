@@ -57,9 +57,6 @@ namespace BookStoresApi.Controllers
         [HttpPost]
         public async Task<ActionResult<OrderDetail>> CreateOrderDetail(OrderDetail orderDetail)
         {
-            orderDetail.CreatedAt = DateTime.Now;
-            orderDetail.UpdatedAt = DateTime.Now;
-
             _context.OrderDetails.Add(orderDetail);
             await _context.SaveChangesAsync();
 
@@ -86,8 +83,6 @@ namespace BookStoresApi.Controllers
 
             existingOrderDetail.Quantity = orderDetail.Quantity;
             existingOrderDetail.UnitPrice = orderDetail.UnitPrice;
-            existingOrderDetail.UpdatedAt = DateTime.Now;
-            existingOrderDetail.UpdatedBy = orderDetail.UpdatedBy;
 
             try
             {
@@ -121,7 +116,6 @@ namespace BookStoresApi.Controllers
 
             // Soft delete
             orderDetail.IsDeleted = true;
-            orderDetail.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             // Update order total amount

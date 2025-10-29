@@ -65,7 +65,6 @@ namespace BookStoresApi.Controllers
             {
                 // Update quantity instead of creating new item
                 existingItem.Quantity += cartItem.Quantity;
-                existingItem.UpdatedAt = DateTime.Now;
                 await _context.SaveChangesAsync();
                 return Ok(existingItem);
             }
@@ -78,8 +77,6 @@ namespace BookStoresApi.Controllers
             }
 
             cartItem.PriceAtAddTime = product.Price;
-            cartItem.CreatedAt = DateTime.Now;
-            cartItem.UpdatedAt = DateTime.Now;
 
             _context.CartItems.Add(cartItem);
             await _context.SaveChangesAsync();
@@ -103,8 +100,6 @@ namespace BookStoresApi.Controllers
             }
 
             existingCartItem.Quantity = cartItem.Quantity;
-            existingCartItem.UpdatedAt = DateTime.Now;
-            existingCartItem.UpdatedBy = cartItem.UpdatedBy;
 
             try
             {
@@ -138,7 +133,6 @@ namespace BookStoresApi.Controllers
             }
 
             cartItem.Quantity = quantity;
-            cartItem.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -156,7 +150,6 @@ namespace BookStoresApi.Controllers
 
             // Soft delete
             cartItem.IsDeleted = true;
-            cartItem.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return NoContent();

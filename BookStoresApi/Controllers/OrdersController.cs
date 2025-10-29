@@ -66,8 +66,8 @@ namespace BookStoresApi.Controllers
         public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
         {
             return await _context
-                .Orders.Include(o => o.Customer)
-                .Include(o => o.Admin)
+                .Orders
+                .Include(o => o.User)
                 .Include(o => o.OrderDetails)
                 .ThenInclude(od => od.Product)
                 .OrderByDescending(o => o.OrderDate)
@@ -79,8 +79,8 @@ namespace BookStoresApi.Controllers
         public async Task<ActionResult<Order>> GetOrder(int id)
         {
             var order = await _context
-                .Orders.Include(o => o.Customer)
-                .Include(o => o.Admin)
+                .Orders
+                .Include(o => o.User)
                 .Include(o => o.OrderDetails)
                 .ThenInclude(od => od.Product)
                 .FirstOrDefaultAsync(o => o.OrderId == id);
@@ -100,7 +100,7 @@ namespace BookStoresApi.Controllers
             return await _context
                 .Orders.Include(o => o.OrderDetails)
                 .ThenInclude(od => od.Product)
-                .Where(o => o.CustomerId == customerId)
+                .Where(o => o.UserId == customerId)
                 .OrderByDescending(o => o.OrderDate)
                 .ToListAsync();
         }
@@ -119,8 +119,6 @@ namespace BookStoresApi.Controllers
             }
 
             order.OrderDate = DateTime.Now;
-            order.CreatedAt = DateTime.Now;
-            order.UpdatedAt = DateTime.Now;
 
             // Calculate total amount from order details
             if (order.OrderDetails != null && order.OrderDetails.Any())
@@ -154,9 +152,7 @@ namespace BookStoresApi.Controllers
             existingOrder.PaymentMethod = order.PaymentMethod;
             existingOrder.ShippingFee = order.ShippingFee;
             existingOrder.TotalAmount = order.TotalAmount;
-            existingOrder.AdminId = order.AdminId;
-            existingOrder.UpdatedAt = DateTime.Now;
-            existingOrder.UpdatedBy = order.UpdatedBy;
+            existingOrder.UserId = order.UserId;
 
             try
             {
@@ -185,7 +181,6 @@ namespace BookStoresApi.Controllers
             }
 
             order.OrderStatus = status;
-            order.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -206,14 +201,12 @@ namespace BookStoresApi.Controllers
 
             // Soft delete order and its details
             order.IsDeleted = true;
-            order.UpdatedAt = DateTime.Now;
 
             if (order.OrderDetails != null)
             {
                 foreach (var detail in order.OrderDetails)
                 {
                     detail.IsDeleted = true;
-                    detail.UpdatedAt = DateTime.Now;
                 }
             }
 

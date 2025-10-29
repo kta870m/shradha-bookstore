@@ -11,7 +11,7 @@ namespace BookStoresApi.Data
         }
 
         // DbSets
-        public DbSet<ApplicationUser> Users { get; set; }
+    public DbSet<ApplicationUser> Users { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Media> Media { get; set; }
@@ -38,7 +38,7 @@ namespace BookStoresApi.Data
                 .HasOne(p => p.Category)
                 .WithMany(c => c.Products)
                 .HasForeignKey(p => p.CategoryId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Media - Product
             modelBuilder.Entity<Media>()
@@ -47,19 +47,12 @@ namespace BookStoresApi.Data
                 .HasForeignKey(m => m.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Order - Customer (ApplicationUser)
+            // Order - User
             modelBuilder.Entity<Order>()
-                .HasOne(o => o.Customer)
-                .WithMany()
-                .HasForeignKey(o => o.CustomerId)
+                .HasOne(o => o.User)
+                .WithMany(u => u.Orders)
+                .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            // Order - Admin (ApplicationUser)
-            modelBuilder.Entity<Order>()
-                .HasOne(o => o.Admin)
-                .WithMany()
-                .HasForeignKey(o => o.AdminId)
-                .OnDelete(DeleteBehavior.SetNull);
 
             // OrderDetail - Order
             modelBuilder.Entity<OrderDetail>()
@@ -82,36 +75,29 @@ namespace BookStoresApi.Data
                 .HasForeignKey(pr => pr.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // ProductReview - Customer
+            // ProductReview - User
             modelBuilder.Entity<ProductReview>()
-                .HasOne(pr => pr.Customer)
-                .WithMany()
-                .HasForeignKey(pr => pr.CustomerId)
+                .HasOne(pr => pr.User)
+                .WithMany(u => u.ProductReviews)
+                .HasForeignKey(pr => pr.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // FeedbackQuery - Customer
+            // FeedbackQuery - User
             modelBuilder.Entity<FeedbackQuery>()
-                .HasOne(fq => fq.Customer)
-                .WithMany()
-                .HasForeignKey(fq => fq.CustomerId)
+                .HasOne(fq => fq.User)
+                .WithMany(u => u.FeedbackQueries)
+                .HasForeignKey(fq => fq.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // FeedbackQuery - Admin
-            modelBuilder.Entity<FeedbackQuery>()
-                .HasOne(fq => fq.Admin)
-                .WithMany()
-                .HasForeignKey(fq => fq.AdminId)
-                .OnDelete(DeleteBehavior.SetNull);
-
-            // ShoppingCart - Customer (One-to-One)
+            // ShoppingCart - User (One-to-One)
             modelBuilder.Entity<ShoppingCart>()
-                .HasOne(sc => sc.Customer)
-                .WithMany()
-                .HasForeignKey(sc => sc.CustomerId)
+                .HasOne(sc => sc.User)
+                .WithOne(u => u.ShoppingCart)
+                .HasForeignKey<ShoppingCart>(sc => sc.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<ShoppingCart>()
-                .HasIndex(sc => sc.CustomerId)
+                .HasIndex(sc => sc.UserId)
                 .IsUnique();
 
             // CartItem - ShoppingCart

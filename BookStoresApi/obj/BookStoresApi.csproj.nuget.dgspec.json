@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "D:\\OneDrive\\All_of_inf\\Aptech\\Sem3\\eProject\\prj\\BookStoresApi\\BookStoresApi.csproj": {}
+    "/Users/admin/Documents/BaiTap/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj": {}
   },
   "projects": {
-    "D:\\OneDrive\\All_of_inf\\Aptech\\Sem3\\eProject\\prj\\BookStoresApi\\BookStoresApi.csproj": {
+    "/Users/admin/Documents/BaiTap/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\OneDrive\\All_of_inf\\Aptech\\Sem3\\eProject\\prj\\BookStoresApi\\BookStoresApi.csproj",
+        "projectUniqueName": "/Users/admin/Documents/BaiTap/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj",
         "projectName": "BookStoresApi",
-        "projectPath": "D:\\OneDrive\\All_of_inf\\Aptech\\Sem3\\eProject\\prj\\BookStoresApi\\BookStoresApi.csproj",
-        "packagesPath": "C:\\Users\\Dell\\.nuget\\packages\\",
-        "outputPath": "D:\\OneDrive\\All_of_inf\\Aptech\\Sem3\\eProject\\prj\\BookStoresApi\\obj\\",
+        "projectPath": "/Users/admin/Documents/BaiTap/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj",
+        "packagesPath": "/Users/admin/.nuget/packages/",
+        "outputPath": "/Users/admin/Documents/BaiTap/eProject3/shradha-bookstore/BookStoresApi/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Dell\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/Users/admin/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -55,6 +55,12 @@
               "target": "Package",
               "version": "[9.0.10, )"
             },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.10, )"
+            },
             "Microsoft.EntityFrameworkCore.SqlServer": {
               "target": "Package",
               "version": "[9.0.10, )"
@@ -91,7 +97,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.408/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.403/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

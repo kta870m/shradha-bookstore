@@ -48,9 +48,6 @@ namespace BookStoresApi.Controllers
         [HttpPost]
         public async Task<ActionResult<Category>> CreateCategory(Category category)
         {
-            category.CreatedAt = DateTime.Now;
-            category.UpdatedAt = DateTime.Now;
-
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
 
@@ -74,8 +71,6 @@ namespace BookStoresApi.Controllers
 
             existingCategory.CategoryName = category.CategoryName;
             existingCategory.ParentId = category.ParentId;
-            existingCategory.UpdatedAt = DateTime.Now;
-            existingCategory.UpdatedBy = category.UpdatedBy;
 
             try
             {
@@ -105,7 +100,6 @@ namespace BookStoresApi.Controllers
 
             // Soft delete
             category.IsDeleted = true;
-            category.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
             return NoContent();

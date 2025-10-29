@@ -9,12 +9,15 @@ namespace BookStoresApi.Models
         [Column("review_id")]
         public int ReviewId { get; set; }
 
+        [Required]
         [Column("product_id")]
         public int ProductId { get; set; }
 
-        [Column("customer_id")]
-        public int CustomerId { get; set; }
+        [Required]
+        [Column("user_id")]
+        public int UserId { get; set; }
 
+        [Required]
         [Column("rating")]
         [Range(1, 5)]
         public int Rating { get; set; }
@@ -23,31 +26,15 @@ namespace BookStoresApi.Models
         public string? Comment { get; set; }
 
         [Column("review_date")]
-        public DateTime ReviewDate { get; set; }
+        public DateTime ReviewDate { get; set; } = DateTime.Now;
+
+        [Column("is_deleted")]
+        public bool IsDeleted { get; set; } = false;
 
         // Navigation properties
         [ForeignKey("ProductId")]
         public virtual Product Product { get; set; } = null!;
-
-        [ForeignKey("CustomerId")]
-        public virtual ApplicationUser Customer { get; set; } = null!;
-
-        // Audit fields
-        [Column("created_at")]
-        public DateTime CreatedAt { get; set; }
-
-        [Column("updated_at")]
-        public DateTime? UpdatedAt { get; set; }
-
-        [Column("created_by")]
-        [MaxLength(255)]
-        public string? CreatedBy { get; set; }
-
-        [Column("updated_by")]
-        [MaxLength(255)]
-        public string? UpdatedBy { get; set; }
-
-        [Column("is_deleted")]
-        public bool IsDeleted { get; set; } = false;
+        [ForeignKey("UserId")]
+        public virtual ApplicationUser User { get; set; } = null!;
     }
 }

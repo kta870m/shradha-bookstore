@@ -21,7 +21,7 @@ namespace BookStoresApi.Controllers
         public async Task<ActionResult<IEnumerable<ShoppingCart>>> GetShoppingCarts()
         {
             return await _context.ShoppingCarts
-                .Include(sc => sc.Customer)
+                .Include(sc => sc.User)
                 .Include(sc => sc.CartItems)
                     .ThenInclude(ci => ci.Product)
                 .ToListAsync();
@@ -32,7 +32,7 @@ namespace BookStoresApi.Controllers
         public async Task<ActionResult<ShoppingCart>> GetShoppingCart(int id)
         {
             var shoppingCart = await _context.ShoppingCarts
-                .Include(sc => sc.Customer)
+                .Include(sc => sc.User)
                 .Include(sc => sc.CartItems)
                     .ThenInclude(ci => ci.Product)
                 .FirstOrDefaultAsync(sc => sc.CartId == id);
@@ -45,24 +45,22 @@ namespace BookStoresApi.Controllers
             return shoppingCart;
         }
 
-        // GET: api/shoppingcarts/customer/{customerId}
-        [HttpGet("customer/{customerId}")]
-        public async Task<ActionResult<ShoppingCart>> GetCartByCustomer(int customerId)
+        // GET: api/shoppingcarts/user/{userId}
+        [HttpGet("user/{userId}")]
+        public async Task<ActionResult<ShoppingCart>> GetCartByUser(int userId)
         {
             var cart = await _context.ShoppingCarts
                 .Include(sc => sc.CartItems)
                     .ThenInclude(ci => ci.Product)
-                .FirstOrDefaultAsync(sc => sc.CustomerId == customerId);
+                .FirstOrDefaultAsync(sc => sc.UserId == userId);
 
             if (cart == null)
             {
                 // Create new cart if doesn't exist
                 var newCart = new ShoppingCart
                 {
-                    CustomerId = customerId,
-                    Status = "Active",
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now
+                    UserId = userId,
+                    Status = "Active"
                 };
                 _context.ShoppingCarts.Add(newCart);
                 await _context.SaveChangesAsync();
@@ -76,18 +74,16 @@ namespace BookStoresApi.Controllers
         [HttpPost]
         public async Task<ActionResult<ShoppingCart>> CreateShoppingCart(ShoppingCart shoppingCart)
         {
-            // Check if customer already has a cart
+            // Check if user already has a cart
             var existingCart = await _context.ShoppingCarts
-                .FirstOrDefaultAsync(sc => sc.CustomerId == shoppingCart.CustomerId);
+                .FirstOrDefaultAsync(sc => sc.UserId == shoppingCart.UserId);
 
             if (existingCart != null)
             {
-                return BadRequest("Customer already has a shopping cart");
+                return BadRequest("User already has a shopping cart");
             }
 
             shoppingCart.Status = "Active";
-            shoppingCart.CreatedAt = DateTime.Now;
-            shoppingCart.UpdatedAt = DateTime.Now;
 
             _context.ShoppingCarts.Add(shoppingCart);
             await _context.SaveChangesAsync();
@@ -111,8 +107,6 @@ namespace BookStoresApi.Controllers
             }
 
             existingCart.Status = shoppingCart.Status;
-            existingCart.UpdatedAt = DateTime.Now;
-            existingCart.UpdatedBy = shoppingCart.UpdatedBy;
 
             try
             {
@@ -145,14 +139,12 @@ namespace BookStoresApi.Controllers
 
             // Soft delete cart and its items
             shoppingCart.IsDeleted = true;
-            shoppingCart.UpdatedAt = DateTime.Now;
 
             if (shoppingCart.CartItems != null)
             {
                 foreach (var item in shoppingCart.CartItems)
                 {
                     item.IsDeleted = true;
-                    item.UpdatedAt = DateTime.Now;
                 }
             }
 
@@ -178,7 +170,6 @@ namespace BookStoresApi.Controllers
             foreach (var item in cart.CartItems)
             {
                 item.IsDeleted = true;
-                item.UpdatedAt = DateTime.Now;
             }
 
             await _context.SaveChangesAsync();
