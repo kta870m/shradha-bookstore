@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/Users/admin/Documents/BaiTap/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj": {}
+    "/Users/kta87m/Documents/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj": {}
   },
   "projects": {
-    "/Users/admin/Documents/BaiTap/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj": {
+    "/Users/kta87m/Documents/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/admin/Documents/BaiTap/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj",
+        "projectUniqueName": "/Users/kta87m/Documents/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj",
         "projectName": "BookStoresApi",
-        "projectPath": "/Users/admin/Documents/BaiTap/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj",
-        "packagesPath": "/Users/admin/.nuget/packages/",
-        "outputPath": "/Users/admin/Documents/BaiTap/eProject3/shradha-bookstore/BookStoresApi/obj/",
+        "projectPath": "/Users/kta87m/Documents/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj",
+        "packagesPath": "/Users/kta87m/.nuget/packages/",
+        "outputPath": "/Users/kta87m/Documents/eProject3/shradha-bookstore/BookStoresApi/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/admin/.nuget/NuGet/NuGet.Config"
+          "/Users/kta87m/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -97,7 +97,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.403/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.412/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
