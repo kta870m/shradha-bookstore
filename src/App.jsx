@@ -1,12 +1,12 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import AdminLogin from './pages/AdminLogin';
+import AdminRegister from './pages/AdminRegister';
+import AdminDashboard from './pages/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import CustomerLayout from './layouts/CustomerLayout';
 import Home from './pages/customer/Home';
 import './App.css';
-
-const AdminDashboard = () => <div>Chào mừng Admin!</div>;
 
 function App() {
   return (
@@ -14,6 +14,12 @@ function App() {
       <Routes>
         {/* Admin routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/register" element={<AdminRegister />} />
+        <Route path="/admin/dashboard" element={
+          <ProtectedRoute>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
         <Route path="/admin/*" element={
           <ProtectedRoute>
             <AdminDashboard />

@@ -34,20 +34,33 @@ namespace BookStoresApi.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest model)
         {
-            var user = await _userManager.FindByNameAsync(model.Username);
+            // Try to find user by email
+            var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null || user.IsDeleted)
             {
-                return Unauthorized("Invalid username or password.");
+                return Unauthorized(new { message = "Invalid email or password." });
             }
 
             var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
             if (!result.Succeeded)
             {
-                return Unauthorized("Invalid username or password.");
+                return Unauthorized(new { message = "Invalid email or password." });
             }
 
             var token = GenerateJwtToken(user);
-            return Ok(new { Token = token });
+            return Ok(
+                new
+                {
+                    token = token,
+                    user = new
+                    {
+                        id = user.Id,
+                        email = user.Email,
+                        fullName = user.FullName,
+                        userType = user.UserType,
+                    },
+                }
+            );
         }
 
         [HttpPost("register")]
@@ -87,9 +100,12 @@ namespace BookStoresApi.Controllers
 
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Sub, user.UserName ?? user.Email),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""),
                 new Claim(JwtRegisteredClaimNames.Sid, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim("user_type", user.UserType ?? "Customer"),
+                new Claim("full_name", user.FullName ?? ""),
             };
 
             var token = new JwtSecurityToken(
@@ -106,20 +122,20 @@ namespace BookStoresApi.Controllers
 
     public class RegisterRequest
     {
-        public string Username { get; set; }
-        public string Password { get; set; }
-        public string Email { get; set; }
+        public required string Username { get; set; }
+        public required string Password { get; set; }
+        public required string Email { get; set; }
 
-        public string FullName { get; set; }
+        public required string FullName { get; set; }
         public string? Address { get; set; }
         public DateTime? BirthDate { get; set; }
         public string? Gender { get; set; }
-        public string UserType { get; set; }
+        public required string UserType { get; set; }
     }
 
     public class LoginRequest
     {
-        public string Username { get; set; }
-        public string Password { get; set; }
+        public required string Email { get; set; }
+        public required string Password { get; set; }
     }
 }

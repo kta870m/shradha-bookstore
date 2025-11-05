@@ -1,17 +1,17 @@
-using Microsoft.EntityFrameworkCore;
 using BookStoresApi.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookStoresApi.Data
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<int>, int>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options)
-        {
-        }
+            : base(options) { }
 
         // DbSets
-    public DbSet<ApplicationUser> Users { get; set; }
+        // Users DbSet is inherited from IdentityDbContext
         public DbSet<Category> Categories { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Media> Media { get; set; }
@@ -27,88 +27,98 @@ namespace BookStoresApi.Data
             base.OnModelCreating(modelBuilder);
 
             // Category - Self Reference
-            modelBuilder.Entity<Category>()
+            modelBuilder
+                .Entity<Category>()
                 .HasOne(c => c.ParentCategory)
                 .WithMany(c => c.SubCategories)
                 .HasForeignKey(c => c.ParentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Product - Category
-            modelBuilder.Entity<Product>()
+            modelBuilder
+                .Entity<Product>()
                 .HasOne(p => p.Category)
                 .WithMany(c => c.Products)
                 .HasForeignKey(p => p.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Media - Product
-            modelBuilder.Entity<Media>()
+            modelBuilder
+                .Entity<Media>()
                 .HasOne(m => m.Product)
                 .WithMany(p => p.MediaFiles)
                 .HasForeignKey(m => m.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Order - User
-            modelBuilder.Entity<Order>()
+            modelBuilder
+                .Entity<Order>()
                 .HasOne(o => o.User)
                 .WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // OrderDetail - Order
-            modelBuilder.Entity<OrderDetail>()
+            modelBuilder
+                .Entity<OrderDetail>()
                 .HasOne(od => od.Order)
                 .WithMany(o => o.OrderDetails)
                 .HasForeignKey(od => od.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // OrderDetail - Product
-            modelBuilder.Entity<OrderDetail>()
+            modelBuilder
+                .Entity<OrderDetail>()
                 .HasOne(od => od.Product)
                 .WithMany(p => p.OrderDetails)
                 .HasForeignKey(od => od.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ProductReview - Product
-            modelBuilder.Entity<ProductReview>()
+            modelBuilder
+                .Entity<ProductReview>()
                 .HasOne(pr => pr.Product)
                 .WithMany(p => p.Reviews)
                 .HasForeignKey(pr => pr.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // ProductReview - User
-            modelBuilder.Entity<ProductReview>()
+            modelBuilder
+                .Entity<ProductReview>()
                 .HasOne(pr => pr.User)
                 .WithMany(u => u.ProductReviews)
                 .HasForeignKey(pr => pr.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // FeedbackQuery - User
-            modelBuilder.Entity<FeedbackQuery>()
+            modelBuilder
+                .Entity<FeedbackQuery>()
                 .HasOne(fq => fq.User)
                 .WithMany(u => u.FeedbackQueries)
                 .HasForeignKey(fq => fq.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ShoppingCart - User (One-to-One)
-            modelBuilder.Entity<ShoppingCart>()
+            modelBuilder
+                .Entity<ShoppingCart>()
                 .HasOne(sc => sc.User)
                 .WithOne(u => u.ShoppingCart)
                 .HasForeignKey<ShoppingCart>(sc => sc.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<ShoppingCart>()
-                .HasIndex(sc => sc.UserId)
-                .IsUnique();
+            modelBuilder.Entity<ShoppingCart>().HasIndex(sc => sc.UserId).IsUnique();
 
             // CartItem - ShoppingCart
-            modelBuilder.Entity<CartItem>()
+            modelBuilder
+                .Entity<CartItem>()
                 .HasOne(ci => ci.ShoppingCart)
                 .WithMany(sc => sc.CartItems)
                 .HasForeignKey(ci => ci.CartId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // CartItem - Product
-            modelBuilder.Entity<CartItem>()
+            modelBuilder
+                .Entity<CartItem>()
                 .HasOne(ci => ci.Product)
                 .WithMany(p => p.CartItems)
                 .HasForeignKey(ci => ci.ProductId)
