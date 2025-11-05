@@ -58,6 +58,7 @@ function AdminRegister() {
         gender: formData.gender,
         userType: formData.userType
       });
+      console.log('Register response:', response.data);
 
       setSuccess('Đăng ký thành công! Đang chuyển đến trang đăng nhập...');
       

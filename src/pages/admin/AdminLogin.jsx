@@ -30,6 +30,8 @@ function AdminLogin() {
         email: formData.email,
         password: formData.password
       });
+      console.log('Login response:', response);
+
 
       const { token, user } = response.data;
 
