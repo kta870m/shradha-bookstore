@@ -27,10 +27,10 @@ dist-ssr
 # .NET / Visual Studio
 # ---------------------------
 ## Build artifacts
-bin/
-obj/
-**/bin/
-**/obj/
+[Bb]in/
+[Oo]bj/
+**/[Bb]in/
+**/[Oo]bj/
 
 ## VS tooling
 .vs/
@@ -39,13 +39,35 @@ obj/
 *.suo
 *.userprefs
 
+## MSBuild Binary and Structured Log
+*.binlog
+
 ## Publish output
 *.Publish.xml
 *.publishsettings
+PublishProfiles/
 
-# User secrets / local config
+## NuGet
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+## User secrets / local config
 secrets.json
 appsettings.Development.json
+appsettings.*.json
+!appsettings.json
+
+## Entity Framework
+*.edmx.diagram
+*.edmx.sql
+
+## Web workbench (sass)
+.sass-cache/
+
+## ASP.NET Scaffolding
+ScaffoldingReadMe.txt
 
 # ---------------------------
 # Node / frontend
