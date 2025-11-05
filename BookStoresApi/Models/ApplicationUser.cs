@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace BookStoresApi.Models
 {
-    public class ApplicationUser : IdentityUser
+    public class ApplicationUser : IdentityUser<int>
     {
         [Required]
         [Column("full_name")]
@@ -32,8 +32,10 @@ namespace BookStoresApi.Models
 
         // Navigation properties
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
-        public virtual ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
-        public virtual ICollection<FeedbackQuery> FeedbackQueries { get; set; } = new List<FeedbackQuery>();
+        public virtual ICollection<ProductReview> ProductReviews { get; set; } =
+            new List<ProductReview>();
+        public virtual ICollection<FeedbackQuery> FeedbackQueries { get; set; } =
+            new List<FeedbackQuery>();
         public virtual ShoppingCart? ShoppingCart { get; set; }
     }
 }
