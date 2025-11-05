@@ -4427,19 +4427,19 @@
     ]
   },
   "packageFolders": {
-    "/Users/kta87m/.nuget/packages/": {}
+    "C:\\Users\\nthan\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/kta87m/Documents/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj",
+      "projectUniqueName": "C:\\Users\\nthan\\OneDrive\\Desktop\\code\\BookStore\\shradha-bookstore\\BookStoresApi\\BookStoresApi.csproj",
       "projectName": "BookStoresApi",
-      "projectPath": "/Users/kta87m/Documents/eProject3/shradha-bookstore/BookStoresApi/BookStoresApi.csproj",
-      "packagesPath": "/Users/kta87m/.nuget/packages/",
-      "outputPath": "/Users/kta87m/Documents/eProject3/shradha-bookstore/BookStoresApi/obj/",
+      "projectPath": "C:\\Users\\nthan\\OneDrive\\Desktop\\code\\BookStore\\shradha-bookstore\\BookStoresApi\\BookStoresApi.csproj",
+      "packagesPath": "C:\\Users\\nthan\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\nthan\\OneDrive\\Desktop\\code\\BookStore\\shradha-bookstore\\BookStoresApi\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/Users/kta87m/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\nthan\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -4522,7 +4522,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.412/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "c:\\program files\\dotnet\\sdk\\8.0.403/PortableRuntimeIdentifierGraph.json"
       }
     }
   },
