@@ -34,10 +34,6 @@ namespace BookStoresApi.Models
         [MaxLength(100)]
         public string? ProductType { get; set; }
 
-        [Required]
-        [Column("category_id")]
-        public int CategoryId { get; set; }
-
         [Column("release_date")]
         public DateTime? ReleaseDate { get; set; }
 
@@ -54,8 +50,7 @@ namespace BookStoresApi.Models
         public bool IsDeleted { get; set; } = false;
 
         // Navigation properties
-        [ForeignKey("CategoryId")]
-        public virtual Category Category { get; set; } = null!;
+        public virtual ICollection<ProductCategory> ProductCategories { get; set; } = new List<ProductCategory>();
         public virtual ICollection<Media> MediaFiles { get; set; } = new List<Media>();
         public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
         public virtual ICollection<ProductReview> Reviews { get; set; } = new List<ProductReview>();

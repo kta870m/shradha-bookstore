@@ -33,7 +33,8 @@ namespace BookStoresApi.Controllers
             var category = await _context.Categories
                 .Include(c => c.ParentCategory)
                 .Include(c => c.SubCategories)
-                .Include(c => c.Products)
+                .Include(c => c.ProductCategories)
+                    .ThenInclude(pc => pc.Product)
                 .FirstOrDefaultAsync(c => c.CategoryId == id);
 
             if (category == null)

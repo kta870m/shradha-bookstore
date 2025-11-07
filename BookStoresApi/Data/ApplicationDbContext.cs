@@ -14,6 +14,7 @@ namespace BookStoresApi.Data
         // Users DbSet is inherited from IdentityDbContext
         public DbSet<Category> Categories { get; set; }
         public DbSet<Product> Products { get; set; }
+        public DbSet<ProductCategory> ProductCategories { get; set; }
         public DbSet<Media> Media { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderDetail> OrderDetails { get; set; }
@@ -34,13 +35,27 @@ namespace BookStoresApi.Data
                 .HasForeignKey(c => c.ParentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Product - Category
+            // ProductCategory - Product (Many-to-Many)
             modelBuilder
-                .Entity<Product>()
-                .HasOne(p => p.Category)
-                .WithMany(c => c.Products)
-                .HasForeignKey(p => p.CategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .Entity<ProductCategory>()
+                .HasOne(pc => pc.Product)
+                .WithMany(p => p.ProductCategories)
+                .HasForeignKey(pc => pc.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ProductCategory - Category (Many-to-Many)
+            modelBuilder
+                .Entity<ProductCategory>()
+                .HasOne(pc => pc.Category)
+                .WithMany(c => c.ProductCategories)
+                .HasForeignKey(pc => pc.CategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Composite unique index to prevent duplicate product-category combinations
+            modelBuilder
+                .Entity<ProductCategory>()
+                .HasIndex(pc => new { pc.ProductId, pc.CategoryId })
+                .IsUnique();
 
             // Media - Product
             modelBuilder

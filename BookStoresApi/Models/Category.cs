@@ -24,6 +24,6 @@ namespace BookStoresApi.Models
         [ForeignKey("ParentId")]
         public virtual Category? ParentCategory { get; set; }
         public virtual ICollection<Category> SubCategories { get; set; } = new List<Category>();
-        public virtual ICollection<Product> Products { get; set; } = new List<Product>();
+        public virtual ICollection<ProductCategory> ProductCategories { get; set; } = new List<ProductCategory>();
     }
 }
