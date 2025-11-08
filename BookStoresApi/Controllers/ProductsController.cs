@@ -206,8 +206,7 @@ namespace BookStoresApi.Controllers
             var productCategory = new ProductCategory
             {
                 ProductId = productId,
-                CategoryId = categoryId,
-                CreatedAt = DateTime.UtcNow
+                CategoryId = categoryId
             };
 
             _context.ProductCategories.Add(productCategory);
@@ -286,8 +285,7 @@ namespace BookStoresApi.Controllers
                 var productCategory = new ProductCategory
                 {
                     ProductId = productId,
-                    CategoryId = categoryId,
-                    CreatedAt = DateTime.UtcNow
+                    CategoryId = categoryId
                 };
                 _context.ProductCategories.Add(productCategory);
             }
