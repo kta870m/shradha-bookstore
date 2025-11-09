@@ -1,5 +1,6 @@
 .dashboard-home {
     animation: fadeIn 0.5s ease-in;
+    padding: 0;
 }
 
 @keyframes fadeIn {
@@ -13,37 +14,102 @@
     }
 }
 
-.dashboard-home h2 {
-    font-size: 32px;
-    color: #2c3e50;
-    margin-bottom: 30px;
-    font-weight: 700;
+/* Ant Design Card Hover Effects */
+.stats-card .ant-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 25px;
-    margin-bottom: 40px;
+.stats-card .ant-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12) !important;
 }
 
-.stat-card {
-    background: white;
-    border-radius: 15px;
-    padding: 25px;
+/* Custom Statistic Styling */
+.ant-statistic-title {
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    color: #6b7280 !important;
+    margin-bottom: 8px !important;
+}
+
+.ant-statistic-content {
     display: flex;
     align-items: center;
-    gap: 20px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
+    gap: 12px;
 }
 
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+/* Button Hover Effects */
+.ant-btn:not(.ant-btn-primary):hover {
+  border-color: #0EADD5 !important;
+  color: #0EADD5 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(14, 173, 213, 0.15);
 }
 
-.stat-icon {
+/* Chart Styling */
+.recharts-wrapper {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.recharts-cartesian-axis-tick-value {
+  font-size: 12px;
+  fill: #6b7280;
+}
+
+.recharts-legend-wrapper {
+  font-size: 14px;
+  color: #374151;
+}
+
+.recharts-tooltip-wrapper {
+  border-radius: 8px !important;
+}
+
+.recharts-surface {
+  overflow: visible;
+}
+
+/* Chart Card Title Icons */
+.ant-card-head-title > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Responsive Chart Adjustments */
+@media (max-width: 768px) {
+  .recharts-wrapper {
+    font-size: 11px;
+  }
+  
+  .recharts-cartesian-axis-tick-value {
+    font-size: 10px;
+  }
+}
+
+/* Animation for chart cards */
+@keyframes chartFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ant-card {
+  animation: chartFadeIn 0.6s ease-out;
+}
+
+.ant-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.ant-card:nth-child(3) {
+  animation-delay: 0.2s;
+}.stat-icon {
     width: 70px;
     height: 70px;
     border-radius: 12px;

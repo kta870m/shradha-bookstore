@@ -1,0 +1,74 @@
+/* Ant Design Admin Dashboard Overrides */
+.ant-layout {
+  background: #f5f5f5;
+}
+
+.ant-layout-sider {
+  box-shadow: 2px 0 8px rgba(0,0,0,0.1) !important;
+}
+
+.ant-layout-header {
+  height: 64px;
+  line-height: 64px;
+  padding: 0 24px !important;
+}
+
+.ant-layout-content {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Menu Customization */
+.ant-menu-dark .ant-menu-item-selected {
+  background-color: #0EADD5 !important;
+}
+
+.ant-menu-dark .ant-menu-item:hover {
+  background-color: rgba(14, 173, 213, 0.2) !important;
+  color: #0EADD5 !important;
+}
+
+.ant-menu-dark .ant-menu-item-selected .ant-menu-item-icon,
+.ant-menu-dark .ant-menu-item-selected {
+  color: white !important;
+}
+
+/* Header Styling */
+.ant-layout-header {
+  border-bottom: 1px solid #f0f0f0;
+  background: white !important;
+}
+
+/* Button Styling */
+.ant-btn-text:hover {
+  background-color: rgba(14, 173, 213, 0.1) !important;
+  border-color: #0EADD5 !important;
+}
+
+/* Dropdown Styling */
+.ant-dropdown-menu-item:hover {
+  background-color: rgba(14, 173, 213, 0.1) !important;
+}
+
+/* Avatar Styling */
+.ant-avatar {
+  background-color: #0EADD5 !important;
+}
+
+/* Badge Styling */
+.ant-badge-count {
+  background-color: #ff4d4f !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ant-layout-header {
+    padding: 0 16px !important;
+  }
+  
+  .ant-layout-content {
+    margin: 16px !important;
+    padding: 16px !important;
+  }
+}
