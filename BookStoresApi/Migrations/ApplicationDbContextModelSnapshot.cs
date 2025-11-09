@@ -155,7 +155,7 @@ namespace BookStoresApi.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("CartItems");
+                    b.ToTable("CartItems", (string)null);
                 });
 
             modelBuilder.Entity("BookStoresApi.Models.Category", b =>
@@ -185,7 +185,7 @@ namespace BookStoresApi.Migrations
 
                     b.HasIndex("ParentId");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("BookStoresApi.Models.FeedbackQuery", b =>
@@ -223,7 +223,7 @@ namespace BookStoresApi.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("FeedbackQueries");
+                    b.ToTable("FeedbackQueries", (string)null);
                 });
 
             modelBuilder.Entity("BookStoresApi.Models.Media", b =>
@@ -262,7 +262,7 @@ namespace BookStoresApi.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("Media");
+                    b.ToTable("Media", (string)null);
                 });
 
             modelBuilder.Entity("BookStoresApi.Models.Order", b =>
@@ -314,7 +314,7 @@ namespace BookStoresApi.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("BookStoresApi.Models.OrderDetail", b =>
@@ -352,7 +352,7 @@ namespace BookStoresApi.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("OrderDetails");
+                    b.ToTable("OrderDetails", (string)null);
                 });
 
             modelBuilder.Entity("BookStoresApi.Models.Product", b =>
@@ -422,7 +422,7 @@ namespace BookStoresApi.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("Products");
+                    b.ToTable("Products", (string)null);
                 });
 
             modelBuilder.Entity("BookStoresApi.Models.ProductReview", b =>
@@ -464,7 +464,7 @@ namespace BookStoresApi.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ProductReviews");
+                    b.ToTable("ProductReviews", (string)null);
                 });
 
             modelBuilder.Entity("BookStoresApi.Models.ShoppingCart", b =>
@@ -494,7 +494,7 @@ namespace BookStoresApi.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("ShoppingCarts");
+                    b.ToTable("ShoppingCarts", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>

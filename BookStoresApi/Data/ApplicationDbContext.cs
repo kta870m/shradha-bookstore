@@ -149,6 +149,27 @@ namespace BookStoresApi.Data
             modelBuilder.Entity<FeedbackQuery>().HasQueryFilter(e => !e.IsDeleted);
             modelBuilder.Entity<ShoppingCart>().HasQueryFilter(e => !e.IsDeleted);
             modelBuilder.Entity<CartItem>().HasQueryFilter(e => !e.IsDeleted);
+
+            // Add indexes for better performance
+            modelBuilder.Entity<Product>().HasIndex(p => p.ProductCode);
+
+            modelBuilder.Entity<Product>().HasIndex(p => p.ProductName);
+
+            modelBuilder.Entity<Product>().HasIndex(p => p.Price);
+
+            modelBuilder.Entity<Product>().HasIndex(p => p.IsDeleted);
+
+            modelBuilder.Entity<Product>().HasIndex(p => p.ReleaseDate);
+
+            modelBuilder.Entity<Product>().HasIndex(p => p.StockQuantity);
+
+            modelBuilder.Entity<Product>().HasIndex(p => new { p.AverageRating, p.TotalReviews });
+
+            modelBuilder.Entity<ProductCategory>().HasIndex(pc => pc.ProductId);
+
+            modelBuilder.Entity<ProductCategory>().HasIndex(pc => pc.CategoryId);
+
+            modelBuilder.Entity<Media>().HasIndex(m => m.ProductId);
         }
     }
 }
