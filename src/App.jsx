@@ -1,16 +1,19 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ConfigProvider } from 'antd';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminRegister from './pages/admin/AdminRegister';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import CustomerLayout from './layouts/CustomerLayout';
 import Home from './pages/customer/Home';
+import antdTheme from './config/antdTheme';
 import './App.css';
 
 function App() {
   return (
-    <BrowserRouter>
+    <ConfigProvider theme={antdTheme}>
+      <BrowserRouter>
       <Routes>
         {/* Admin routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
@@ -115,6 +118,7 @@ function App() {
         } />
       </Routes>
     </BrowserRouter>
+    </ConfigProvider>
   );
 }
 
