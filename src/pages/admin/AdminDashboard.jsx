@@ -1,7 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
+import { Layout, Menu, Button, Avatar, Dropdown, Badge, Typography } from 'antd';
+import {
+  DashboardOutlined,
+  ShoppingOutlined,
+  UnorderedListOutlined,
+  ShoppingCartOutlined,
+  UserOutlined,
+  StarOutlined,
+  MessageOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  BellOutlined,
+  SettingOutlined,
+  LogoutOutlined,
+  BookOutlined
+} from '@ant-design/icons';
 import DashboardHome from './DashboardHome';
 import '../../styles/AdminDashboard.css';
+import '../../styles/AntdOverrides.css';
+
+const { Header, Sider, Content } = Layout;
+const { Text } = Typography;
 
 const AdminDashboard = () => {
     const [user, setUser] = useState(null);
@@ -25,111 +45,225 @@ const AdminDashboard = () => {
 
     const menuItems = [
         {
-            title: 'Dashboard',
-            icon: 'fa-home',
-            path: '/admin/dashboard',
+            key: '/admin/dashboard',
+            icon: <DashboardOutlined />,
+            label: 'Dashboard',
         },
         {
-            title: 'Products',
-            icon: 'fa-book',
-            path: '/admin/products',
+            key: '/admin/products',
+            icon: <ShoppingOutlined />,
+            label: 'Products',
         },
         {
-            title: 'Categories',
-            icon: 'fa-list',
-            path: '/admin/categories',
+            key: '/admin/categories',
+            icon: <UnorderedListOutlined />,
+            label: 'Categories',
         },
         {
-            title: 'Orders',
-            icon: 'fa-shopping-cart',
-            path: '/admin/orders',
+            key: '/admin/orders',
+            icon: <ShoppingCartOutlined />,
+            label: 'Orders',
         },
         {
-            title: 'Customers',
-            icon: 'fa-users',
-            path: '/admin/customers',
+            key: '/admin/customers',
+            icon: <UserOutlined />,
+            label: 'Customers',
         },
         {
-            title: 'Reviews',
-            icon: 'fa-star',
-            path: '/admin/reviews',
+            key: '/admin/reviews',
+            icon: <StarOutlined />,
+            label: 'Reviews',
         },
         {
-            title: 'Feedback',
-            icon: 'fa-comments',
-            path: '/admin/feedback',
+            key: '/admin/feedback',
+            icon: <MessageOutlined />,
+            label: 'Feedback',
+        },
+    ];
+
+    const userMenuItems = [
+        {
+            key: 'profile',
+            label: 'Profile',
+            icon: <UserOutlined />,
+        },
+        {
+            key: 'settings',
+            label: 'Settings',
+            icon: <SettingOutlined />,
+        },
+        {
+            type: 'divider',
+        },
+        {
+            key: 'logout',
+            label: 'Logout',
+            icon: <LogoutOutlined />,
+            onClick: handleLogout,
         },
     ];
 
     return (
-        <div className="admin-dashboard">
+        <Layout style={{ minHeight: '100vh' }}>
             {/* Sidebar */}
-            <aside className={`admin-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
-                <div className="sidebar-header">
-                    <div className="logo">
-                        <i className="fas fa-book-reader"></i>
-                        {!sidebarCollapsed && <span>BookStore Admin</span>}
-                    </div>
-                    <button
-                        className="toggle-btn"
-                        onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                    >
-                        <i className={`fas fa-${sidebarCollapsed ? 'angle-right' : 'angle-left'}`}></i>
-                    </button>
+            <Sider 
+                trigger={null} 
+                collapsible 
+                collapsed={sidebarCollapsed}
+                style={{
+                    boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
+                    background: '#001529'
+                }}
+                width={250}
+            >
+                {/* Logo */}
+                <div style={{
+                    height: 64,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+                    padding: sidebarCollapsed ? '0' : '0 24px',
+                    background: 'rgba(255,255,255,0.1)',
+                    borderBottom: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                    <BookOutlined style={{ fontSize: 24, color: '#0EADD5' }} />
+                    {!sidebarCollapsed && (
+                        <Text strong style={{ color: 'white', marginLeft: 12, fontSize: 16 }}>
+                            BookStore Admin
+                        </Text>
+                    )}
                 </div>
 
-                <nav className="sidebar-menu">
-                    {menuItems.map((item, index) => (
-                        <button
-                            key={index}
-                            className="menu-item"
-                            onClick={() => navigate(item.path)}
-                        >
-                            <i className={`fas ${item.icon}`}></i>
-                            {!sidebarCollapsed && <span>{item.title}</span>}
-                        </button>
-                    ))}
-                </nav>
+                {/* Menu */}
+                <Menu
+                    theme="dark"
+                    mode="inline"
+                    selectedKeys={[location.pathname]}
+                    items={menuItems}
+                    onClick={({ key }) => navigate(key)}
+                    style={{
+                        borderRight: 0,
+                        background: 'transparent'
+                    }}
+                />
 
-                <div className="sidebar-footer">
-                    <div className="user-info">
-                        <div className="user-avatar">
-                            <i className="fas fa-user-circle"></i>
-                        </div>
-                        {!sidebarCollapsed && user && (
-                            <div className="user-details">
-                                <div className="user-name">{user.fullName}</div>
-                                <div className="user-role">{user.userType}</div>
+                {/* User Info - At bottom */}
+                {user && (
+                    <div style={{
+                        position: 'absolute',
+                        bottom: 16,
+                        left: 16,
+                        right: 16,
+                        padding: 12,
+                        background: 'rgba(255,255,255,0.1)',
+                        borderRadius: 8,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12
+                    }}>
+                        <Avatar icon={<UserOutlined />} />
+                        {!sidebarCollapsed && (
+                            <div style={{ flex: 1 }}>
+                                <Text style={{ color: 'white', display: 'block', fontSize: 12 }}>
+                                    {user.fullName}
+                                </Text>
+                                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>
+                                    {user.userType}
+                                </Text>
                             </div>
                         )}
                     </div>
-                    <button className="logout-btn" onClick={handleLogout}>
-                        <i className="fas fa-sign-out-alt"></i>
-                        {!sidebarCollapsed && <span>Logout</span>}
-                    </button>
-                </div>
-            </aside>
+                )}
+            </Sider>
 
-            {/* Main Content */}
-            <main className="admin-content">
-                <header className="content-header">
-                    <h1>Dashboard</h1>
-                    <div className="header-actions">
-                        <button className="icon-btn">
-                            <i className="fas fa-bell"></i>
-                            <span className="badge">3</span>
-                        </button>
-                        <button className="icon-btn">
-                            <i className="fas fa-cog"></i>
-                        </button>
+            <Layout>
+                {/* Header */}
+                <Header style={{
+                    padding: '0 24px',
+                    background: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    zIndex: 1
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                        <Button
+                            type="text"
+                            icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                            style={{
+                                fontSize: '16px',
+                                width: 40,
+                                height: 40,
+                                border: '1px solid #d9d9d9'
+                            }}
+                        />
+                        <Text style={{ fontSize: 18, fontWeight: 500, color: '#1f2937' }}>
+                            Dashboard
+                        </Text>
                     </div>
-                </header>
 
-                <div className="content-body">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                        <Badge count={3} size="small">
+                            <Button
+                                type="text"
+                                icon={<BellOutlined />}
+                                style={{
+                                    width: 40,
+                                    height: 40,
+                                    border: '1px solid #d9d9d9'
+                                }}
+                            />
+                        </Badge>
+
+                        <Button
+                            type="text"
+                            icon={<SettingOutlined />}
+                            style={{
+                                width: 40,
+                                height: 40,
+                                border: '1px solid #d9d9d9'
+                            }}
+                        />
+
+                        <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+                            <Button
+                                type="text"
+                                style={{
+                                    height: 40,
+                                    padding: '0 12px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                    border: '1px solid #d9d9d9'
+                                }}
+                            >
+                                <Avatar size="small" icon={<UserOutlined />} />
+                                {user && (
+                                    <Text style={{ fontSize: 14 }}>
+                                        {user.fullName}
+                                    </Text>
+                                )}
+                            </Button>
+                        </Dropdown>
+                    </div>
+                </Header>
+
+                {/* Main Content */}
+                <Content style={{
+                    margin: '24px',
+                    padding: '24px',
+                    background: 'white',
+                    borderRadius: 12,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                    overflow: 'auto',
+                    minHeight: 'calc(100vh - 112px)'
+                }}>
                     {location.pathname === '/admin/dashboard' ? <DashboardHome /> : <Outlet />}
-                </div>
-            </main>
-        </div>
+                </Content>
+            </Layout>
+        </Layout>
     );
 };
 

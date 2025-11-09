@@ -212,6 +212,123 @@ namespace BookStoresApi.Controllers
             return NoContent();
         }
 
+        // POST: api/products/{productId}/categories/{categoryId}
+        [HttpPost("{productId}/categories/{categoryId}")]
+        public async Task<IActionResult> AddCategoryToProduct(int productId, int categoryId)
+        {
+            var product = await _context.Products.FindAsync(productId);
+            if (product == null)
+            {
+                return NotFound("Product not found");
+            }
+
+            var category = await _context.Categories.FindAsync(categoryId);
+            if (category == null)
+            {
+                return NotFound("Category not found");
+            }
+
+            // Check if relationship already exists
+            var exists = await _context.ProductCategories
+                .AnyAsync(pc => pc.ProductId == productId && pc.CategoryId == categoryId);
+
+            if (exists)
+            {
+                return BadRequest("Product already has this category");
+            }
+
+            var productCategory = new ProductCategory
+            {
+                ProductId = productId,
+                CategoryId = categoryId
+            };
+
+            _context.ProductCategories.Add(productCategory);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Category added to product successfully" });
+        }
+
+        // DELETE: api/products/{productId}/categories/{categoryId}
+        [HttpDelete("{productId}/categories/{categoryId}")]
+        public async Task<IActionResult> RemoveCategoryFromProduct(int productId, int categoryId)
+        {
+            var productCategory = await _context.ProductCategories
+                .FirstOrDefaultAsync(pc => pc.ProductId == productId && pc.CategoryId == categoryId);
+
+            if (productCategory == null)
+            {
+                return NotFound("Product-Category relationship not found");
+            }
+
+            _context.ProductCategories.Remove(productCategory);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Category removed from product successfully" });
+        }
+
+        // GET: api/products/{productId}/categories
+        [HttpGet("{productId}/categories")]
+        public async Task<ActionResult<IEnumerable<Category>>> GetProductCategories(int productId)
+        {
+            var product = await _context.Products.FindAsync(productId);
+            if (product == null)
+            {
+                return NotFound("Product not found");
+            }
+
+            var categories = await _context.ProductCategories
+                .Where(pc => pc.ProductId == productId)
+                .Include(pc => pc.Category)
+                .Select(pc => pc.Category)
+                .ToListAsync();
+
+            return Ok(categories);
+        }
+
+        // PUT: api/products/{productId}/categories
+        // Update all categories for a product at once
+        [HttpPut("{productId}/categories")]
+        public async Task<IActionResult> UpdateProductCategories(int productId, [FromBody] int[] categoryIds)
+        {
+            var product = await _context.Products.FindAsync(productId);
+            if (product == null)
+            {
+                return NotFound("Product not found");
+            }
+
+            // Verify all categories exist
+            foreach (var categoryId in categoryIds)
+            {
+                var categoryExists = await _context.Categories.AnyAsync(c => c.CategoryId == categoryId);
+                if (!categoryExists)
+                {
+                    return BadRequest($"Category with ID {categoryId} not found");
+                }
+            }
+
+            // Remove all existing categories
+            var existingProductCategories = await _context.ProductCategories
+                .Where(pc => pc.ProductId == productId)
+                .ToListAsync();
+            _context.ProductCategories.RemoveRange(existingProductCategories);
+
+            // Add new categories
+            foreach (var categoryId in categoryIds)
+            {
+                var productCategory = new ProductCategory
+                {
+                    ProductId = productId,
+                    CategoryId = categoryId
+                };
+                _context.ProductCategories.Add(productCategory);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Product categories updated successfully" });
+        }
+
         private bool ProductExists(int id)
         {
             return _context.Products.Any(e => e.ProductId == id);
