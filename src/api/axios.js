@@ -4,7 +4,7 @@ const API_BASE_URL = 'http://localhost:5047/api';
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 30000, // Tăng từ 10s lên 30s để xử lý search queries phức tạp
   headers: {
     'Content-Type': 'application/json',
   },

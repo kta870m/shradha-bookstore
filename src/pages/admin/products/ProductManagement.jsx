@@ -1,35 +1,77 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { 
+  Table, 
+  Button, 
+  Space, 
+  Tag, 
+  Input, 
+  Select, 
+  Card, 
+  Typography, 
+  Row, 
+  Col,
+  Pagination,
+  message,
+  Image,
+  Tooltip,
+  Modal
+} from 'antd';
+import { 
+  EditOutlined, 
+  DeleteOutlined, 
+  EyeOutlined, 
+  PlusOutlined,
+  SearchOutlined,
+  ReloadOutlined
+} from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import axiosInstance from '../../../api/axios';
 import '../../styles/ProductManagement.css';
+
+const { Title } = Typography;
+const { Search } = Input;
+const { Option } = Select;
 
 function ProductManagement() {
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [formData, setFormData] = useState({
-    productName: '',
-    description: '',
-    price: '',
-    stockQuantity: '',
-    categoryId: '',
-    isbn: '',
-    author: '',
-    publisher: '',
-    publishedDate: '',
-    pageCount: ''
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 20,
+    total: 0,
+    totalPages: 0
   });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('productName');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [pagination.current, pagination.pageSize, searchTerm, sortBy, sortOrder]);
 
   const fetchProducts = async () => {
+    setLoading(true);
     try {
-      const response = await window.$axios.get('/products');
-      setProducts(response.data);
+      const response = await axiosInstance.get('/products', {
+        params: {
+          page: pagination.current,
+          pageSize: pagination.pageSize,
+          search: searchTerm || undefined,
+          sortBy: sortBy,
+          ascending: sortOrder === 'asc'
+        }
+      });
+
+      setProducts(response.data.items || []);
+      setPagination(prev => ({
+        ...prev,
+        total: response.data.totalItems,
+        totalPages: response.data.totalPages
+      }));
     } catch (error) {
       console.error('Error fetching products:', error);
-      alert('Không thể tải danh sách sản phẩm');
+      message.error('Không thể tải danh sách sản phẩm');
     } finally {
       setLoading(false);
     }

@@ -4,6 +4,7 @@ import { ConfigProvider } from 'antd';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminRegister from './pages/admin/AdminRegister';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminProductManagement from './pages/admin/products/AdminProductManagement';
 import ProtectedRoute from './components/ProtectedRoute';
 import CustomerLayout from './layouts/CustomerLayout';
 import Home from './pages/customer/Home';
@@ -18,16 +19,20 @@ function App() {
         {/* Admin routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/register" element={<AdminRegister />} />
-        <Route path="/admin/dashboard" element={
+        <Route path="/admin" element={
           <ProtectedRoute>
             <AdminDashboard />
           </ProtectedRoute>
-        } />
-        <Route path="/admin/*" element={
-          <ProtectedRoute>
-            <AdminDashboard />
-          </ProtectedRoute>
-        } />
+        }>
+          <Route index element={<div>Dashboard Home</div>} />
+          <Route path="dashboard" element={<div>Dashboard Home</div>} />
+          <Route path="products" element={<AdminProductManagement />} />
+          <Route path="categories" element={<div>Categories Management</div>} />
+          <Route path="orders" element={<div>Orders Management</div>} />
+          <Route path="customers" element={<div>Customers Management</div>} />
+          <Route path="reviews" element={<div>Reviews Management</div>} />
+          <Route path="feedback" element={<div>Feedback Management</div>} />
+        </Route>
 
         {/* Customer routes with layout */}
         <Route path="/" element={
