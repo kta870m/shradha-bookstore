@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookStoresApi.Models
 {
-    [Table("ProductCategories")]
     public class ProductCategory
     {
         [Key]

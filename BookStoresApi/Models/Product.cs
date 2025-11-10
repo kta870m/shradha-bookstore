@@ -32,7 +32,7 @@ namespace BookStoresApi.Models
 
         [Column("product_type")]
         [MaxLength(100)]
-        public string? ProductType { get; set; }
+        public string ProductType { get; set; }
 
         [Column("release_date")]
         public DateTime? ReleaseDate { get; set; }
@@ -52,7 +52,8 @@ namespace BookStoresApi.Models
         // Navigation properties
         public virtual ICollection<ProductCategory> ProductCategories { get; set; } = new List<ProductCategory>();
         public virtual ICollection<Media> MediaFiles { get; set; } = new List<Media>();
-        public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
+        public virtual ICollection<OrderDetail> OrderDetails { get; set; } =
+            new List<OrderDetail>();
         public virtual ICollection<ProductReview> Reviews { get; set; } = new List<ProductReview>();
         public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
     }
