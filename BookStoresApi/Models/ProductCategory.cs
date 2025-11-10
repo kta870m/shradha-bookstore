@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookStoresApi.Models
 {
-    [Table("product_categories")]
+    [Table("ProductCategories")]
     public class ProductCategory
     {
         [Key]
@@ -17,9 +17,6 @@ namespace BookStoresApi.Models
         [Required]
         [Column("category_id")]
         public int CategoryId { get; set; }
-
-        [Column("created_at")]
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties
         [ForeignKey("ProductId")]
