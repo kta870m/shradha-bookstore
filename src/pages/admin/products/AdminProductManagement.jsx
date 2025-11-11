@@ -15,7 +15,8 @@ import {
   Tooltip,
   Modal,
   Descriptions,
-  Rate
+  Rate,
+  Alert
 } from 'antd';
 import { 
   EditOutlined, 
@@ -25,8 +26,9 @@ import {
   SearchOutlined,
   ReloadOutlined
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../../../api/axios';
+import { CloudinaryImage, getCloudinaryImageUrl, extractPublicIdFromUrl } from '../../../config/cloudinary.jsx';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -51,8 +53,10 @@ function AdminProductManagement() {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [productDetail, setProductDetail] = useState(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [isNewProductAdded, setIsNewProductAdded] = useState(false);
   
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Debounced search effect
   useEffect(() => {
@@ -62,6 +66,52 @@ function AdminProductManagement() {
 
     return () => clearTimeout(delayedSearch);
   }, [pagination.current, pagination.pageSize, searchTerm, sortBy]);
+
+  // Effect để detect khi có refresh query parameter (sau khi thêm sản phẩm)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    if (urlParams.get('refresh')) {
+      // Set flag để biết có sản phẩm mới
+      setIsNewProductAdded(true);
+      
+      // Reset về trang 1 và refresh
+      setPagination(prev => ({ ...prev, current: 1 }));
+      
+      // Force refresh danh sách
+      setTimeout(() => {
+        fetchProducts();
+      }, 100);
+      
+      // Hiển thị thông báo đặc biệt với icon và style
+      setTimeout(() => {
+        message.success({
+          content: (
+            <div>
+              <span style={{ fontSize: '16px', marginRight: '8px' }}>🎉</span>
+              <strong>Thêm sản phẩm thành công!</strong>
+              <br />
+              <span style={{ fontSize: '12px', color: '#666' }}>
+                Sản phẩm mới đã được hiển thị trong danh sách
+              </span>
+            </div>
+          ),
+          duration: 5,
+          style: {
+            marginTop: '20px'
+          }
+        });
+      }, 1000);
+      
+      // Reset flag sau một thời gian
+      setTimeout(() => {
+        setIsNewProductAdded(false);
+      }, 5000);
+      
+      // Xóa query parameter khỏi URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [location.search]);
 
   // Fetch products from API
   const fetchProducts = async () => {
@@ -149,6 +199,7 @@ function AdminProductManagement() {
       setProductDetail(response.data);
       setDetailModalVisible(true);
     } catch (error) {
+      console.error('Error fetching product detail:', error);
       message.error('Không thể tải chi tiết sản phẩm');
     }
   };
@@ -185,16 +236,49 @@ function AdminProductManagement() {
       dataIndex: 'thumbnailUrl',
       key: 'thumbnailUrl',
       width: 80,
-      render: (url, record) => (
-        <Image
-          width={60}
-          height={60}
-          src={url || '/placeholder-book.svg'}
-          alt={record.productName}
-          style={{ objectFit: 'cover', borderRadius: 4 }}
-          fallback="/placeholder-book.svg"
-        />
-      ),
+      render: (url, record) => {
+        // Tìm URL ảnh từ thumbnailUrl hoặc mediaFiles
+        let imageUrl = url;
+        
+        // Nếu không có thumbnailUrl, lấy từ mediaFiles
+        if (!imageUrl && record.mediaFiles && record.mediaFiles.length > 0) {
+          const firstMedia = record.mediaFiles.find(media => 
+            media.fileType === 'Image' || 
+            media.mediaUrl?.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+          );
+          
+          if (firstMedia) {
+            imageUrl = firstMedia.mediaUrl;
+          }
+        }
+        
+        // Nếu là Cloudinary URL, extract public ID và sử dụng CloudinaryImage
+        if (imageUrl && imageUrl.includes('cloudinary')) {
+          const publicId = extractPublicIdFromUrl(imageUrl);
+          return (
+            <CloudinaryImage
+              publicId={publicId}
+              alt={record.productName}
+              width={60}
+              height={60}
+              style={{ objectFit: 'cover', borderRadius: 4 }}
+              fallback="/placeholder-book.svg"
+            />
+          );
+        }
+        
+        // Fallback cho ảnh thường
+        return (
+          <Image
+            width={60}
+            height={60}
+            src={imageUrl || '/placeholder-book.svg'}
+            alt={record.productName}
+            style={{ objectFit: 'cover', borderRadius: 4 }}
+            fallback="/placeholder-book.svg"
+          />
+        );
+      },
     },
     {
       title: 'Mã sản phẩm',
@@ -363,6 +447,23 @@ function AdminProductManagement() {
           </Col>
         </Row>
 
+        {/* New Product Alert */}
+        {isNewProductAdded && (
+          <Alert
+            message="Sản phẩm mới đã được thêm!"
+            description="Sản phẩm vừa thêm đã được hiển thị trong danh sách bên dưới."
+            type="success"
+            showIcon
+            closable
+            onClose={() => setIsNewProductAdded(false)}
+            style={{ 
+              marginBottom: 16,
+              border: '1px solid #52c41a',
+              backgroundColor: '#f6ffed'
+            }}
+          />
+        )}
+
         {/* Filters */}
         <Row gutter={16} style={{ marginBottom: 16 }}>
           <Col xs={24} sm={12} md={8}>
@@ -439,48 +540,122 @@ function AdminProductManagement() {
           width={800}
         >
           {productDetail && (
-            <Descriptions column={2} bordered>
-              <Descriptions.Item label="Mã sản phẩm" span={1}>
-                {productDetail.productCode}
-              </Descriptions.Item>
-              <Descriptions.Item label="Tên sản phẩm" span={1}>
-                {productDetail.productName}
-              </Descriptions.Item>
-              <Descriptions.Item label="Giá" span={1}>
-                <span style={{ fontWeight: 600, color: '#f5222d' }}>
-                  {formatPrice(productDetail.price)}
-                </span>
-              </Descriptions.Item>
-              <Descriptions.Item label="Tồn kho" span={1}>
-                <Tag color={productDetail.stockQuantity > 10 ? 'green' : productDetail.stockQuantity > 0 ? 'orange' : 'red'}>
-                  {productDetail.stockQuantity}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Loại sản phẩm" span={1}>
-                {productDetail.productType}
-              </Descriptions.Item>
-              <Descriptions.Item label="Nhà sản xuất" span={1}>
-                {productDetail.manufacturer || 'Chưa có thông tin'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Đánh giá" span={2}>
-                <Space>
-                  <Rate disabled value={productDetail.averageRating} allowHalf />
-                  <span>({productDetail.totalReviews} đánh giá)</span>
-                </Space>
-              </Descriptions.Item>
-              <Descriptions.Item label="Danh mục" span={2}>
-                <Space wrap>
-                  {productDetail.productCategories?.map(pc => (
-                    <Tag key={pc.category.categoryId}>
-                      {pc.category.categoryName}
-                    </Tag>
-                  ))}
-                </Space>
-              </Descriptions.Item>
-              <Descriptions.Item label="Mô tả" span={2}>
-                {productDetail.description || 'Chưa có mô tả'}
-              </Descriptions.Item>
-            </Descriptions>
+            <div>
+              {/* Hiển thị ảnh sản phẩm */}
+              <div style={{ marginBottom: 16, textAlign: 'center' }}>
+                {(() => {
+                  const thumbnailUrl = productDetail.thumbnailUrl;
+                  const mediaFiles = productDetail.mediaFiles || [];
+                  
+                  console.log('Rendering image for:', productDetail.productName);
+                  console.log('Thumbnail URL:', thumbnailUrl);
+                  console.log('Media Files:', mediaFiles);
+                  
+                  // Tìm URL ảnh từ thumbnailUrl hoặc mediaFiles
+                  let imageUrl = thumbnailUrl;
+                  
+                  // Nếu không có thumbnailUrl, lấy từ mediaFiles
+                  if (!imageUrl && mediaFiles.length > 0) {
+                    // Tìm ảnh đầu tiên trong mediaFiles
+                    const firstMedia = mediaFiles.find(media => 
+                      media.fileType === 'Image' || 
+                      media.mediaUrl?.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+                    );
+                    
+                    if (firstMedia) {
+                      imageUrl = firstMedia.mediaUrl;
+                      console.log('Using image from mediaFiles:', imageUrl);
+                    }
+                  }
+                  
+                  console.log('Final image URL:', imageUrl);
+                  console.log('Is Cloudinary URL:', imageUrl && imageUrl.includes('cloudinary'));
+                  
+                  // Nếu là Cloudinary URL
+                  if (imageUrl && imageUrl.includes('cloudinary')) {
+                    const publicId = extractPublicIdFromUrl(imageUrl);
+                    console.log('Extracted Public ID:', publicId);
+                    
+                    return (
+                      <CloudinaryImage
+                        publicId={publicId}
+                        alt={productDetail.productName}
+                        width={200}
+                        height={200}
+                        style={{ 
+                          objectFit: 'cover', 
+                          borderRadius: 8,
+                          border: '1px solid #d9d9d9'
+                        }}
+                        fallback="/placeholder-book.svg"
+                      />
+                    );
+                  }
+                  
+                  // Sử dụng Image component thường
+                  console.log('Using regular Image component');
+                  return (
+                    <Image
+                      width={200}
+                      height={200}
+                      src={imageUrl || '/placeholder-book.svg'}
+                      alt={productDetail.productName}
+                      style={{ 
+                        objectFit: 'cover', 
+                        borderRadius: 8 
+                      }}
+                      fallback="/placeholder-book.svg"
+                      onError={(e) => {
+                        console.log('Image load error:', e);
+                      }}
+                    />
+                  );
+                })()}
+              </div>
+              
+              <Descriptions column={2} bordered>
+                <Descriptions.Item label="Mã sản phẩm" span={1}>
+                  {productDetail.productCode}
+                </Descriptions.Item>
+                <Descriptions.Item label="Tên sản phẩm" span={1}>
+                  {productDetail.productName}
+                </Descriptions.Item>
+                <Descriptions.Item label="Giá" span={1}>
+                  <span style={{ fontWeight: 600, color: '#f5222d' }}>
+                    {formatPrice(productDetail.price)}
+                  </span>
+                </Descriptions.Item>
+                <Descriptions.Item label="Tồn kho" span={1}>
+                  <Tag color={productDetail.stockQuantity > 10 ? 'green' : productDetail.stockQuantity > 0 ? 'orange' : 'red'}>
+                    {productDetail.stockQuantity}
+                  </Tag>
+                </Descriptions.Item>
+                <Descriptions.Item label="Loại sản phẩm" span={1}>
+                  {productDetail.productType}
+                </Descriptions.Item>
+                <Descriptions.Item label="Nhà sản xuất" span={1}>
+                  {productDetail.manufacturer || 'Chưa có thông tin'}
+                </Descriptions.Item>
+                <Descriptions.Item label="Đánh giá" span={2}>
+                  <Space>
+                    <Rate disabled value={productDetail.averageRating} allowHalf />
+                    <span>({productDetail.totalReviews} đánh giá)</span>
+                  </Space>
+                </Descriptions.Item>
+                <Descriptions.Item label="Danh mục" span={2}>
+                  <Space wrap>
+                    {productDetail.productCategories?.map(pc => (
+                      <Tag key={pc.category.categoryId}>
+                        {pc.category.categoryName}
+                      </Tag>
+                    ))}
+                  </Space>
+                </Descriptions.Item>
+                <Descriptions.Item label="Mô tả" span={2}>
+                  {productDetail.description || 'Chưa có mô tả'}
+                </Descriptions.Item>
+              </Descriptions>
+            </div>
           )}
         </Modal>
       </Card>
