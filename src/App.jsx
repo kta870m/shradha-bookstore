@@ -10,7 +10,11 @@ import ProtectedRoute from './components/ProtectedRoute';
 import CustomerLayout from './layouts/CustomerLayout';
 import Home from './pages/customer/Home';
 import antdTheme from './config/antdTheme';
+import Faqs from './components/customer/Faqs'
+import ShippingPolicy from './components/customer/ShippingPolicy';
+import ReturnPolicy from './components/customer/ReturnPolicy';
 import './App.css';
+import { FaQq } from 'react-icons/fa';
 
 function App() {
   return (
@@ -112,6 +116,24 @@ function App() {
         <Route path="/products" element={
           <CustomerLayout>
             <div>All Products Page</div>
+          </CustomerLayout>
+        } />
+
+        <Route path="/faqs" element={
+          <CustomerLayout>
+            <Faqs />
+          </CustomerLayout>
+        } />
+
+        <Route path="/shipping-policy" element={
+          <CustomerLayout>
+            <ShippingPolicy />
+          </CustomerLayout>
+        } />
+
+        <Route path="/return-policy" element={
+          <CustomerLayout>
+            <ReturnPolicy />
           </CustomerLayout>
         } />
 
