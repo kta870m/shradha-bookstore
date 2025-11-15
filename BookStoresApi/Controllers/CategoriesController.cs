@@ -38,13 +38,13 @@ namespace BookStoresApi.Controllers
                 {
                     c.CategoryId,
                     c.CategoryName,
-                    c.ParentId,
+                    c.ParentCategoryId,
                     FirstLetter = c.CategoryName.Substring(0, 1).ToUpper()
                 })
                 .ToListAsync();
 
             // Nếu có categories con (ParentId != null) thì lấy random
-            var childCategories = allCategories.Where(c => c.ParentId != null).ToList();
+            var childCategories = allCategories.Where(c => c.ParentCategoryId != null).ToList();
             
             if (childCategories.Any())
             {
