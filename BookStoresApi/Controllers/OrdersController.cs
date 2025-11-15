@@ -1,4 +1,5 @@
 using BookStoresApi.Data;
+using BookStoresApi.DTOs;
 using BookStoresApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
@@ -53,7 +54,7 @@ namespace BookStoresApi.Controllers
                     var result = await cmd.ExecuteScalarAsync();
                     if (result != null && result != DBNull.Value)
                     {
-                        newCode = result.ToString();
+                        newCode = result.ToString() ?? "OR000001";
                     }
                 }
             }
@@ -118,6 +119,12 @@ namespace BookStoresApi.Controllers
                 order.OrderCode = codeProperty?.GetValue(codeValue)?.ToString() ?? "OR000001";
             }
 
+            // Auto-generate payment transaction reference if not provided
+            if (string.IsNullOrEmpty(order.PaymentTxnRef))
+            {
+                order.PaymentTxnRef = Guid.NewGuid().ToString("N").Substring(0, 20);
+            }
+
             order.OrderDate = DateTime.Now;
 
             // Calculate total amount from order details
@@ -131,6 +138,102 @@ namespace BookStoresApi.Controllers
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetOrder), new { id = order.OrderId }, order);
+        }
+
+        // POST: api/orders/create (Simplified version)
+        [HttpPost("create")]
+        public async Task<ActionResult<OrderResponse>> CreateOrderSimple(CreateOrderRequest request)
+        {
+            // Validate user exists
+            var userExists = await _context.Users.AnyAsync(u => u.Id == request.UserId);
+            if (!userExists)
+            {
+                return BadRequest(new { message = "User not found" });
+            }
+
+            // Validate products and get prices
+            var productIds = request.OrderDetails.Select(od => od.ProductId).ToList();
+            var products = await _context.Products
+                .Where(p => productIds.Contains(p.ProductId) && !p.IsDeleted)
+                .ToListAsync();
+
+            if (products.Count != productIds.Count)
+            {
+                return BadRequest(new { message = "One or more products not found" });
+            }
+
+            // Generate order code
+            var codeResult = await GetNewOrderCode();
+            var codeValue = (codeResult as OkObjectResult)?.Value;
+            var codeProperty = codeValue?.GetType().GetProperty("orderCode");
+            string orderCode = codeProperty?.GetValue(codeValue)?.ToString() ?? "OR000001";
+
+            // Generate unique payment transaction reference (UUID 20 chars like Java)
+            string paymentTxnRef = Guid.NewGuid().ToString("N").Substring(0, 20);
+
+            // Create order
+            var order = new Order
+            {
+                OrderCode = orderCode,
+                UserId = request.UserId,
+                OrderDate = DateTime.Now,
+                OrderStatus = "Pending",
+                ShippingFee = request.ShippingFee,
+                PaymentTxnRef = paymentTxnRef,
+                OrderDetails = new List<OrderDetail>()
+            };
+
+            // Create order details and calculate total
+            decimal totalAmount = 0;
+            foreach (var detailDto in request.OrderDetails)
+            {
+                var product = products.First(p => p.ProductId == detailDto.ProductId);
+                var detail = new OrderDetail
+                {
+                    ProductId = detailDto.ProductId,
+                    Quantity = detailDto.Quantity,
+                    UnitPrice = product.Price
+                };
+
+                totalAmount += detail.Quantity * detail.UnitPrice;
+                order.OrderDetails.Add(detail);
+            }
+
+            order.TotalAmount = totalAmount + order.ShippingFee;
+
+            // Save to database
+            _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
+
+            // Reload with navigation properties
+            var createdOrder = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product)
+                .FirstAsync(o => o.OrderId == order.OrderId);
+
+            // Map to response
+            var response = new OrderResponse
+            {
+                OrderId = createdOrder.OrderId,
+                OrderCode = createdOrder.OrderCode,
+                OrderDate = createdOrder.OrderDate,
+                TotalAmount = createdOrder.TotalAmount,
+                OrderStatus = createdOrder.OrderStatus,
+                PaymentMethod = createdOrder.PaymentMethod,
+                ShippingFee = createdOrder.ShippingFee,
+                UserId = createdOrder.UserId,
+                OrderDetails = createdOrder.OrderDetails.Select(od => new OrderDetailResponse
+                {
+                    OrderDetailId = od.OrderDetailId,
+                    ProductId = od.ProductId,
+                    ProductName = od.Product.ProductName,
+                    Quantity = od.Quantity,
+                    UnitPrice = od.UnitPrice,
+                    Subtotal = od.Quantity * od.UnitPrice
+                }).ToList()
+            };
+
+            return CreatedAtAction(nameof(GetOrder), new { id = order.OrderId }, response);
         }
 
         // PUT: api/orders/{id}

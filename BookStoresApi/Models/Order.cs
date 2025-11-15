@@ -29,6 +29,10 @@ namespace BookStoresApi.Models
         [MaxLength(50)]
         public string? PaymentMethod { get; set; }
 
+        [Column("payment_txn_ref")]
+        [MaxLength(100)]
+        public string? PaymentTxnRef { get; set; } // Mã giao dịch duy nhất cho mỗi lần thanh toán
+
         [Column("shipping_fee", TypeName = "decimal(18,2)")]
         public decimal ShippingFee { get; set; } = 0;
 

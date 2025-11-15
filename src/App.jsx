@@ -25,6 +25,7 @@ import BillingPayment from './pages/customer/policy/BillingPayment';
 import ShippingPolicy from './pages/customer/policy/ShippingPolicy';
 import ReturnPolicy from './pages/customer/policy/ReturnPolicy';
 import Faqs from './pages/customer/faqs/Faqs';
+import VNPayReturn from './pages/customer/VNPayReturn';
 import antdTheme from './config/antdTheme';
 import './App.css';
 
@@ -207,6 +208,18 @@ function App() {
         <Route path="/shipping-info" element={
           <CustomerLayout>
             <ShippingInfo />
+          </CustomerLayout>
+        } />
+
+        {/* VNPay Return (support both routes VNPay may use) */}
+        <Route path="/vnpay-return" element={
+          <CustomerLayout>
+            <VNPayReturn />
+          </CustomerLayout>
+        } />
+        <Route path="/payment-result" element={
+          <CustomerLayout>
+            <VNPayReturn />
           </CustomerLayout>
         } />
 

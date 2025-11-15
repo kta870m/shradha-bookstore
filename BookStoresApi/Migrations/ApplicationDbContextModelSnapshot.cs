@@ -298,6 +298,11 @@ namespace BookStoresApi.Migrations
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("payment_method");
 
+                    b.Property<string>("PaymentTxnRef")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("payment_txn_ref");
+
                     b.Property<decimal>("ShippingFee")
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("shipping_fee");

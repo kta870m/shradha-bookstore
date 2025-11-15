@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using BookStoresApi.Data;
 using BookStoresApi.Models;
+using BookStoresApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -60,7 +61,7 @@ builder
 
 // Add JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings["SecretKey"];
+var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey is not configured");
 
 builder
     .Services.AddAuthentication(options =>
@@ -90,6 +91,13 @@ builder.Services.AddCors(options =>
         builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()
     );
 });
+
+// Add VNPay Configuration
+builder.Services.Configure<VNPayConfig>(builder.Configuration.GetSection("VNPay"));
+
+// Add Payment Service
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddHttpContextAccessor();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
