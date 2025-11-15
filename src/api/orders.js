@@ -28,3 +28,18 @@ export const getUserOrders = async () => {
   const response = await axiosInstance.get('/orders');
   return response.data;
 };
+
+/**
+ * Update order status
+ * @param {number} orderId
+ * @param {string} status - Order status (e.g., "Paid", "Processing", "Completed", "Failed")
+ * @returns {Promise<void>}
+ */
+export const updateOrderStatus = async (orderId, status) => {
+  const response = await axiosInstance.put(`/orders/${orderId}/status`, JSON.stringify(status), {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+  return response.data;
+};

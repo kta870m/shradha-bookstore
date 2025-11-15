@@ -4,6 +4,7 @@ using BookStoresApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace BookStoresApi.Controllers
 {
@@ -66,6 +67,38 @@ namespace BookStoresApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
         {
+            // Debug: Log all claims
+            foreach (var claim in User.Claims)
+            {
+                Console.WriteLine($"Claim Type: {claim.Type}, Value: {claim.Value}");
+            }
+            
+            // Try to get userId from JWT token claims using different claim types
+            var userIdClaim = User.FindFirst(ClaimTypes.Sid)?.Value 
+                           ?? User.FindFirst("sid")?.Value
+                           ?? User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid")?.Value;
+            
+            Console.WriteLine($"UserIdClaim extracted: {userIdClaim}");
+            
+            if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out int userId))
+            {
+                Console.WriteLine($"Filtering orders for userId: {userId}");
+                // If userId found in token, return only user's orders
+                var userOrders = await _context
+                    .Orders
+                    .Where(o => o.UserId == userId)
+                    .Include(o => o.User)
+                    .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                    .OrderByDescending(o => o.OrderDate)
+                    .ToListAsync();
+                    
+                Console.WriteLine($"Found {userOrders.Count} orders for user {userId}");
+                return userOrders;
+            }
+            
+            Console.WriteLine("No userId found in token, returning all orders");
+            // If no userId in token (admin or public access), return all orders
             return await _context
                 .Orders
                 .Include(o => o.User)
@@ -77,7 +110,7 @@ namespace BookStoresApi.Controllers
 
         // GET: api/orders/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<Order>> GetOrder(int id)
+        public async Task<ActionResult<OrderResponse>> GetOrder(int id)
         {
             var order = await _context
                 .Orders
@@ -91,7 +124,29 @@ namespace BookStoresApi.Controllers
                 return NotFound();
             }
 
-            return order;
+            // Map to OrderResponse
+            var response = new OrderResponse
+            {
+                OrderId = order.OrderId,
+                OrderCode = order.OrderCode,
+                OrderDate = order.OrderDate,
+                TotalAmount = order.TotalAmount,
+                OrderStatus = order.OrderStatus,
+                PaymentMethod = order.PaymentMethod,
+                ShippingFee = order.ShippingFee,
+                UserId = order.UserId,
+                OrderDetails = order.OrderDetails.Select(od => new OrderDetailResponse
+                {
+                    OrderDetailId = od.OrderDetailId,
+                    ProductId = od.ProductId,
+                    ProductName = od.Product?.ProductName ?? "Unknown",
+                    Quantity = od.Quantity,
+                    UnitPrice = od.UnitPrice,
+                    Subtotal = od.Quantity * od.UnitPrice
+                }).ToList()
+            };
+
+            return response;
         }
 
         // GET: api/orders/customer/{customerId}

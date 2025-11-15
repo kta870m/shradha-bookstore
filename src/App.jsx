@@ -13,6 +13,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import CustomerLayout from './layouts/CustomerLayout';
 import Home from './pages/customer/home/Home';
 import Cart from './pages/customer/cart/Cart';
+import Orders from './pages/customer/orders/Orders';
 import SellBooks from './pages/customer/sell/SellBooks';
 import Membership from './pages/customer/membership/Membership';
 import ShippingInfo from './pages/customer/policy/ShippingInfo';
@@ -176,6 +177,12 @@ function App() {
         <Route path="/cart" element={
           <CustomerLayout>
             <Cart />
+          </CustomerLayout>
+        } />
+        
+        <Route path="/orders" element={
+          <CustomerLayout>
+            <Orders />
           </CustomerLayout>
         } />
         
