@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using BookStoresApi.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -76,6 +77,7 @@ namespace BookStoresApi.Controllers
                 UserName = model.Username ?? model.Email,
                 Email = model.Email,
                 FullName = model.FullName,
+                PhoneNumber = model.PhoneNumber,
                 Address = model.Address,
                 BirthDate = model.BirthDate,
                 Gender = model.Gender,
@@ -154,6 +156,118 @@ namespace BookStoresApi.Controllers
 
             return Ok(users);
         }
+
+        // GET: api/auth/profile
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<ActionResult<object>> GetProfile()
+        {
+            // Get userId from JWT token
+            var userIdClaim = User.FindFirst(ClaimTypes.Sid)?.Value 
+                           ?? User.FindFirst("sid")?.Value;
+            
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            {
+                return Unauthorized(new { message = "User not authenticated" });
+            }
+
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            
+            if (user == null || user.IsDeleted)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            return Ok(new
+            {
+                id = user.Id,
+                email = user.Email,
+                fullName = user.FullName,
+                phoneNumber = user.PhoneNumber,
+                address = user.Address,
+                birthDate = user.BirthDate,
+                gender = user.Gender,
+                userType = user.UserType
+            });
+        }
+
+        // PUT: api/auth/profile
+        [HttpPut("profile")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest model)
+        {
+            // Get userId from JWT token
+            var userIdClaim = User.FindFirst(ClaimTypes.Sid)?.Value 
+                           ?? User.FindFirst("sid")?.Value;
+            
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            {
+                return Unauthorized(new { message = "User not authenticated" });
+            }
+
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            
+            if (user == null || user.IsDeleted)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            // Update user fields
+            if (!string.IsNullOrEmpty(model.FullName))
+                user.FullName = model.FullName;
+            
+            if (!string.IsNullOrEmpty(model.PhoneNumber))
+                user.PhoneNumber = model.PhoneNumber;
+            
+            if (!string.IsNullOrEmpty(model.Address))
+                user.Address = model.Address;
+            
+            if (model.BirthDate.HasValue)
+                user.BirthDate = model.BirthDate;
+            
+            if (!string.IsNullOrEmpty(model.Gender))
+                user.Gender = model.Gender;
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (result.Succeeded)
+            {
+                return Ok(new { message = "Profile updated successfully" });
+            }
+
+            return BadRequest(new { message = "Failed to update profile", errors = result.Errors });
+        }
+
+        // PUT: api/auth/change-password
+        [HttpPut("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest model)
+        {
+            // Get userId from JWT token
+            var userIdClaim = User.FindFirst(ClaimTypes.Sid)?.Value 
+                           ?? User.FindFirst("sid")?.Value;
+            
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            {
+                return Unauthorized(new { message = "User not authenticated" });
+            }
+
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            
+            if (user == null || user.IsDeleted)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+
+            if (result.Succeeded)
+            {
+                return Ok(new { message = "Password changed successfully" });
+            }
+
+            return BadRequest(new { message = "Failed to change password", errors = result.Errors });
+        }
     }
 
     public class RegisterRequest
@@ -163,6 +277,7 @@ namespace BookStoresApi.Controllers
         public required string Email { get; set; }
 
         public required string FullName { get; set; }
+        public string? PhoneNumber { get; set; }
         public string? Address { get; set; }
         public DateTime? BirthDate { get; set; }
         public string? Gender { get; set; }
@@ -173,5 +288,20 @@ namespace BookStoresApi.Controllers
     {
         public required string Email { get; set; }
         public required string Password { get; set; }
+    }
+
+    public class UpdateProfileRequest
+    {
+        public string? FullName { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? Address { get; set; }
+        public DateTime? BirthDate { get; set; }
+        public string? Gender { get; set; }
+    }
+
+    public class ChangePasswordRequest
+    {
+        public required string CurrentPassword { get; set; }
+        public required string NewPassword { get; set; }
     }
 }

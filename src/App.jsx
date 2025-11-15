@@ -46,6 +46,7 @@ import Faqs from './pages/customer/faqs/Faqs';
 
 import VNPayReturn from './pages/customer/VNPayReturn';
 import PaymentReturn from './pages/customer/payment/PaymentReturn';
+import MyAccount from './pages/customer/account/MyAccount';
 
 import antdTheme from './config/antdTheme';
 import './App.css';
@@ -178,7 +179,7 @@ function App() {
             } />
 
             <Route path="/account" element={
-              <CustomerLayout><div>User Account Page</div></CustomerLayout>
+              <CustomerLayout><MyAccount /></CustomerLayout>
             } />
 
             <Route path="/search" element={
