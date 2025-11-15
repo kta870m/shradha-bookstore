@@ -14,6 +14,7 @@ const PaymentReturn = () => {
   const [loading, setLoading] = useState(true);
   const [paymentResult, setPaymentResult] = useState(null);
   const [error, setError] = useState(null);
+  const [urlParams, setUrlParams] = useState({});
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -26,6 +27,20 @@ const PaymentReturn = () => {
           setLoading(false);
           return;
         }
+
+        // Parse URL parameters
+        const params = new URLSearchParams(queryString);
+        const urlData = {
+          vnp_TxnRef: params.get('vnp_TxnRef'),
+          vnp_Amount: params.get('vnp_Amount'),
+          vnp_OrderInfo: params.get('vnp_OrderInfo'),
+          vnp_ResponseCode: params.get('vnp_ResponseCode'),
+          vnp_TransactionNo: params.get('vnp_TransactionNo'),
+          vnp_BankCode: params.get('vnp_BankCode'),
+          vnp_PayDate: params.get('vnp_PayDate'),
+          vnp_TransactionStatus: params.get('vnp_TransactionStatus'),
+        };
+        setUrlParams(urlData);
 
         // Call backend to verify payment with VNPay
         const result = await handleVnpayReturn(queryString);
@@ -122,6 +137,18 @@ const PaymentReturn = () => {
 
   const isSuccess = paymentResult.success;
 
+  // Format VNPay date (yyyyMMddHHmmss) to readable format
+  const formatVnpayDate = (dateStr) => {
+    if (!dateStr || dateStr.length !== 14) return 'N/A';
+    const year = dateStr.substring(0, 4);
+    const month = dateStr.substring(4, 6);
+    const day = dateStr.substring(6, 8);
+    const hour = dateStr.substring(8, 10);
+    const minute = dateStr.substring(10, 12);
+    const second = dateStr.substring(12, 14);
+    return `${day}/${month}/${year} ${hour}:${minute}:${second}`;
+  };
+
   return (
     <div style={{ maxWidth: '900px', margin: '40px auto', padding: '20px' }}>
       <Result
@@ -153,28 +180,34 @@ const PaymentReturn = () => {
         <Card style={{ marginTop: '24px' }}>
           <Title level={4}>Payment Details</Title>
           <Descriptions bordered column={1}>
-            <Descriptions.Item label="Transaction Reference">
-              {paymentResult.transactionRef || paymentResult.vnpayQuery?.transactionNo || 'N/A'}
-            </Descriptions.Item>
+            {/* <Descriptions.Item label="Transaction Reference">
+              {urlParams.vnp_TxnRef || 'N/A'}
+            </Descriptions.Item> */}
+            {/* <Descriptions.Item label="Transaction No">
+              {urlParams.vnp_TransactionNo || 'N/A'}
+            </Descriptions.Item> */}
             <Descriptions.Item label="Amount (VND)">
-              {((paymentResult.amount || 0) / 100).toLocaleString('vi-VN')} ₫
+              {urlParams.vnp_Amount 
+                ? (parseInt(urlParams.vnp_Amount) / 100).toLocaleString('vi-VN') + ' ₫'
+                : 'N/A'
+              }
             </Descriptions.Item>
             <Descriptions.Item label="Order Code">
               {paymentResult.orderCode || 'N/A'}
             </Descriptions.Item>
-            <Descriptions.Item label="Order Info">
-              {paymentResult.orderInfo || 'N/A'}
-            </Descriptions.Item>
+            {/* <Descriptions.Item label="Order Info">
+              {urlParams.vnp_OrderInfo || 'N/A'}
+            </Descriptions.Item> */}
             <Descriptions.Item label="Transaction Time">
-              {paymentResult.payDate 
-                ? new Date(paymentResult.payDate).toLocaleString()
-                : 'N/A'
-              }
+              {formatVnpayDate(urlParams.vnp_PayDate)}
             </Descriptions.Item>
             <Descriptions.Item label="Bank Code">
-              {paymentResult.bankCode || paymentResult.vnpayQuery?.bankCode || 'N/A'}
+              {urlParams.vnp_BankCode || 'N/A'}
             </Descriptions.Item>
-            <Descriptions.Item label="Status">
+            {/* <Descriptions.Item label="Response Code">
+              <Text code>{urlParams.vnp_ResponseCode || 'N/A'}</Text>
+            </Descriptions.Item> */}
+            <Descriptions.Item label="Payment Status">
               <Text strong type={isSuccess ? 'success' : 'danger'}>
                 {isSuccess ? 'SUCCESS' : 'FAILED'}
               </Text>
@@ -182,11 +215,6 @@ const PaymentReturn = () => {
             {paymentResult.message && (
               <Descriptions.Item label="Message">
                 {paymentResult.message}
-              </Descriptions.Item>
-            )}
-            {paymentResult.vnpayQuery && (
-              <Descriptions.Item label="VNPay Response">
-                Code: {paymentResult.vnpayQuery.responseCode} - {paymentResult.vnpayQuery.message}
               </Descriptions.Item>
             )}
           </Descriptions>
