@@ -26,6 +26,37 @@ namespace BookStoresApi.Controllers
                 .ToListAsync();
         }
 
+        // GET: api/categories/featured?limit=15
+        [HttpGet("featured")]
+        public async Task<ActionResult<IEnumerable<object>>> GetFeaturedCategories([FromQuery] int limit = 15)
+        {
+            // Debug: Lấy TẤT CẢ categories để xem có gì
+            var allCategories = await _context.Categories
+                .Where(c => !c.IsDeleted)
+                .Select(c => new
+                {
+                    c.CategoryId,
+                    c.CategoryName,
+                    c.ParentId,
+                    FirstLetter = c.CategoryName.Substring(0, 1).ToUpper()
+                })
+                .ToListAsync();
+
+            // Nếu có categories con (ParentId != null) thì lấy random
+            var childCategories = allCategories.Where(c => c.ParentId != null).ToList();
+            
+            if (childCategories.Any())
+            {
+                // Có categories con, random và lấy limit
+                return Ok(childCategories.OrderBy(x => Guid.NewGuid()).Take(limit));
+            }
+            else
+            {
+                // Không có categories con, trả về tất cả (kể cả Book level)
+                return Ok(allCategories.OrderBy(x => Guid.NewGuid()).Take(limit));
+            }
+        }
+
         // GET: api/categories/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<Category>> GetCategory(int id)

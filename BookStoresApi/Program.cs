@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using BookStoresApi.Data;
 using BookStoresApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
