@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Form,
   Input,
@@ -18,10 +18,14 @@ import {
 import {
   SaveOutlined,
   ArrowLeftOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined,
+  CloseCircleOutlined,
   PlusOutlined,
   DeleteOutlined
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import moment from 'moment';
 import axiosInstance from '../../../api/axios';
 import CloudinaryUpload from '../../../components/cloudinary/CloudinaryUpload';
 import mediaService from '../../../services/mediaService';
@@ -30,13 +34,75 @@ const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
-const AddProduct = () => {
+const EditProduct = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
+  const { productId } = useParams();
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [images, setImages] = useState([]);
+  const [productData, setProductData] = useState(null);
 
-  // Fetch categories - removed since categories not in Product entity
+  // Fetch product data for editing
+  useEffect(() => {
+    const fetchProductData = async () => {
+      if (!productId) {
+        message.error({
+          content: 'Không tìm thấy ID sản phẩm',
+          icon: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+        });
+        navigate('/admin/products');
+        return;
+      }
+
+      try {
+        setInitialLoading(true);
+        console.log('Fetching product data for ID:', productId);
+        
+        const response = await axiosInstance.get(`/products/${productId}`);
+        const product = response.data;
+        
+        console.log('Product data received:', product);
+        setProductData(product);
+
+        // Set form values
+        form.setFieldsValue({
+          productCode: product.productCode,
+          productName: product.productName,
+          description: product.description,
+          price: product.price,
+          stockQuantity: product.stockQuantity,
+          productType: product.productType,
+          manufacturer: product.manufacturer,
+          releaseDate: product.releaseDate ? moment(product.releaseDate) : null
+        });
+
+        // Set existing images
+        if (product.mediaFiles && product.mediaFiles.length > 0) {
+          const existingImages = product.mediaFiles
+            .filter(media => media.fileType === 'Image' || media.mediaUrl?.match(/\.(jpg|jpeg|png|gif|webp)$/i))
+            .map(media => ({
+              url: media.mediaUrl,
+              mediaId: media.mediaId // Keep track of existing media IDs
+            }));
+          setImages(existingImages);
+          console.log('Existing images:', existingImages);
+        }
+
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        message.error({
+          content: 'Không thể tải thông tin sản phẩm',
+          icon: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+        });
+        navigate('/admin/products');
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    fetchProductData();
+  }, [productId, form, navigate]);
 
   // Handle form submit
   const handleSubmit = async (values) => {
@@ -44,6 +110,7 @@ const AddProduct = () => {
     try {
       // Prepare product data
       const productData = {
+        productId: parseInt(productId),
         productCode: values.productCode,
         productName: values.productName,
         description: values.description,
@@ -54,55 +121,98 @@ const AddProduct = () => {
         releaseDate: values.releaseDate ? values.releaseDate.format('YYYY-MM-DD') : null
       };
 
-      // Create product first
-      const response = await axiosInstance.post('/products', productData);
-      const newProduct = response.data;
+      console.log('Updating product with data:', productData);
+      console.log('PUT URL:', `/products/${productId}`);
+
+      // Update product
+      const response = await axiosInstance.put(`/products/${productId}`, productData);
+      console.log('PUT Response status:', response.status);
+      console.log('PUT Response data:', response.data);
       
-      console.log('Product created successfully:', newProduct);
-      console.log('Product ID:', newProduct.productId);
+      const updatedProduct = response.data;
+      console.log('Product updated successfully:', updatedProduct);
       
-      // Upload images to Media table if any
-      if (images.length > 0 && newProduct.productId) {
+      // Handle image updates - Delete all old images and upload current images
+      try {
+        message.loading('Đang cập nhật ảnh...', 0);
+
+
+
+        // Step 1: Delete all existing media for this product
         try {
-          message.loading('Đang upload ảnh...', 0);
-          
-          const mediaResults = await mediaService.uploadMultipleProductMedia(
-            newProduct.productId, 
-            images
-          );
-          
-          message.destroy(); // Clear loading message
-          message.success(`Thêm sản phẩm thành công với ${mediaResults.length} ảnh!`);
-          
-          console.log('Uploaded media results:', mediaResults);
-        } catch (mediaError) {
-          console.error('Error uploading media:', mediaError);
-          message.destroy(); // Clear loading message
-          
-          // More detailed error message
-          let errorMsg = 'Sản phẩm đã được tạo nhưng có lỗi khi upload ảnh.';
-          if (mediaError.message) {
-            errorMsg += ` Chi tiết: ${mediaError.message}`;
-          }
-          
-          message.warning(errorMsg);
+          await axiosInstance.delete(`/media/product/${productId}`);
+        } catch (deleteError) {
+          // Continue anyway - might be no existing media
         }
-      } else {
-        message.success('Thêm sản phẩm thành công!');
+
+        // Step 2: Upload all current images (both kept and new ones)
+        if (images.length > 0) {
+          // Convert images to the format expected by mediaService (objects with url property)
+          const imageObjects = images.map((img, index) => {
+            let url = null;
+            
+            if (typeof img === 'string') {
+              url = img; // New uploaded image URL string
+            } else if (img && typeof img === 'object' && img.url) {
+              url = img.url; // Image object with URL property
+            } else if (img && typeof img === 'object' && img.mediaUrl) {
+              url = img.mediaUrl; // From existing media
+            }
+            
+            return url ? { url: url } : null;
+          }).filter(obj => obj !== null);
+
+          if (imageObjects.length > 0) {
+            const mediaResults = await mediaService.uploadMultipleProductMedia(
+              productId, 
+              imageObjects
+            );
+          }
+        }
+        
+        message.destroy(); // Clear loading message
+        message.success({
+          content: 'Cập nhật sản phẩm thành công!',
+          icon: <CheckCircleOutlined style={{ color: '#52c41a' }} />
+        });
+        
+        // Refresh the product data to show updated images
+        await fetchProductData();
+        
+      } catch (mediaError) {
+        message.destroy(); // Clear loading message
+        
+        let errorMsg = 'Sản phẩm đã được cập nhật nhưng có lỗi khi cập nhật ảnh.';
+        if (mediaError.message) {
+          errorMsg += ` Chi tiết: ${mediaError.message}`;
+        }
+        
+        message.warning({
+          content: errorMsg,
+          icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />
+        });
       }
 
-      // Navigate về products list
-      navigate('/admin/products?refresh=' + Date.now());
+      // Navigate back to products list with update action
+      navigate('/admin/products?refresh=' + Date.now() + '&action=update');
     } catch (error) {
-      console.error('Error creating product:', error);
       if (error.response?.data?.message) {
-        message.error(error.response.data.message);
+        message.error({
+          content: error.response.data.message,
+          icon: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+        });
       } else if (error.response?.data?.errors) {
         // Handle validation errors
         const errorMessages = Object.values(error.response.data.errors).flat();
-        message.error(`Lỗi: ${errorMessages.join(', ')}`);
+        message.error({
+          content: `Lỗi: ${errorMessages.join(', ')}`,
+          icon: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+        });
       } else {
-        message.error('Không thể thêm sản phẩm. Vui lòng thử lại.');
+        message.error({
+          content: 'Không thể cập nhật sản phẩm. Vui lòng thử lại.',
+          icon: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+        });
       }
     } finally {
       setLoading(false);
@@ -110,45 +220,56 @@ const AddProduct = () => {
     }
   };
 
-  // Handle form reset
+  // Handle form reset to original values
   const handleReset = () => {
-    form.resetFields();
-    setImages([]);
-    message.info('Đã reset form');
-  };
+    if (productData) {
+      form.setFieldsValue({
+        productCode: productData.productCode,
+        productName: productData.productName,
+        description: productData.description,
+        price: productData.price,
+        stockQuantity: productData.stockQuantity,
+        productType: productData.productType,
+        manufacturer: productData.manufacturer,
+        releaseDate: productData.releaseDate ? moment(productData.releaseDate) : null
+      });
 
-  // Generate product code
-  const generateProductCode = () => {
-    const timestamp = Date.now().toString().slice(-6);
-    const randomStr = Math.random().toString(36).substring(2, 5).toUpperCase();
-    const code = `PRD${timestamp}${randomStr}`;
-    form.setFieldsValue({ productCode: code });
-  };
+      // Reset images to original
+      if (productData.mediaFiles && productData.mediaFiles.length > 0) {
+        const originalImages = productData.mediaFiles
+          .filter(media => media.fileType === 'Image' || media.mediaUrl?.match(/\.(jpg|jpeg|png|gif|webp)$/i))
+          .map(media => ({
+            url: media.mediaUrl,
+            mediaId: media.mediaId
+          }));
+        setImages(originalImages);
+      } else {
+        setImages([]);
+      }
 
-  // Test function for debugging media upload
-  const testMediaUpload = async () => {
-    try {
-      console.log('Testing direct API call...');
-      
-      // Test payload
-      const testPayload = {
-        productId: 1, // Assuming Product ID 1 exists
-        mediaUrl: "https://res.cloudinary.com/ddbvpnf0s/image/upload/v1234567890/test.jpg",
-        mediaType: "image/jpeg"
-      };
-      
-      console.log('Test payload:', testPayload);
-      
-      const response = await axiosInstance.post('/media', testPayload);
-      console.log('Test success:', response.data);
-      message.success('Test upload thành công!');
-      
-    } catch (error) {
-      console.error('Test error:', error);
-      console.error('Error response:', error.response?.data);
-      message.error('Test upload thất bại!');
+      message.info('Đã khôi phục về dữ liệu gốc');
     }
   };
+
+  if (initialLoading) {
+    return (
+      <div style={{ padding: 24, textAlign: 'center' }}>
+        <Spin size="large" />
+        <div style={{ marginTop: 16 }}>Đang tải thông tin sản phẩm...</div>
+      </div>
+    );
+  }
+
+  if (!productData) {
+    return (
+      <div style={{ padding: 24, textAlign: 'center' }}>
+        <Title level={4}>Không tìm thấy sản phẩm</Title>
+        <Button onClick={() => navigate('/admin/products')}>
+          Quay lại danh sách
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: 24 }}>
@@ -164,14 +285,10 @@ const AddProduct = () => {
                 Quay lại
               </Button>
               <Title level={3} style={{ margin: 0 }}>
-                Thêm sản phẩm mới
+                Chỉnh sửa sản phẩm
               </Title>
+              <Text type="secondary">ID: {productId}</Text>
             </Space>
-          </Col>
-          <Col>
-            <Button onClick={testMediaUpload} type="dashed" size="small">
-              Test Media API
-            </Button>
           </Col>
         </Row>
 
@@ -180,11 +297,6 @@ const AddProduct = () => {
             form={form}
             layout="vertical"
             onFinish={handleSubmit}
-            initialValues={{
-              stockQuantity: 0,
-              price: 0,
-              productType: 'Book'
-            }}
           >
             <Row gutter={24}>
               {/* Left Column - Basic Info */}
@@ -201,15 +313,7 @@ const AddProduct = () => {
                   >
                     <Input 
                       placeholder="Nhập mã sản phẩm"
-                      addonAfter={
-                        <Button 
-                          type="link" 
-                          size="small"
-                          onClick={generateProductCode}
-                        >
-                          Tạo mã
-                        </Button>
-                      }
+                      disabled // Usually product code shouldn't be changed
                     />
                   </Form.Item>
 
@@ -335,7 +439,7 @@ const AddProduct = () => {
                       aspectRatio="1:1"
                     />
                     <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
-                      Ảnh sẽ được lưu riêng trong bảng Media
+                      Ảnh hiện tại sẽ được giữ lại, ảnh mới sẽ được thêm vào
                     </div>
                   </Form.Item>
                 </Card>
@@ -348,7 +452,7 @@ const AddProduct = () => {
             <Row justify="end">
               <Space>
                 <Button onClick={handleReset}>
-                  Đặt lại
+                  Khôi phục
                 </Button>
                 <Button onClick={() => navigate('/admin/products')}>
                   Hủy
@@ -359,7 +463,7 @@ const AddProduct = () => {
                   icon={<SaveOutlined />}
                   loading={loading}
                 >
-                  Thêm sản phẩm
+                  Cập nhật sản phẩm
                 </Button>
               </Space>
             </Row>
@@ -370,4 +474,4 @@ const AddProduct = () => {
   );
 };
 
-export default AddProduct;
+export default EditProduct;

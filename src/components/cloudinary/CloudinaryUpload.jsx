@@ -107,7 +107,12 @@ const CloudinaryUpload = ({
           status: 'done',
           url: result.info.secure_url,
           publicId: result.info.public_id,
-          thumbnailUrl: result.info.eager?.[0]?.secure_url || result.info.secure_url
+          thumbnailUrl: result.info.eager?.[0]?.secure_url || result.info.secure_url,
+          // Add metadata for media service
+          mediaType: `image/${result.info.format}`,
+          size: result.info.bytes,
+          width: result.info.width,
+          height: result.info.height
         };
         
         const newImages = multiple ? [...value, newImage] : [newImage];
