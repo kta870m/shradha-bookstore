@@ -108,7 +108,7 @@ namespace BookStoresApi.Data
             // FeedbackQuery - User
             modelBuilder
                 .Entity<FeedbackQuery>()
-                .HasOne(fq => fq.User)
+                .HasOne(fq => fq.ApplicationUser)
                 .WithMany(u => u.FeedbackQueries)
                 .HasForeignKey(fq => fq.UserId)
                 .OnDelete(DeleteBehavior.Restrict);

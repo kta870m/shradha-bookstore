@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookStoresApi.Models
 {
+    [Table("FeedbackQueries")]
     public class FeedbackQuery
     {
         [Key]
@@ -29,6 +30,6 @@ namespace BookStoresApi.Models
 
         // Navigation properties
         [ForeignKey("UserId")]
-        public virtual ApplicationUser User { get; set; } = null!;
+        public virtual ApplicationUser ApplicationUser { get; set; } = null!;
     }
 }

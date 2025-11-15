@@ -118,6 +118,42 @@ namespace BookStoresApi.Controllers
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        // GET: api/auth/users/search?q=keyword&limit=20
+        [HttpGet("users/search")]
+        public async Task<ActionResult<IEnumerable<object>>> SearchUsers(
+            [FromQuery] string? q = null,
+            [FromQuery] int limit = 20
+        )
+        {
+            var query = _userManager.Users
+                .Where(u => !u.IsDeleted && u.UserType == "customer");
+
+            if (!string.IsNullOrEmpty(q))
+            {
+                query = query.Where(u => 
+                    u.FullName.Contains(q) || 
+                    u.Id.ToString().Contains(q) ||
+                    (u.PhoneNumber != null && u.PhoneNumber.Contains(q)) ||
+                    u.Email.Contains(q)
+                );
+            }
+
+            var users = query
+                .OrderBy(u => u.FullName)
+                .Take(limit)
+                .Select(u => new
+                {
+                    u.Id,
+                    u.FullName,
+                    u.Email,
+                    u.PhoneNumber,
+                    u.Address
+                })
+                .ToList();
+
+            return Ok(users);
+        }
     }
 
     public class RegisterRequest

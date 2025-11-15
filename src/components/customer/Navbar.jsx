@@ -11,9 +11,7 @@ const Navbar = () => {
     { label: "Kid's & Young Adult", path: '/categories/kids-young-adult' },
     { label: 'Discount Deals', path: '/deals' },
     { label: 'Sell Your Books', path: '/sell' },
-    { label: 'Gifts & Others', path: '/gifts' },
-    { label: 'Events', path: '/events' },
-    { label: 'About Bookworm', path: '/about' },
+    { label: 'About Shradha', path: '/about' },
   ];
 
   return (

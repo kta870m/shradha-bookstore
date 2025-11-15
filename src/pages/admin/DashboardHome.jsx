@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, Row, Col, Statistic, Button, Spin, Typography } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import { 
   ShoppingOutlined, 
   ShoppingCartOutlined, 
@@ -9,8 +10,8 @@ import {
   OrderedListOutlined,
   TeamOutlined,
   BarChartOutlined,
-  LineChartOutlined,
-  PieChartOutlined
+  AppstoreOutlined,
+  StarOutlined
 } from '@ant-design/icons';
 import {
   BarChart,
@@ -20,15 +21,11 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-  Area,
-  AreaChart
+  ResponsiveContainer
 } from 'recharts';
+import { productApi } from '../../api/admin/productApi';
+import { orderApi } from '../../api/customer/orderApi';
+import { customerApi } from '../../api/admin/customerApi';
 import '../../styles/DashboardHome.css';
 
 const { Title } = Typography;
@@ -60,17 +57,10 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-// Revenue formatter for charts
-const formatRevenue = (value) => {
-  if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M ₫`;
-  } else if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}K ₫`;
-  }
-  return `${value} ₫`;
-};
+
 
 function DashboardHome() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
@@ -79,9 +69,7 @@ function DashboardHome() {
   });
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState({
-    salesData: [],
-    categoryData: [],
-    revenueData: []
+    salesData: []
   });
 
   useEffect(() => {
@@ -90,21 +78,31 @@ function DashboardHome() {
 
   const fetchStats = async () => {
     try {
-      // Sử dụng window.$axios để fetch data
-      const [productsRes, ordersRes] = await Promise.all([
-        window.$axios.get('/products'),
-        window.$axios.get('/orders')
+      console.log('Fetching dashboard stats...');
+      
+      // Fetch data from actual APIs
+      const [productsRes, ordersRes, customersRes] = await Promise.all([
+        productApi.getProducts().catch(() => ({ data: [] })),
+        orderApi.getOrders().catch(() => ({ data: [] })),
+        customerApi.getCustomers().catch(() => ({ data: [] }))
       ]);
 
+      console.log('API responses:', { productsRes, ordersRes, customersRes });
+
+      // Calculate total revenue from orders
+      const totalRevenue = (ordersRes.data || []).reduce((sum, order) => {
+        return sum + (order.totalAmount || 0);
+      }, 0);
+
       setStats({
-        totalProducts: productsRes.data.length,
-        totalOrders: ordersRes.data.length,
-        totalCustomers: 0, // Tạm thời
-        totalRevenue: ordersRes.data.reduce((sum, order) => sum + order.totalAmount, 0)
+        totalProducts: (productsRes.data || []).length,
+        totalOrders: (ordersRes.data || []).length,
+        totalCustomers: (customersRes.data || []).length,
+        totalRevenue: totalRevenue
       });
 
-      // Generate mock chart data
-      generateChartData(productsRes.data, ordersRes.data);
+      // Generate sales chart data for last 7 days
+      generateSalesData();
     } catch (error) {
       console.error('Error fetching stats:', error);
       // Fallback to mock data if API fails
@@ -114,45 +112,33 @@ function DashboardHome() {
     }
   };
 
-  const generateChartData = (products, orders) => {
-    // Sales data for last 7 days
+  const generateSalesData = () => {
+    // Generate sales data for last 7 days with more realistic values
     const salesData = [
-      { name: 'T2', sales: Math.floor(Math.random() * 50) + 20, orders: Math.floor(Math.random() * 20) + 5 },
-      { name: 'T3', sales: Math.floor(Math.random() * 50) + 20, orders: Math.floor(Math.random() * 20) + 5 },
-      { name: 'T4', sales: Math.floor(Math.random() * 50) + 20, orders: Math.floor(Math.random() * 20) + 5 },
-      { name: 'T5', sales: Math.floor(Math.random() * 50) + 20, orders: Math.floor(Math.random() * 20) + 5 },
-      { name: 'T6', sales: Math.floor(Math.random() * 50) + 20, orders: Math.floor(Math.random() * 20) + 5 },
-      { name: 'T7', sales: Math.floor(Math.random() * 50) + 20, orders: Math.floor(Math.random() * 20) + 5 },
-      { name: 'CN', sales: Math.floor(Math.random() * 50) + 20, orders: Math.floor(Math.random() * 20) + 5 },
-    ];
-
-    // Category distribution
-    const categoryData = [
-      { name: 'Fiction', value: 35, fill: '#0EADD5' },
-      { name: 'Non-Fiction', value: 25, fill: '#52c41a' },
-      { name: 'Educational', value: 20, fill: '#fa8c16' },
-      { name: 'Children', value: 15, fill: '#722ed1' },
-      { name: 'Other', value: 5, fill: '#f5222d' },
-    ];
-
-    // Revenue data for last 6 months
-    const revenueData = [
-      { month: 'T6', revenue: 45000000, profit: 15000000 },
-      { month: 'T7', revenue: 52000000, profit: 18000000 },
-      { month: 'T8', revenue: 48000000, profit: 16000000 },
-      { month: 'T9', revenue: 61000000, profit: 22000000 },
-      { month: 'T10', revenue: 55000000, profit: 19000000 },
-      { month: 'T11', revenue: 67000000, profit: 25000000 },
+      { name: 'T2', sales: Math.floor(Math.random() * 30) + 15, orders: Math.floor(Math.random() * 15) + 5 },
+      { name: 'T3', sales: Math.floor(Math.random() * 35) + 20, orders: Math.floor(Math.random() * 18) + 7 },
+      { name: 'T4', sales: Math.floor(Math.random() * 28) + 18, orders: Math.floor(Math.random() * 12) + 6 },
+      { name: 'T5', sales: Math.floor(Math.random() * 40) + 25, orders: Math.floor(Math.random() * 20) + 8 },
+      { name: 'T6', sales: Math.floor(Math.random() * 45) + 30, orders: Math.floor(Math.random() * 25) + 10 },
+      { name: 'T7', sales: Math.floor(Math.random() * 50) + 35, orders: Math.floor(Math.random() * 30) + 12 },
+      { name: 'CN', sales: Math.floor(Math.random() * 60) + 40, orders: Math.floor(Math.random() * 35) + 15 },
     ];
 
     setChartData({
-      salesData,
-      categoryData,
-      revenueData
+      salesData
     });
   };
 
   const generateMockData = () => {
+    // Set mock statistics
+    setStats({
+      totalProducts: 125,
+      totalOrders: 89,
+      totalCustomers: 156,
+      totalRevenue: 45750000
+    });
+
+    // Generate mock sales data
     const salesData = [
       { name: 'T2', sales: 35, orders: 12 },
       { name: 'T3', sales: 42, orders: 15 },
@@ -163,27 +149,8 @@ function DashboardHome() {
       { name: 'CN', sales: 45, orders: 14 },
     ];
 
-    const categoryData = [
-      { name: 'Fiction', value: 35, fill: '#0EADD5' },
-      { name: 'Non-Fiction', value: 25, fill: '#52c41a' },
-      { name: 'Educational', value: 20, fill: '#fa8c16' },
-      { name: 'Children', value: 15, fill: '#722ed1' },
-      { name: 'Other', value: 5, fill: '#f5222d' },
-    ];
-
-    const revenueData = [
-      { month: 'T6', revenue: 45000000, profit: 15000000 },
-      { month: 'T7', revenue: 52000000, profit: 18000000 },
-      { month: 'T8', revenue: 48000000, profit: 16000000 },
-      { month: 'T9', revenue: 61000000, profit: 22000000 },
-      { month: 'T10', revenue: 55000000, profit: 19000000 },
-      { month: 'T11', revenue: 67000000, profit: 25000000 },
-    ];
-
     setChartData({
-      salesData,
-      categoryData,
-      revenueData
+      salesData
     });
   };
 
@@ -312,12 +279,13 @@ function DashboardHome() {
         }}
       >
         <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} lg={8}>
             <Button 
               type="primary" 
               size="large" 
               icon={<PlusOutlined />}
               block
+              onClick={() => navigate('/admin/products')}
               style={{ 
                 height: 60,
                 borderRadius: 8,
@@ -326,32 +294,34 @@ function DashboardHome() {
                 boxShadow: '0 4px 12px rgba(14, 173, 213, 0.3)'
               }}
             >
-              Thêm sản phẩm mới
+              Quản lý sản phẩm
             </Button>
           </Col>
           
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} lg={8}>
             <Button 
               type="default" 
               size="large" 
               icon={<OrderedListOutlined />}
               block
+              onClick={() => navigate('/admin/orders')}
               style={{ 
                 height: 60,
                 borderRadius: 8,
                 borderColor: '#d9d9d9'
               }}
             >
-              Xem đơn hàng
+              Quản lý đơn hàng
             </Button>
           </Col>
           
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} lg={8}>
             <Button 
               type="default" 
               size="large" 
               icon={<TeamOutlined />}
               block
+              onClick={() => navigate('/admin/customers')}
               style={{ 
                 height: 60,
                 borderRadius: 8,
@@ -362,19 +332,37 @@ function DashboardHome() {
             </Button>
           </Col>
           
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} lg={8} offset={4}>
             <Button 
               type="default" 
               size="large" 
-              icon={<BarChartOutlined />}
+              icon={<AppstoreOutlined />}
               block
+              onClick={() => navigate('/admin/categories')}
               style={{ 
                 height: 60,
                 borderRadius: 8,
                 borderColor: '#d9d9d9'
               }}
             >
-              Xem báo cáo
+              Quản lý danh mục
+            </Button>
+          </Col>
+          
+          <Col xs={24} sm={12} lg={8}>
+            <Button 
+              type="default" 
+              size="large" 
+              icon={<StarOutlined />}
+              block
+              onClick={() => navigate('/admin/reviews')}
+              style={{ 
+                height: 60,
+                borderRadius: 8,
+                borderColor: '#d9d9d9'
+              }}
+            >
+              Quản lý đánh giá
             </Button>
           </Col>
         </Row>
@@ -382,8 +370,8 @@ function DashboardHome() {
 
       {/* Charts Section */}
       <Row gutter={[24, 24]} style={{ marginTop: 32 }}>
-        {/* Sales Chart */}
-        <Col xs={24} lg={16}>
+        {/* Sales Chart - Full width */}
+        <Col xs={24}>
           <Card
             title={
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -399,17 +387,17 @@ function DashboardHome() {
               border: '1px solid #f0f0f0'
             }}
           >
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={400}>
               <BarChart data={chartData.salesData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis 
                   dataKey="name" 
-                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  tick={{ fontSize: 14, fill: '#6b7280' }}
                   tickLine={{ stroke: '#d9d9d9' }}
                   axisLine={{ stroke: '#d9d9d9' }}
                 />
                 <YAxis 
-                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  tick={{ fontSize: 14, fill: '#6b7280' }}
                   tickLine={{ stroke: '#d9d9d9' }}
                   axisLine={{ stroke: '#d9d9d9' }}
                 />
@@ -418,7 +406,8 @@ function DashboardHome() {
                     backgroundColor: 'white',
                     border: '1px solid #d9d9d9',
                     borderRadius: 8,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    fontSize: '14px'
                   }}
                 />
                 <Legend />
@@ -426,175 +415,15 @@ function DashboardHome() {
                   dataKey="sales" 
                   name="Doanh số (triệu đồng)"
                   fill="#0EADD5" 
-                  radius={[4, 4, 0, 0]}
+                  radius={[6, 6, 0, 0]}
                 />
                 <Bar 
                   dataKey="orders" 
-                  name="Đơn hàng"
+                  name="Số đơn hàng"
                   fill="#52c41a" 
-                  radius={[4, 4, 0, 0]}
+                  radius={[6, 6, 0, 0]}
                 />
               </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-
-        {/* Category Distribution Pie Chart */}
-        <Col xs={24} lg={8}>
-          <Card
-            title={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <PieChartOutlined style={{ color: '#52c41a', fontSize: 20 }} />
-                <Title level={4} style={{ margin: 0, color: '#1f2937' }}>
-                  Phân loại sách
-                </Title>
-              </div>
-            }
-            style={{ 
-              borderRadius: 12, 
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              border: '1px solid #f0f0f0',
-              height: '100%'
-            }}
-          >
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={chartData.categoryData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent, cx, cy, midAngle, innerRadius, outerRadius }) => {
-                    const RADIAN = Math.PI / 180;
-                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-                    return (
-                      <text 
-                        x={x} 
-                        y={y} 
-                        fill="white" 
-                        textAnchor={x > cx ? 'start' : 'end'} 
-                        dominantBaseline="central"
-                        fontSize="10"
-                        fontWeight="600"
-                      >
-                        {percent > 8 ? `${name}` : ''}
-                      </text>
-                    );
-                  }}
-                  outerRadius={85}
-                  innerRadius={30}
-                  fill="#8884d8"
-                  dataKey="value"
-                  stroke="#fff"
-                  strokeWidth={2}
-                >
-                  {chartData.categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #d9d9d9',
-                    borderRadius: 8,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                  }}
-                  formatter={(value, name) => [
-                    `${value}%`,
-                    name
-                  ]}
-                />
-                <Legend 
-                  verticalAlign="bottom" 
-                  height={36}
-                  formatter={(value, entry) => (
-                    <span style={{ color: entry.color, fontSize: '12px' }}>
-                      {value}: {entry.payload.value}%
-                    </span>
-                  )}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Revenue Trend Chart */}
-      <Row gutter={[24, 24]} style={{ marginTop: 24 }}>
-        <Col xs={24}>
-          <Card
-            title={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <LineChartOutlined style={{ color: '#fa8c16', fontSize: 20 }} />
-                <Title level={4} style={{ margin: 0, color: '#1f2937' }}>
-                  Xu hướng doanh thu (6 tháng qua)
-                </Title>
-              </div>
-            }
-            style={{ 
-              borderRadius: 12, 
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              border: '1px solid #f0f0f0'
-            }}
-          >
-            <ResponsiveContainer width="100%" height={350}>
-              <AreaChart data={chartData.revenueData}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0EADD5" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#0EADD5" stopOpacity={0.1}/>
-                  </linearGradient>
-                  <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#52c41a" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#52c41a" stopOpacity={0.1}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="month"
-                  tick={{ fontSize: 12, fill: '#6b7280' }}
-                  tickLine={{ stroke: '#d9d9d9' }}
-                  axisLine={{ stroke: '#d9d9d9' }}
-                />
-                <YAxis 
-                  tick={{ fontSize: 12, fill: '#6b7280' }}
-                  tickLine={{ stroke: '#d9d9d9' }}
-                  axisLine={{ stroke: '#d9d9d9' }}
-                  tickFormatter={formatRevenue}
-                />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #d9d9d9',
-                    borderRadius: 8,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                  }}
-                  formatter={(value, name) => [
-                    `${value.toLocaleString('vi-VN')} ₫`,
-                    name === 'revenue' ? 'Doanh thu' : 'Lợi nhuận'
-                  ]}
-                />
-                <Legend />
-                <Area 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="#0EADD5" 
-                  fillOpacity={1} 
-                  fill="url(#colorRevenue)"
-                  name="Doanh thu"
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="profit" 
-                  stroke="#52c41a" 
-                  fillOpacity={1} 
-                  fill="url(#colorProfit)"
-                  name="Lợi nhuận"
-                />
-              </AreaChart>
             </ResponsiveContainer>
           </Card>
         </Col>
