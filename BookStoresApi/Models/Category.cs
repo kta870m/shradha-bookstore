@@ -15,13 +15,13 @@ namespace BookStoresApi.Models
         public string CategoryName { get; set; } = string.Empty;
 
         [Column("parent_id")]
-        public int? ParentId { get; set; }
+        public int? ParentCategoryId { get; set; }
 
         [Column("is_deleted")]
         public bool IsDeleted { get; set; } = false;
 
         // Navigation properties
-        [ForeignKey("ParentId")]
+        [ForeignKey("ParentCategoryId")]
         public virtual Category? ParentCategory { get; set; }
         public virtual ICollection<Category> SubCategories { get; set; } = new List<Category>();
         public virtual ICollection<ProductCategory> ProductCategories { get; set; } = new List<ProductCategory>();
