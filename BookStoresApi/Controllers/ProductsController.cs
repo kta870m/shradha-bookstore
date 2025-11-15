@@ -246,6 +246,47 @@ namespace BookStoresApi.Controllers
             return Ok(products);
         }
 
+        // GET: api/products/search?q=keyword&limit=20
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<object>>> SearchProducts(
+            [FromQuery] string? q = null,
+            [FromQuery] int limit = 20
+        )
+        {
+            var query = _context.Products
+                .Where(p => !p.IsDeleted && p.StockQuantity > 0);
+
+            if (!string.IsNullOrEmpty(q))
+            {
+                query = query.Where(p => 
+                    p.ProductName.Contains(q) || 
+                    p.ProductCode.Contains(q) ||
+                    (p.Description != null && p.Description.Contains(q)) ||
+                    (p.Manufacturer != null && p.Manufacturer.Contains(q))
+                );
+            }
+
+            var products = await query
+                .OrderBy(p => p.ProductName)
+                .Take(limit)
+                .Select(p => new
+                {
+                    p.ProductId,
+                    p.ProductCode,
+                    p.ProductName,
+                    p.Price,
+                    p.StockQuantity,
+                    ThumbnailUrl = p.MediaFiles
+                        .Where(m => !m.IsDeleted)
+                        .OrderBy(m => m.MediaId)
+                        .Select(m => m.MediaUrl)
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return Ok(products);
+        }
+
         // GET: api/products/new-arrivals?limit=12
         [HttpGet("new-arrivals")]
         [ResponseCache(Duration = 300)] // Cache 5 minutes
@@ -394,17 +435,28 @@ namespace BookStoresApi.Controllers
 
         // GET: api/products/by-category/{categoryId}
         [HttpGet("by-category/{categoryId}")]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProductsByCategory(int categoryId)
+        public async Task<ActionResult<IEnumerable<Product>>> GetProductsByCategory(
+            int categoryId, 
+            [FromQuery] int page = 1, 
+            [FromQuery] int pageSize = 12)
         {
-            var products = await _context
-                .ProductCategories.Where(pc => pc.CategoryId == categoryId)
+            // Validate pagination parameters
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 12;
+            if (pageSize > 100) pageSize = 100; // Max 100 items per page
+
+            var query = _context
+                .ProductCategories
+                .Where(pc => pc.CategoryId == categoryId)
                 .Include(pc => pc.Product)
                 .ThenInclude(p => p.MediaFiles.Where(m => !m.IsDeleted))
-                .Include(pc => pc.Product)
-                .ThenInclude(p => p.ProductCategories)
-                .ThenInclude(pcat => pcat.Category)
                 .Select(pc => pc.Product)
-                .Where(p => !p.IsDeleted)
+                .Where(p => !p.IsDeleted);
+
+            // Apply pagination
+            var products = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
             return Ok(products);

@@ -64,7 +64,7 @@ const AddProduct = () => {
       // Upload images to Media table if any
       if (images.length > 0 && newProduct.productId) {
         try {
-          message.loading('Đang upload ảnh...', 0);
+          message.loading('Uploading images...', 0);
           
           const mediaResults = await mediaService.uploadMultipleProductMedia(
             newProduct.productId, 
@@ -72,7 +72,7 @@ const AddProduct = () => {
           );
           
           message.destroy(); // Clear loading message
-          message.success(`Thêm sản phẩm thành công với ${mediaResults.length} ảnh!`);
+          message.success(`Product added successfully with ${mediaResults.length} images!`);
           
           console.log('Uploaded media results:', mediaResults);
         } catch (mediaError) {
@@ -80,15 +80,15 @@ const AddProduct = () => {
           message.destroy(); // Clear loading message
           
           // More detailed error message
-          let errorMsg = 'Sản phẩm đã được tạo nhưng có lỗi khi upload ảnh.';
+          let errorMsg = 'Product created but there was an error uploading images.';
           if (mediaError.message) {
-            errorMsg += ` Chi tiết: ${mediaError.message}`;
+            errorMsg += ` Details: ${mediaError.message}`;
           }
           
           message.warning(errorMsg);
         }
       } else {
-        message.success('Thêm sản phẩm thành công!');
+        message.success('Product added successfully!');
       }
 
       // Navigate về products list
@@ -100,9 +100,9 @@ const AddProduct = () => {
       } else if (error.response?.data?.errors) {
         // Handle validation errors
         const errorMessages = Object.values(error.response.data.errors).flat();
-        message.error(`Lỗi: ${errorMessages.join(', ')}`);
+        message.error(`Error: ${errorMessages.join(', ')}`);
       } else {
-        message.error('Không thể thêm sản phẩm. Vui lòng thử lại.');
+        message.error('Unable to add product. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -114,7 +114,7 @@ const AddProduct = () => {
   const handleReset = () => {
     form.resetFields();
     setImages([]);
-    message.info('Đã reset form');
+    message.info('Form has been reset');
   };
 
   // Generate product code
@@ -161,10 +161,10 @@ const AddProduct = () => {
                 icon={<ArrowLeftOutlined />}
                 onClick={() => navigate('/admin/products')}
               >
-                Quay lại
+                Back
               </Button>
               <Title level={3} style={{ margin: 0 }}>
-                Thêm sản phẩm mới
+                Add New Product
               </Title>
             </Space>
           </Col>
@@ -189,25 +189,25 @@ const AddProduct = () => {
             <Row gutter={24}>
               {/* Left Column - Basic Info */}
               <Col xs={24} lg={12}>
-                <Card title="Thông tin cơ bản" size="small" style={{ marginBottom: 16 }}>
+                <Card title="Basic Information" size="small" style={{ marginBottom: 16 }}>
                   {/* Product Code */}
                   <Form.Item
-                    label="Mã sản phẩm"
+                    label="Product Code"
                     name="productCode"
                     rules={[
-                      { required: true, message: 'Vui lòng nhập mã sản phẩm' },
-                      { min: 3, message: 'Mã sản phẩm phải có ít nhất 3 ký tự' }
+                      { required: true, message: 'Please enter product code' },
+                      { min: 3, message: 'Product code must be at least 3 characters' }
                     ]}
                   >
                     <Input 
-                      placeholder="Nhập mã sản phẩm"
+                      placeholder="Enter product code"
                       addonAfter={
                         <Button 
                           type="link" 
                           size="small"
                           onClick={generateProductCode}
                         >
-                          Tạo mã
+                          Generate
                         </Button>
                       }
                     />
@@ -215,24 +215,24 @@ const AddProduct = () => {
 
                   {/* Product Name */}
                   <Form.Item
-                    label="Tên sản phẩm"
+                    label="Product Name"
                     name="productName"
                     rules={[
-                      { required: true, message: 'Vui lòng nhập tên sản phẩm' },
-                      { min: 3, message: 'Tên sản phẩm phải có ít nhất 3 ký tự' }
+                      { required: true, message: 'Please enter product name' },
+                      { min: 3, message: 'Product name must be at least 3 characters' }
                     ]}
                   >
-                    <Input placeholder="Nhập tên sản phẩm" />
+                    <Input placeholder="Enter product name" />
                   </Form.Item>
 
                   {/* Description */}
                   <Form.Item
-                    label="Mô tả sản phẩm"
+                    label="Product Description"
                     name="description"
                   >
                     <TextArea 
                       rows={4} 
-                      placeholder="Nhập mô tả chi tiết về sản phẩm..."
+                      placeholder="Enter detailed product description..."
                       showCount
                       maxLength={1000}
                     />
@@ -242,11 +242,11 @@ const AddProduct = () => {
                   <Row gutter={16}>
                     <Col xs={24} sm={12}>
                       <Form.Item
-                        label="Giá (USD)"
+                        label="Price (USD)"
                         name="price"
                         rules={[
-                          { required: true, message: 'Vui lòng nhập giá sản phẩm' },
-                          { type: 'number', min: 0, message: 'Giá phải lớn hơn 0' }
+                          { required: true, message: 'Please enter product price' },
+                          { type: 'number', min: 0, message: 'Price must be greater than 0' }
                         ]}
                       >
                         <InputNumber
@@ -262,11 +262,11 @@ const AddProduct = () => {
                     </Col>
                     <Col xs={24} sm={12}>
                       <Form.Item
-                        label="Số lượng tồn kho"
+                        label="Stock Quantity"
                         name="stockQuantity"
                         rules={[
-                          { required: true, message: 'Vui lòng nhập số lượng' },
-                          { type: 'number', min: 0, message: 'Số lượng không thể âm' }
+                          { required: true, message: 'Please enter quantity' },
+                          { type: 'number', min: 0, message: 'Quantity cannot be negative' }
                         ]}
                       >
                         <InputNumber
@@ -282,37 +282,37 @@ const AddProduct = () => {
                   <Row gutter={16}>
                     <Col xs={24} sm={12}>
                       <Form.Item
-                        label="Loại sản phẩm"
+                        label="Product Type"
                         name="productType"
-                        rules={[{ required: true, message: 'Vui lòng chọn loại sản phẩm' }]}
+                        rules={[{ required: true, message: 'Please select product type' }]}
                       >
-                        <Select placeholder="Chọn loại sản phẩm">
-                          <Option value="Book">Sách</Option>
-                          <Option value="EBook">Sách điện tử</Option>
-                          <Option value="AudioBook">Sách nói</Option>
-                          <Option value="Magazine">Tạp chí</Option>
-                          <Option value="Stationery">Văn phòng phẩm</Option>
+                        <Select placeholder="Select product type">
+                          <Option value="Book">Book</Option>
+                          <Option value="EBook">E-Book</Option>
+                          <Option value="AudioBook">Audio Book</Option>
+                          <Option value="Magazine">Magazine</Option>
+                          <Option value="Stationery">Stationery</Option>
                         </Select>
                       </Form.Item>
                     </Col>
                     <Col xs={24} sm={12}>
                       <Form.Item
-                        label="Nhà sản xuất"
+                        label="Manufacturer"
                         name="manufacturer"
                       >
-                        <Input placeholder="Nhập tên nhà sản xuất" />
+                        <Input placeholder="Enter manufacturer name" />
                       </Form.Item>
                     </Col>
                   </Row>
 
                   {/* Release Date */}
                   <Form.Item
-                    label="Ngày phát hành"
+                    label="Release Date"
                     name="releaseDate"
                   >
                     <DatePicker 
                       style={{ width: '100%' }}
-                      placeholder="Chọn ngày phát hành"
+                      placeholder="Select release date"
                       format="YYYY-MM-DD"
                     />
                   </Form.Item>
@@ -322,9 +322,9 @@ const AddProduct = () => {
               {/* Right Column - Images */}
               <Col xs={24} lg={12}>
                 {/* Product Images */}
-                <Card title="Hình ảnh sản phẩm" size="small" style={{ marginBottom: 16 }}>
+                <Card title="Product Images" size="small" style={{ marginBottom: 16 }}>
                   <Form.Item
-                    label="Upload ảnh sản phẩm"
+                    label="Upload Product Images"
                   >
                     <CloudinaryUpload
                       value={images}
@@ -335,7 +335,7 @@ const AddProduct = () => {
                       aspectRatio="1:1"
                     />
                     <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
-                      Ảnh sẽ được lưu riêng trong bảng Media
+                      Images will be stored separately in the Media table
                     </div>
                   </Form.Item>
                 </Card>
@@ -348,10 +348,10 @@ const AddProduct = () => {
             <Row justify="end">
               <Space>
                 <Button onClick={handleReset}>
-                  Đặt lại
+                  Reset
                 </Button>
                 <Button onClick={() => navigate('/admin/products')}>
-                  Hủy
+                  Cancel
                 </Button>
                 <Button 
                   type="primary" 
@@ -359,7 +359,7 @@ const AddProduct = () => {
                   icon={<SaveOutlined />}
                   loading={loading}
                 >
-                  Thêm sản phẩm
+                  Add Product
                 </Button>
               </Space>
             </Row>

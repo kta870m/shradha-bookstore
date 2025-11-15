@@ -1,16 +1,23 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { ConfigProvider } from 'antd';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ConfigProvider, App as AntApp } from 'antd';
 import { CartProvider } from './contexts/CartContext';
 
 // Admin pages
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminRegister from './pages/admin/AdminRegister';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import DashboardHome from './pages/admin/DashboardHome';
+
 import AdminProductManagement from './pages/admin/products/AdminProductManagement';
 import AddProduct from './pages/admin/products/AddProduct';
 import EditProduct from './pages/admin/products/EditProduct';
 import AdminCategoryManagement from './pages/admin/categories/AdminCategoryManagement';
+import AdminOrderManagement from './pages/admin/orders/AdminOrderManagement';
+import AdminCustomerManagement from './pages/admin/AdminCustomerManagement';
+import AdminReviewManagement from './components/admin/AdminReviewManagement';
+import AdminFeedbackManagement from './components/admin/AdminFeedbackManagement';
+
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Customer layout + pages
@@ -46,11 +53,12 @@ import './App.css';
 function App() {
   return (
     <ConfigProvider theme={antdTheme}>
-      <CartProvider>
-        <BrowserRouter>
-          <Routes>
+      <AntApp>
+        <CartProvider>
+          <BrowserRouter>
+            <Routes>
 
-            {/* =========== ADMIN ROUTES =========== */}
+            {/* ================= ADMIN ROUTES ================= */}
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/register" element={<AdminRegister />} />
 
@@ -58,31 +66,32 @@ function App() {
               <ProtectedRoute>
                 <AdminDashboard />
               </ProtectedRoute>
-            }>
-              <Route index element={<div>Dashboard Home</div>} />
-              <Route path="dashboard" element={<div>Dashboard Home</div>} />
+}>
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard" element={<DashboardHome />} />
+
               <Route path="products" element={<AdminProductManagement />} />
               <Route path="products/add" element={<AddProduct />} />
               <Route path="products/edit/:productId" element={<EditProduct />} />
+
               <Route path="categories" element={<AdminCategoryManagement />} />
-              <Route path="orders" element={<div>Orders Management</div>} />
-              <Route path="customers" element={<div>Customers Management</div>} />
-              <Route path="reviews" element={<div>Reviews Management</div>} />
-              <Route path="feedback" element={<div>Feedback Management</div>} />
+              <Route path="orders" element={<AdminOrderManagement />} />
+              <Route path="customers" element={<AdminCustomerManagement />} />
+              <Route path="reviews" element={<AdminReviewManagement />} />
+              <Route path="feedback" element={<AdminFeedbackManagement />} />
             </Route>
 
 
-            {/* =========== CUSTOMER ROUTES =========== */}
-            <Route path="/" element={
-              <CustomerLayout><Home /></CustomerLayout>
-            } />
+            {/* ================= CUSTOMER ROUTES ================= */}
+
+            <Route path="/" element={<CustomerLayout><Home /></CustomerLayout>} />
 
             {/* Book detail */}
             <Route path="/book/:id" element={
               <CustomerLayout><BookDetail /></CustomerLayout>
             } />
 
-            {/* Product list (ALL products) */}
+            {/* All products */}
             <Route path="/products" element={
               <CustomerLayout><CategoryProducts /></CustomerLayout>
             } />
@@ -137,7 +146,7 @@ function App() {
             } />
 
             <Route path="/condition-guideline" element={
-              <CustomerLayout><ConditionGuideline /></CustomerLayout>
+<CustomerLayout><ConditionGuideline /></CustomerLayout>
             } />
 
             <Route path="/billing-payment" element={
@@ -188,7 +197,7 @@ function App() {
               <CustomerLayout><ShippingInfo /></CustomerLayout>
             } />
 
-            {/* VNPay Return */}
+            {/* VNPay return */}
             <Route path="/payment-return" element={
               <CustomerLayout><PaymentReturn /></CustomerLayout>
             } />
@@ -201,7 +210,7 @@ function App() {
               <CustomerLayout><VNPayReturn /></CustomerLayout>
             } />
 
-            {/* =========== 404 =========== */}
+            {/* 404 */}
             <Route path="*" element={
               <CustomerLayout>
                 <div style={{ textAlign: 'center', padding: '50px' }}>
@@ -213,6 +222,7 @@ function App() {
           </Routes>
         </BrowserRouter>
       </CartProvider>
+      </AntApp>
     </ConfigProvider>
   );
 }

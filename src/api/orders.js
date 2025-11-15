@@ -25,6 +25,15 @@ export const getOrderById = async (orderId) => {
  * @returns {Promise<Array>} List of orders
  */
 export const getUserOrders = async () => {
+  const response = await axiosInstance.get('/orders/my-orders');
+  return response.data;
+};
+
+/**
+ * Get all orders (admin only)
+ * @returns {Promise<Array>} List of all orders
+ */
+export const getAllOrders = async () => {
   const response = await axiosInstance.get('/orders');
   return response.data;
 };

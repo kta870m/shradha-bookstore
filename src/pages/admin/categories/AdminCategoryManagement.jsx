@@ -48,7 +48,7 @@ function AdminCategoryManagement() {
       const response = await axiosInstance.get('/categories');
       setCategories(response.data);
     } catch (error) {
-      message.error('Không thể tải danh sách danh mục');
+      message.error('Unable to load category list');
       console.error('Error fetching categories:', error);
     } finally {
       setLoading(false);
@@ -61,11 +61,11 @@ function AdminCategoryManagement() {
       if (editingCategory) {
         // Update category
         await axiosInstance.put(`/categories/${editingCategory.categoryId}`, values);
-        message.success('Cập nhật danh mục thành công!');
+        message.success('Category updated successfully!');
       } else {
         // Create new category
         await axiosInstance.post('/categories', values);
-        message.success('Thêm danh mục mới thành công!');
+        message.success('New category added successfully!');
       }
       
       setModalVisible(false);
@@ -73,7 +73,7 @@ function AdminCategoryManagement() {
       form.resetFields();
       fetchCategories();
     } catch (error) {
-      const errorMsg = error.response?.data?.message || 'Có lỗi xảy ra khi lưu danh mục';
+      const errorMsg = error.response?.data?.message || 'An error occurred while saving category';
       message.error(errorMsg);
     }
   };
@@ -82,10 +82,10 @@ function AdminCategoryManagement() {
   const handleDelete = async (categoryId) => {
     try {
       await axiosInstance.delete(`/categories/${categoryId}`);
-      message.success('Xóa danh mục thành công!');
+      message.success('Category deleted successfully!');
       fetchCategories();
     } catch (error) {
-      const errorMsg = error.response?.data?.message || 'Không thể xóa danh mục';
+      const errorMsg = error.response?.data?.message || 'Unable to delete category';
       message.error(errorMsg);
     }
   };
@@ -119,7 +119,7 @@ function AdminCategoryManagement() {
       width: 80,
     },
     {
-      title: 'Tên danh mục',
+      title: 'Category Name',
       dataIndex: 'categoryName',
       key: 'categoryName',
       render: (text, record) => (
@@ -135,33 +135,33 @@ function AdminCategoryManagement() {
     },
 
     {
-      title: 'Danh mục cha',
+      title: 'Parent Category',
       dataIndex: 'parentCategory',
       key: 'parentCategory',
       render: (parentCategory) => (
         parentCategory ? (
           <Tag color="blue">{parentCategory.categoryName}</Tag>
         ) : (
-          <Tag color="green">Danh mục gốc</Tag>
+          <Tag color="green">Root Category</Tag>
         )
       ),
     },
     {
-      title: 'Số danh mục con',
+      title: 'Subcategories Count',
       key: 'subCategoriesCount',
       render: (_, record) => (
         <Tag color="cyan">
-          {record.subCategories?.length || 0} danh mục con
+          {record.subCategories?.length || 0} subcategories
         </Tag>
       ),
     },
     {
-      title: 'Hành động',
+      title: 'Actions',
       key: 'actions',
       width: 150,
       render: (_, record) => (
         <Space className="category-actions">
-          <Tooltip title="Chỉnh sửa">
+          <Tooltip title="Edit">
             <Button
               type="primary"
               size="small"
@@ -170,14 +170,14 @@ function AdminCategoryManagement() {
             />
           </Tooltip>
           <Popconfirm
-            title="Xác nhận xóa"
-            description="Bạn có chắc chắn muốn xóa danh mục này?"
+            title="Confirm Delete"
+            description="Are you sure you want to delete this category?"
             onConfirm={() => handleDelete(record.categoryId)}
-            okText="Xóa"
-            cancelText="Hủy"
+            okText="Delete"
+            cancelText="Cancel"
             icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
           >
-            <Tooltip title="Xóa">
+            <Tooltip title="Delete">
               <Button
                 danger
                 size="small"
@@ -195,7 +195,7 @@ function AdminCategoryManagement() {
       <Card className="category-card">
         <div className="category-header">
           <Title level={2} className="category-title">
-            Quản lý danh mục sản phẩm
+            Category Management
           </Title>
           <Button
             type="primary"
@@ -204,7 +204,7 @@ function AdminCategoryManagement() {
             size="large"
             className="add-category-btn"
           >
-            Thêm danh mục mới
+            Add New Category
           </Button>
         </div>
 
@@ -219,7 +219,7 @@ function AdminCategoryManagement() {
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) =>
-              `${range[0]}-${range[1]} của ${total} danh mục`,
+              `${range[0]}-${range[1]} of ${total} categories`,
           }}
           scroll={{ x: 800 }}
         />
@@ -227,7 +227,7 @@ function AdminCategoryManagement() {
 
       {/* Create/Edit Modal */}
       <Modal
-        title={editingCategory ? 'Chỉnh sửa danh mục' : 'Thêm danh mục mới'}
+        title={editingCategory ? 'Edit Category' : 'Add New Category'}
         open={modalVisible}
         onCancel={() => {
           setModalVisible(false);
@@ -245,23 +245,23 @@ function AdminCategoryManagement() {
         >
           <Form.Item
             name="categoryName"
-            label="Tên danh mục"
+            label="Category Name"
             rules={[
-              { required: true, message: 'Vui lòng nhập tên danh mục!' },
-              { min: 2, message: 'Tên danh mục phải có ít nhất 2 ký tự!' }
+              { required: true, message: 'Please enter category name!' },
+              { min: 2, message: 'Category name must be at least 2 characters!' }
             ]}
           >
-            <Input placeholder="Nhập tên danh mục..." />
+            <Input placeholder="Enter category name..." />
           </Form.Item>
 
 
 
           <Form.Item
             name="parentCategoryId"
-            label="Danh mục cha"
+            label="Parent Category"
           >
             <Select
-              placeholder="Chọn danh mục cha (tùy chọn)"
+              placeholder="Select parent category (optional)"
               allowClear
             >
               {getParentCategories().map(category => (
@@ -281,10 +281,10 @@ function AdminCategoryManagement() {
                   form.resetFields();
                 }}
               >
-                Hủy
+                Cancel
               </Button>
               <Button type="primary" htmlType="submit">
-                {editingCategory ? 'Cập nhật' : 'Thêm mới'}
+                {editingCategory ? 'Update' : 'Add New'}
               </Button>
             </Space>
           </Form.Item>
