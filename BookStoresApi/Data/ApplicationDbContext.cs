@@ -32,7 +32,7 @@ namespace BookStoresApi.Data
                 .Entity<Category>()
                 .HasOne(c => c.ParentCategory)
                 .WithMany(c => c.SubCategories)
-                .HasForeignKey(c => c.ParentId)
+                .HasForeignKey(c => c.ParentCategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ProductCategory - Product (Many-to-Many)

@@ -7,6 +7,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProductManagement from './pages/admin/products/AdminProductManagement';
 import AddProduct from './pages/admin/products/AddProduct';
 import EditProduct from './pages/admin/products/EditProduct';
+import AdminCategoryManagement from './pages/admin/categories/AdminCategoryManagement';
 import ProtectedRoute from './components/ProtectedRoute';
 import CustomerLayout from './layouts/CustomerLayout';
 import Home from './pages/customer/Home';
@@ -31,7 +32,7 @@ function App() {
           <Route path="products" element={<AdminProductManagement />} />
           <Route path="products/add" element={<AddProduct />} />
           <Route path="products/edit/:productId" element={<EditProduct />} />
-          <Route path="categories" element={<div>Categories Management</div>} />
+          <Route path="categories" element={<AdminCategoryManagement />} />
           <Route path="orders" element={<div>Orders Management</div>} />
           <Route path="customers" element={<div>Customers Management</div>} />
           <Route path="reviews" element={<div>Reviews Management</div>} />
