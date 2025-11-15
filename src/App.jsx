@@ -11,6 +11,8 @@ import AdminCategoryManagement from './pages/admin/categories/AdminCategoryManag
 import ProtectedRoute from './components/ProtectedRoute';
 import CustomerLayout from './layouts/CustomerLayout';
 import Home from './pages/customer/home/Home';
+import BookDetail from './pages/customer/book/BookDetail';
+import CategoryProducts from './pages/customer/book/CategoryProducts';
 import SellBooks from './pages/customer/sell/SellBooks';
 import Membership from './pages/customer/membership/Membership';
 import ShippingInfo from './pages/customer/policy/ShippingInfo';
@@ -58,6 +60,12 @@ function App() {
         <Route path="/" element={
           <CustomerLayout>
             <Home />
+          </CustomerLayout>
+        } />
+        
+        <Route path="/book/:id" element={
+          <CustomerLayout>
+            <BookDetail />
           </CustomerLayout>
         } />
         
@@ -189,7 +197,7 @@ function App() {
         
         <Route path="/products" element={
           <CustomerLayout>
-            <div>All Products Page</div>
+            <CategoryProducts />
           </CustomerLayout>
         } />
 

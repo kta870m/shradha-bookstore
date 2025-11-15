@@ -1,18 +1,25 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { FaStar } from "react-icons/fa";
 
 const currency = (v) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
 
 const ProductCard = ({ product }) => {
+  const navigate = useNavigate();
+  
   const imageUrl = product.mediaFiles && product.mediaFiles.length > 0 
     ? product.mediaFiles[0].mediaUrl 
     : product.thumbnailUrl || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=720&auto=format&fit=crop";
 
   const rating = product.averageRating || 0;
 
+  const handleClick = () => {
+    navigate(`/book/${product.productId}`);
+  };
+
   return (
-    <div className="product-card">
+    <div className="product-card" onClick={handleClick} style={{ cursor: 'pointer' }}>
       <div className="product-media">
         <img src={imageUrl} alt={product.productName} />
       </div>
