@@ -750,10 +750,18 @@ namespace BookStoresApi.Migrations
                 });
 
             modelBuilder.Entity("BookStoresApi.Models.ProductCategory", b =>
+            modelBuilder.Entity("BookStoresApi.Models.ProductCategory", b =>
                 {
                     b.HasOne("BookStoresApi.Models.Category", "Category")
                         .WithMany("ProductCategories")
                         .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BookStoresApi.Models.Product", "Product")
+                        .WithMany("ProductCategories")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -766,7 +774,9 @@ namespace BookStoresApi.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("Product");
-                });
+
+                    b.Navigation("Product");
+                }));
 
             modelBuilder.Entity("BookStoresApi.Models.ProductReview", b =>
                 {
@@ -863,6 +873,7 @@ namespace BookStoresApi.Migrations
             modelBuilder.Entity("BookStoresApi.Models.Category", b =>
                 {
                     b.Navigation("ProductCategories");
+                    b.Navigation("ProductCategories");
 
                     b.Navigation("SubCategories");
                 });
@@ -879,6 +890,8 @@ namespace BookStoresApi.Migrations
                     b.Navigation("MediaFiles");
 
                     b.Navigation("OrderDetails");
+
+                    b.Navigation("ProductCategories");
 
                     b.Navigation("ProductCategories");
 

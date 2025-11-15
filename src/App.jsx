@@ -10,7 +10,21 @@ import EditProduct from './pages/admin/products/EditProduct';
 import AdminCategoryManagement from './pages/admin/categories/AdminCategoryManagement';
 import ProtectedRoute from './components/ProtectedRoute';
 import CustomerLayout from './layouts/CustomerLayout';
-import Home from './pages/customer/Home';
+import Home from './pages/customer/home/Home';
+import SellBooks from './pages/customer/sell/SellBooks';
+import Membership from './pages/customer/membership/Membership';
+import ShippingInfo from './pages/customer/policy/ShippingInfo';
+import About from './pages/customer/about/About';
+import Blog from './pages/customer/blog/Blog';
+import Charity from './pages/customer/charity/Charity';
+import Press from './pages/customer/press/Press';
+import Ordering from './pages/customer/policy/Ordering';
+import PurchaseGuideline from './pages/customer/policy/PurchaseGuideline';
+import ConditionGuideline from './pages/customer/policy/ConditionGuideline';
+import BillingPayment from './pages/customer/policy/BillingPayment';
+import ShippingPolicy from './pages/customer/policy/ShippingPolicy';
+import ReturnPolicy from './pages/customer/policy/ReturnPolicy';
+import Faqs from './pages/customer/faqs/Faqs';
 import antdTheme from './config/antdTheme';
 import './App.css';
 
@@ -84,7 +98,67 @@ function App() {
         
         <Route path="/about" element={
           <CustomerLayout>
-            <div>About Bookworm Page</div>
+            <About />
+          </CustomerLayout>
+        } />
+
+        <Route path="/blog" element={
+          <CustomerLayout>
+            <Blog />
+          </CustomerLayout>
+        } />
+
+        <Route path="/charity" element={
+          <CustomerLayout>
+            <Charity />
+          </CustomerLayout>
+        } />
+
+        <Route path="/press" element={
+          <CustomerLayout>
+            <Press />
+          </CustomerLayout>
+        } />
+
+        <Route path="/ordering" element={
+          <CustomerLayout>
+            <Ordering />
+          </CustomerLayout>
+        } />
+
+        <Route path="/purchase-guideline" element={
+          <CustomerLayout>
+            <PurchaseGuideline />
+          </CustomerLayout>
+        } />
+
+        <Route path="/condition-guideline" element={
+          <CustomerLayout>
+            <ConditionGuideline />
+          </CustomerLayout>
+        } />
+
+        <Route path="/billing-payment" element={
+          <CustomerLayout>
+            <BillingPayment />
+          </CustomerLayout>
+        } />
+
+        <Route path="/shipping-policy" element={
+          <CustomerLayout>
+            <ShippingPolicy />
+          </CustomerLayout>
+        } />
+
+        <Route path="/return-policy" element={
+          <CustomerLayout>
+            <ReturnPolicy />
+          </CustomerLayout>
+        } />
+
+        <Route path="/faqs" element={
+          <CustomerLayout>
+            <Faqs />
           </CustomerLayout>
         } />
         
@@ -115,6 +189,24 @@ function App() {
         <Route path="/products" element={
           <CustomerLayout>
             <div>All Products Page</div>
+          </CustomerLayout>
+        } />
+
+        <Route path="/sell-books" element={
+          <CustomerLayout>
+            <SellBooks />
+          </CustomerLayout>
+        } />
+
+        <Route path="/membership" element={
+          <CustomerLayout>
+            <Membership />
+          </CustomerLayout>
+        } />
+
+        <Route path="/shipping-info" element={
+          <CustomerLayout>
+            <ShippingInfo />
           </CustomerLayout>
         } />
 
