@@ -55,28 +55,34 @@ namespace BookStoresApi.Controllers
 
         // POST: api/cartitems
         [HttpPost]
-        public async Task<ActionResult<CartItem>> CreateCartItem(CartItem cartItem)
+        public async Task<ActionResult<CartItem>> CreateCartItem(CreateCartItemDto dto)
         {
             // Check if product already exists in cart
             var existingItem = await _context.CartItems
-                .FirstOrDefaultAsync(ci => ci.CartId == cartItem.CartId && ci.ProductId == cartItem.ProductId && !ci.IsDeleted);
+                .FirstOrDefaultAsync(ci => ci.CartId == dto.CartId && ci.ProductId == dto.ProductId && !ci.IsDeleted);
 
             if (existingItem != null)
             {
                 // Update quantity instead of creating new item
-                existingItem.Quantity += cartItem.Quantity;
+                existingItem.Quantity += dto.Quantity;
                 await _context.SaveChangesAsync();
                 return Ok(existingItem);
             }
 
             // Get current product price
-            var product = await _context.Products.FindAsync(cartItem.ProductId);
+            var product = await _context.Products.FindAsync(dto.ProductId);
             if (product == null)
             {
                 return BadRequest("Product not found");
             }
 
-            cartItem.PriceAtAddTime = product.Price;
+            var cartItem = new CartItem
+            {
+                CartId = dto.CartId,
+                ProductId = dto.ProductId,
+                Quantity = dto.Quantity,
+                PriceAtAddTime = product.Price
+            };
 
             _context.CartItems.Add(cartItem);
             await _context.SaveChangesAsync();
@@ -142,14 +148,17 @@ namespace BookStoresApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCartItem(int id)
         {
-            var cartItem = await _context.CartItems.FindAsync(id);
+            var cartItem = await _context.CartItems
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(ci => ci.CartItemId == id);
+                
             if (cartItem == null)
             {
                 return NotFound();
             }
-
-            // Soft delete
+            
             cartItem.IsDeleted = true;
+            _context.Entry(cartItem).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -159,5 +168,12 @@ namespace BookStoresApi.Controllers
         {
             return _context.CartItems.Any(e => e.CartItemId == id);
         }
+    }
+
+    public class CreateCartItemDto
+    {
+        public required int CartId { get; set; }
+        public required int ProductId { get; set; }
+        public required int Quantity { get; set; }
     }
 }

@@ -1,0 +1,103 @@
+/* Product Card Styles */
+.product-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+.product-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.product-media {
+  position: relative;
+  width: 100%;
+  padding-top: 140%; /* 7:10 aspect ratio for book covers */
+  overflow: hidden;
+  background: #f9fafb;
+}
+
+.product-media img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-media img {
+  transform: scale(1.05);
+}
+
+/* Add to Cart Button Styles */
+.add-to-cart-btn {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.add-to-cart-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.add-to-cart-btn:active:not(:disabled) {
+  transform: translateX(-50%) translateY(0) scale(0.95) !important;
+}
+
+.product-info {
+  padding: 16px;
+}
+
+.product-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 42px;
+}
+
+.product-author {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.product-rating {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.product-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ef4444;
+}
+
+@media (max-width: 768px) {
+  .product-card:hover {
+    transform: translateY(-4px);
+  }
+  
+  .add-to-cart-btn {
+    font-size: 13px;
+    padding: 8px 16px;
+  }
+}

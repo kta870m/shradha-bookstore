@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
+using BookStoresApi.Constants;
 using BookStoresApi.Data;
 using BookStoresApi.DTOs;
 using BookStoresApi.Models;
@@ -43,6 +44,19 @@ namespace BookStoresApi.Services
             // Sử dụng PaymentTxnRef từ order (đã được tạo sẵn khi tạo order)
             string vnpTxnRef = order.PaymentTxnRef ?? Guid.NewGuid().ToString("N").Substring(0, 20);
             
+            // Chuyển đổi USD sang VND và format cho VNPay
+            long vnpAmount = CurrencyConstants.ConvertUsdToVnpayAmount(order.TotalAmount);
+            long vndAmount = CurrencyConstants.ConvertUsdToVnd(order.TotalAmount);
+            
+            _logger.LogInformation(
+                "Payment conversion - Order {OrderId}: USD {UsdAmount:F2} -> VND {VndAmount:N0} -> VNPay Amount {VnpAmount} (Rate: {Rate})", 
+                order.OrderId, 
+                order.TotalAmount, 
+                vndAmount, 
+                vnpAmount,
+                CurrencyConstants.USD_TO_VND_RATE
+            );
+            
             DateTime now = DateTime.Now;
             DateTime expire = now.AddMinutes(15);
             string dateFormat = "yyyyMMddHHmmss";
@@ -53,7 +67,7 @@ namespace BookStoresApi.Services
                 { "vnp_Version", "2.1.0" },
                 { "vnp_Command", "pay" },
                 { "vnp_TmnCode", _vnPayConfig.TmnCode },
-                { "vnp_Amount", ((long)Math.Round(order.TotalAmount * 100)).ToString() }, // Làm tròn
+                { "vnp_Amount", vnpAmount.ToString() },
                 { "vnp_CurrCode", "VND" },
                 { "vnp_TxnRef", vnpTxnRef }, // Sử dụng PaymentTxnRef từ order
                 { "vnp_OrderInfo", $"Thanh toan don hang #{order.OrderId}" },
@@ -222,8 +236,15 @@ namespace BookStoresApi.Services
             else
             {
                 // Thanh toán thất bại hoặc xác thực thất bại
-                order.OrderStatus = vnpResponseCode == "00" ? "Payment Verification Failed" : "Payment Failed";
+                string failureStatus = vnpResponseCode == "00" 
+                    ? "Payment Verification Failed" 
+                    : "Failed"; // Set to "Failed" when payment fails
+                    
+                order.OrderStatus = failureStatus;
                 await _context.SaveChangesAsync();
+
+                _logger.LogWarning("Payment failed for Order {OrderId}. VNP Response Code: {ResponseCode}, Query Response: {QueryResponse}", 
+                    order.OrderId, vnpResponseCode, queryResult.ResponseCode);
 
                 return new
                 {
@@ -234,6 +255,9 @@ namespace BookStoresApi.Services
                     orderId = order.OrderId,
                     orderCode = order.OrderCode,
                     status = order.OrderStatus,
+                    transactionRef = vnpTxnRef,
+                    bankCode = bankCode,
+                    payDate = vnpPayDate,
                     vnpayQuery = new
                     {
                         responseCode = queryResult.ResponseCode,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ConfigProvider } from 'antd';
+import { CartProvider } from './contexts/CartContext';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminRegister from './pages/admin/AdminRegister';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -11,6 +12,7 @@ import AdminCategoryManagement from './pages/admin/categories/AdminCategoryManag
 import ProtectedRoute from './components/ProtectedRoute';
 import CustomerLayout from './layouts/CustomerLayout';
 import Home from './pages/customer/home/Home';
+import Cart from './pages/customer/cart/Cart';
 import SellBooks from './pages/customer/sell/SellBooks';
 import Membership from './pages/customer/membership/Membership';
 import ShippingInfo from './pages/customer/policy/ShippingInfo';
@@ -26,14 +28,16 @@ import ShippingPolicy from './pages/customer/policy/ShippingPolicy';
 import ReturnPolicy from './pages/customer/policy/ReturnPolicy';
 import Faqs from './pages/customer/faqs/Faqs';
 import VNPayReturn from './pages/customer/VNPayReturn';
+import PaymentReturn from './pages/customer/payment/PaymentReturn';
 import antdTheme from './config/antdTheme';
 import './App.css';
 
 function App() {
   return (
     <ConfigProvider theme={antdTheme}>
-      <BrowserRouter>
-      <Routes>
+      <CartProvider>
+        <BrowserRouter>
+        <Routes>
         {/* Admin routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/register" element={<AdminRegister />} />
@@ -171,7 +175,7 @@ function App() {
         
         <Route path="/cart" element={
           <CustomerLayout>
-            <div>Shopping Cart Page</div>
+            <Cart />
           </CustomerLayout>
         } />
         
@@ -212,6 +216,11 @@ function App() {
         } />
 
         {/* VNPay Return (support both routes VNPay may use) */}
+        <Route path="/payment-return" element={
+          <CustomerLayout>
+            <PaymentReturn />
+          </CustomerLayout>
+        } />
         <Route path="/vnpay-return" element={
           <CustomerLayout>
             <VNPayReturn />
@@ -233,6 +242,7 @@ function App() {
         } />
       </Routes>
     </BrowserRouter>
+    </CartProvider>
     </ConfigProvider>
   );
 }

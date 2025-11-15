@@ -171,13 +171,22 @@ namespace BookStoresApi.Controllers
             // Generate unique payment transaction reference (UUID 20 chars like Java)
             string paymentTxnRef = Guid.NewGuid().ToString("N").Substring(0, 20);
 
+            // Determine initial order status based on payment method
+            string initialStatus = "Pending";
+            if (!string.IsNullOrEmpty(request.PaymentMethod) && 
+                request.PaymentMethod.Equals("COD", StringComparison.OrdinalIgnoreCase))
+            {
+                initialStatus = "Confirmed"; // COD orders are confirmed immediately
+            }
+
             // Create order
             var order = new Order
             {
                 OrderCode = orderCode,
                 UserId = request.UserId,
                 OrderDate = DateTime.Now,
-                OrderStatus = "Pending",
+                OrderStatus = initialStatus,
+                PaymentMethod = request.PaymentMethod,
                 ShippingFee = request.ShippingFee,
                 PaymentTxnRef = paymentTxnRef,
                 OrderDetails = new List<OrderDetail>()
