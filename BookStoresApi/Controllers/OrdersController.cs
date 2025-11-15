@@ -67,6 +67,23 @@ namespace BookStoresApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
         {
+            // This endpoint returns ALL orders (for admin use)
+            // For customer-specific orders, use GET /api/orders/my-orders
+            
+            return await _context
+                .Orders
+                .Include(o => o.User)
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product)
+                .ThenInclude(p => p.MediaFiles)
+                .OrderByDescending(o => o.OrderCode)
+                .ToListAsync();
+        }
+
+        // GET: api/orders/my-orders (Get orders for current logged-in user)
+        [HttpGet("my-orders")]
+        public async Task<ActionResult<IEnumerable<Order>>> GetMyOrders()
+        {
             // Debug: Log all claims
             foreach (var claim in User.Claims)
             {
@@ -80,34 +97,26 @@ namespace BookStoresApi.Controllers
             
             Console.WriteLine($"UserIdClaim extracted: {userIdClaim}");
             
-            if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out int userId))
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
             {
-                Console.WriteLine($"Filtering orders for userId: {userId}");
-                // If userId found in token, return only user's orders
-                var userOrders = await _context
-                    .Orders
-                    .Where(o => o.UserId == userId)
-                    .Include(o => o.User)
-                    .Include(o => o.OrderDetails)
-                    .ThenInclude(od => od.Product)
-                    .ThenInclude(p => p.MediaFiles)
-                    .OrderByDescending(o => o.OrderCode)
-                    .ToListAsync();
-                    
-                Console.WriteLine($"Found {userOrders.Count} orders for user {userId}");
-                return userOrders;
+                return Unauthorized(new { message = "User not authenticated or userId not found in token" });
             }
             
-            Console.WriteLine("No userId found in token, returning all orders");
-            // If no userId in token (admin or public access), return all orders
-            return await _context
+            Console.WriteLine($"Filtering orders for userId: {userId}");
+            
+            // Return only user's orders
+            var userOrders = await _context
                 .Orders
+                .Where(o => o.UserId == userId)
                 .Include(o => o.User)
                 .Include(o => o.OrderDetails)
                 .ThenInclude(od => od.Product)
                 .ThenInclude(p => p.MediaFiles)
                 .OrderByDescending(o => o.OrderCode)
                 .ToListAsync();
+                
+            Console.WriteLine($"Found {userOrders.Count} orders for user {userId}");
+            return userOrders;
         }
 
         // GET: api/orders/{id}

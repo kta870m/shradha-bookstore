@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { FaStar, FaHeart, FaMinus, FaPlus, FaTruck, FaExchangeAlt, FaUndo, FaShippingFast, FaFacebookF } from "react-icons/fa";
+import { DollarOutlined, CreditCardOutlined } from '@ant-design/icons';
+import { Modal, Radio, Card, Space, Typography, Divider, Statistic } from "antd";
 import { bookApi } from "../../../api/customer";
+import { useCart } from "../../../contexts/CartContext";
+import { message } from "antd";
+import { createOrder } from '../../../api/orders';
+import { createPayment } from '../../../api/payment';
+import { convertUsdToVnd, formatVnd, CURRENCY_CONFIG } from '../../../config/currency';
 import "./BookDetail.css";
+
+const { Text } = Typography;
 
 const currency = (v) =>
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
@@ -10,6 +19,7 @@ const currency = (v) =>
 const BookDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { addToCart, loading: cartLoading } = useCart();
     const [product, setProduct] = useState(null);
     const [relatedProducts, setRelatedProducts] = useState([]);
     const [sameCategoryBooks, setSameCategoryBooks] = useState([]);
@@ -17,6 +27,24 @@ const BookDetail = () => {
     const [quantity, setQuantity] = useState(1);
     const [selectedFormat, setSelectedFormat] = useState("PAPERBACK");
     const [selectedCondition, setSelectedCondition] = useState("NEW");
+    const [addingToCart, setAddingToCart] = useState(false);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState('online');
+    const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+    // Get userId from JWT token
+    const getUserId = () => {
+        const token = localStorage.getItem('token');
+        if (!token) return null;
+
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return parseInt(payload.sid);
+        } catch (error) {
+            console.error('Error decoding token:', error);
+            return null;
+        }
+    };
 
     useEffect(() => {
         const fetchProductDetail = async () => {
@@ -25,26 +53,37 @@ const BookDetail = () => {
             const data = await bookApi.getById(id);
             console.log('[BookDetail] Product data:', data);
             setProduct(data);
+            setLoading(false); // Set loading false ngay sau khi có product data
 
-            // Lấy sản phẩm "You Might Also Like" (4 sách)
+            // Fetch related books không blocking
             if (data.categoryId) {
                 console.log('[BookDetail] Fetching related books for category:', data.categoryId);
-                const related = await bookApi.getRelatedBooks(id, data.categoryId, 4);
-                console.log('[BookDetail] Related books (You Might Also Enjoy):', related);
-                setRelatedProducts(related);
                 
-                // Lấy sách cùng category cho section dưới (6 sách khác)
-                const sameCategory = await bookApi.getRelatedBooks(id, data.categoryId, 10);
-                console.log('[BookDetail] Same category books:', sameCategory);
-                // Lấy 6 sách khác với "You Might Also Enjoy"
-                const filteredSameCategory = sameCategory.filter(
-                    book => !related.some(r => r.productId === book.productId)
-                ).slice(0, 6);
-                setSameCategoryBooks(filteredSameCategory);
+                // Fetch related books với error handling riêng
+                bookApi.getRelatedBooks(id, data.categoryId, 4)
+                    .then(related => {
+                        console.log('[BookDetail] Related books (You Might Also Enjoy):', related);
+                        setRelatedProducts(related);
+                        
+                        // Fetch same category books
+                        return bookApi.getRelatedBooks(id, data.categoryId, 10)
+                            .then(sameCategory => {
+                                console.log('[BookDetail] Same category books:', sameCategory);
+                                const filteredSameCategory = sameCategory.filter(
+                                    book => !related.some(r => r.productId === book.productId)
+                                ).slice(0, 6);
+                                setSameCategoryBooks(filteredSameCategory);
+                            });
+                    })
+                    .catch(error => {
+                        console.error("Error fetching related books:", error);
+                        // Không hiển thị error cho user, chỉ log
+                        setRelatedProducts([]);
+                        setSameCategoryBooks([]);
+                    });
             }
         } catch (error) {
             console.error("Error fetching product:", error);
-        } finally {
             setLoading(false);
         }
         };
@@ -61,14 +100,85 @@ const BookDetail = () => {
         }
     };
 
-    const handleAddToCart = () => {
-        // TODO: Implement add to cart logic
-        console.log("Add to cart:", { product, quantity, selectedFormat, selectedCondition });
+    const handleAddToCart = async () => {
+        if (addingToCart || cartLoading) return;
+
+        setAddingToCart(true);
+        try {
+            const success = await addToCart(product.productId, quantity);
+            if (success) {
+                message.success(`Added ${quantity} item(s) to cart successfully!`);
+                // Reset quantity after adding to cart
+                setQuantity(1);
+            }
+        } catch {
+            message.error('An error occurred while adding to cart');
+        } finally {
+            setAddingToCart(false);
+        }
     };
 
     const handleBuyNow = () => {
-        // TODO: Implement buy now logic
-        console.log("Buy now:", { product, quantity, selectedFormat, selectedCondition });
+        const userId = getUserId();
+        if (!userId) {
+            message.error('Please login to buy');
+            navigate('/login');
+            return;
+        }
+
+        if (!product || quantity < 1) {
+            message.error('Invalid product or quantity');
+            return;
+        }
+
+        // Show payment method selection modal
+        setShowPaymentModal(true);
+    };
+
+    const handlePaymentMethodConfirm = async () => {
+        setShowPaymentModal(false);
+        setCheckoutLoading(true);
+
+        const userId = getUserId();
+
+        try {
+            // Create order with single product
+            const orderDetails = [{
+                productId: product.productId,
+                quantity: quantity
+            }];
+
+            const orderResponse = await createOrder({
+                userId: userId,
+                shippingFee: 0,
+                paymentMethod: paymentMethod === 'cod' ? 'COD' : 'VNPAY',
+                orderDetails: orderDetails
+            });
+
+            if (paymentMethod === 'cod') {
+                // COD payment - Order is confirmed
+                message.success('Order placed successfully with Cash on Delivery!');
+                
+                // Navigate to orders page
+                navigate('/orders');
+            } else {
+                // Online payment - Store info and redirect to VNPay
+                localStorage.setItem('pendingOrderId', orderResponse.orderId.toString());
+
+                // Create payment and get VNPay URL
+                const paymentResponse = await createPayment({
+                    orderId: orderResponse.orderId,
+                    returnUrl: `${window.location.origin}/payment-return`
+                });
+
+                // Redirect to VNPay
+                window.location.href = paymentResponse.paymentUrl;
+            }
+        } catch (error) {
+            console.error('Buy now error:', error);
+            message.error(error.response?.data?.message || 'Failed to process order');
+            setCheckoutLoading(false);
+        }
     };
 
     if (loading) {
@@ -91,8 +201,6 @@ const BookDetail = () => {
     const imageUrl = product.mediaFiles && product.mediaFiles.length > 0 
         ? product.mediaFiles[0].mediaUrl 
         : product.thumbnailUrl || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=720&auto=format&fit=crop";
-
-    const rating = product.averageRating || 0;
 
     return (
         <div className="book-detail-page">
@@ -203,7 +311,13 @@ const BookDetail = () => {
             {/* Action Buttons */}
             <div className="action-buttons">
                 <button className="btn-buy-now" onClick={handleBuyNow}>Buy Now</button>
-                <button className="btn-add-cart" onClick={handleAddToCart}>Add to cart</button>
+                <button 
+                    className="btn-add-cart" 
+                    onClick={handleAddToCart}
+                    disabled={addingToCart || cartLoading || product.stockQuantity === 0}
+                >
+                    {addingToCart ? 'Adding...' : 'Add to cart'}
+                </button>
             </div>
 
             <div className="availability-badge">
@@ -345,7 +459,106 @@ const BookDetail = () => {
             </div>
             </div>
         )}
-        </div>
+
+        {/* Payment Method Selection Modal */}
+        <Modal
+            title="Select Payment Method"
+            open={showPaymentModal}
+            onOk={handlePaymentMethodConfirm}
+            onCancel={() => setShowPaymentModal(false)}
+            okText="Confirm Order"
+            cancelText="Cancel"
+            okButtonProps={{ loading: checkoutLoading }}
+            width={500}
+        >
+            <Space direction="vertical" size="large" style={{ width: '100%', padding: '20px 0' }}>
+                <Text>Please select your preferred payment method:</Text>
+                
+                <Radio.Group 
+                    onChange={(e) => setPaymentMethod(e.target.value)} 
+                    value={paymentMethod}
+                    style={{ width: '100%' }}
+                >
+                    <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                        <Card 
+                            hoverable
+                            style={{ 
+                                border: paymentMethod === 'online' ? '2px solid #1890ff' : '1px solid #d9d9d9',
+                                cursor: 'pointer'
+                            }}
+                            onClick={() => setPaymentMethod('online')}
+                        >
+                            <Radio value="online">
+                                <Space>
+                                    <CreditCardOutlined style={{ fontSize: '24px', color: '#1890ff' }} />
+                                    <div>
+                                        <Text strong>Online Payment (VNPay)</Text>
+                                        <br />
+                                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                                            Pay securely with VNPay gateway
+                                        </Text>
+                                    </div>
+                                </Space>
+                            </Radio>
+                        </Card>
+
+                        <Card 
+                            hoverable
+                            style={{ 
+                                border: paymentMethod === 'cod' ? '2px solid #1890ff' : '1px solid #d9d9d9',
+                                cursor: 'pointer'
+                            }}
+                            onClick={() => setPaymentMethod('cod')}
+                        >
+                            <Radio value="cod">
+                                <Space>
+                                    <DollarOutlined style={{ fontSize: '24px', color: '#52c41a' }} />
+                                    <div>
+                                        <Text strong>Cash on Delivery (COD)</Text>
+                                        <br />
+                                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                                            Pay when you receive your order
+                                        </Text>
+                                    </div>
+                                </Space>
+                            </Radio>
+                        </Card>
+                    </Space>
+                </Radio.Group>
+
+                <Divider style={{ margin: '8px 0' }} />
+                
+                <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text>Quantity:</Text>
+                        <Text strong style={{ fontSize: '16px' }}>
+                            {quantity} {quantity === 1 ? 'item' : 'items'}
+                        </Text>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text>Total Amount (USD):</Text>
+                        <Text strong style={{ fontSize: '18px' }}>
+                            ${(product?.price * quantity).toFixed(2)}
+                        </Text>
+                    </div>
+                    
+                    {paymentMethod === 'online' && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Text type="secondary">Amount in VND:</Text>
+                            <Text strong style={{ fontSize: '16px', color: '#52c41a' }}>
+                                {formatVnd(convertUsdToVnd(product?.price * quantity))}
+                            </Text>
+                        </div>
+                    )}
+                    
+                    <Text type="secondary" style={{ fontSize: '11px', fontStyle: 'italic' }}>
+                        {paymentMethod === 'online' && `Exchange rate: 1 USD ≈ ${CURRENCY_CONFIG.USD_TO_VND_RATE.toLocaleString('vi-VN')} VND`}
+                    </Text>
+                </Space>
+            </Space>
+        </Modal>
+      </div>
     );
 };
 
