@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
+using BookStoresApi.Constants;
 using BookStoresApi.Data;
 using BookStoresApi.DTOs;
 using BookStoresApi.Models;
@@ -43,6 +44,19 @@ namespace BookStoresApi.Services
             // Sử dụng PaymentTxnRef từ order (đã được tạo sẵn khi tạo order)
             string vnpTxnRef = order.PaymentTxnRef ?? Guid.NewGuid().ToString("N").Substring(0, 20);
             
+            // Chuyển đổi USD sang VND và format cho VNPay
+            long vnpAmount = CurrencyConstants.ConvertUsdToVnpayAmount(order.TotalAmount);
+            long vndAmount = CurrencyConstants.ConvertUsdToVnd(order.TotalAmount);
+            
+            _logger.LogInformation(
+                "Payment conversion - Order {OrderId}: USD {UsdAmount:F2} -> VND {VndAmount:N0} -> VNPay Amount {VnpAmount} (Rate: {Rate})", 
+                order.OrderId, 
+                order.TotalAmount, 
+                vndAmount, 
+                vnpAmount,
+                CurrencyConstants.USD_TO_VND_RATE
+            );
+            
             DateTime now = DateTime.Now;
             DateTime expire = now.AddMinutes(15);
             string dateFormat = "yyyyMMddHHmmss";
@@ -53,7 +67,7 @@ namespace BookStoresApi.Services
                 { "vnp_Version", "2.1.0" },
                 { "vnp_Command", "pay" },
                 { "vnp_TmnCode", _vnPayConfig.TmnCode },
-                { "vnp_Amount", ((long)Math.Round(order.TotalAmount * 100)).ToString() }, // Làm tròn
+                { "vnp_Amount", vnpAmount.ToString() },
                 { "vnp_CurrCode", "VND" },
                 { "vnp_TxnRef", vnpTxnRef }, // Sử dụng PaymentTxnRef từ order
                 { "vnp_OrderInfo", $"Thanh toan don hang #{order.OrderId}" },
@@ -170,9 +184,10 @@ namespace BookStoresApi.Services
             }
 
             // Kiểm tra xem order đã được xử lý chưa
-            if (order.OrderStatus == "Processing" || order.OrderStatus == "Completed")
+            if (order.OrderStatus == "Paid" || order.OrderStatus == "Processing" || order.OrderStatus == "Completed")
             {
                 // Trả về kết quả từ DB (đã xử lý trước đó)
+                _logger.LogInformation("Order {OrderId} already processed with status: {Status}", order.OrderId, order.OrderStatus);
                 return new 
                 { 
                     success = true,
@@ -183,66 +198,195 @@ namespace BookStoresApi.Services
                     alreadyProcessed = true
                 };
             }
-
-            // Xác thực với VNPay Query API
-            var queryResult = await QueryTransaction(vnpTxnRef, vnpPayDate);
             
-            _logger.LogInformation("=== VNPay Query Result ===");
-            _logger.LogInformation("OrderId: {OrderId}, TxnRef: {TxnRef}", order.OrderId, vnpTxnRef);
-            _logger.LogInformation("ResponseCode: {ResponseCode}, TransactionStatus: {TransactionStatus}", 
-                queryResult.ResponseCode, queryResult.TransactionStatus);
+            _logger.LogInformation("Processing payment for Order {OrderId}, current status: {Status}", order.OrderId, order.OrderStatus);
 
-            // Kiểm tra kết quả từ VNPay Query API
-            if (vnpResponseCode == "00" && (queryResult.ResponseCode == "00" || queryResult.ResponseCode == "94"))
+            // Xác thực với VNPay Query API với xử lý timeout
+            VnPayQueryResponse? queryResult = null;
+            bool querySuccess = false;
+            
+            try
             {
-                // Thanh toán thành công và VNPay xác nhận
-                order.OrderStatus = "Processing";
-                order.PaymentMethod = "VNPAY";
-                await _context.SaveChangesAsync();
+                queryResult = await QueryTransaction(vnpTxnRef, vnpPayDate);
+                querySuccess = true;
+                
+                _logger.LogInformation("=== VNPay Query Result ===");
+                _logger.LogInformation("OrderId: {OrderId}, TxnRef: {TxnRef}", order.OrderId, vnpTxnRef);
+                _logger.LogInformation("ResponseCode: {ResponseCode}, TransactionStatus: {TransactionStatus}", 
+                    queryResult.ResponseCode, queryResult.TransactionStatus);
+            }
+            catch (TaskCanceledException ex)
+            {
+                _logger.LogWarning("VNPay Query API timeout for Order {OrderId}. Will process based on callback signature validation. Error: {Error}", 
+                    order.OrderId, ex.Message);
+                querySuccess = false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("VNPay Query API error for Order {OrderId}. Will process based on callback signature validation. Error: {Error}", 
+                    order.OrderId, ex.Message);
+                querySuccess = false;
+            }
 
-                return new
+            // Kiểm tra kết quả
+            if (vnpResponseCode == "00")
+            {
+                // Response code 00 = Giao dịch thành công từ callback
+                if (querySuccess && queryResult != null && (queryResult.ResponseCode == "00" || queryResult.ResponseCode == "94"))
                 {
-                    success = true,
-                    message = "Payment successful",
-                    orderId = order.OrderId,
-                    orderCode = order.OrderCode,
-                    status = order.OrderStatus,
-                    vnpayQuery = new
+                    // Thanh toán thành công và VNPay Query xác nhận
+                    _logger.LogInformation("Updating order {OrderId} status to 'Paid' (Query API verified)", order.OrderId);
+                    
+                    order.OrderStatus = "Paid";
+                    order.PaymentMethod = "VNPAY";
+                    
+                    // Ensure entity is tracked
+                    _context.Entry(order).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+                    
+                    _logger.LogInformation("Before SaveChanges - Order {OrderId} status: {Status}, Entity State: {State}", 
+                        order.OrderId, order.OrderStatus, _context.Entry(order).State);
+                    
+                    try
                     {
-                        responseCode = queryResult.ResponseCode,
-                        transactionStatus = queryResult.TransactionStatus,
-                        transactionNo = queryResult.TransactionNo ?? vnpTransactionNo,
-                        amount = queryResult.Amount,
-                        bankCode = queryResult.BankCode ?? bankCode,
-                        payDate = vnpPayDate,
-                        message = queryResult.Message
+                        var changeCount = await _context.SaveChangesAsync();
+                        _logger.LogInformation("SaveChanges successful for Order {OrderId}. {Count} records updated.", order.OrderId, changeCount);
                     }
-                };
+                    catch (Exception saveEx)
+                    {
+                        _logger.LogError("SaveChanges FAILED for Order {OrderId}. Error: {Error}", order.OrderId, saveEx.Message);
+                        throw;
+                    }
+
+                    return new
+                    {
+                        success = true,
+                        message = "Payment successful and verified",
+                        orderId = order.OrderId,
+                        orderCode = order.OrderCode,
+                        status = order.OrderStatus,
+                        verified = true,
+                        vnpayQuery = new
+                        {
+                            responseCode = queryResult.ResponseCode,
+                            transactionStatus = queryResult.TransactionStatus,
+                            transactionNo = queryResult.TransactionNo ?? vnpTransactionNo,
+                            amount = queryResult.Amount,
+                            bankCode = queryResult.BankCode ?? bankCode,
+                            payDate = vnpPayDate,
+                            message = queryResult.Message
+                        }
+                    };
+                }
+                else if (!querySuccess)
+                {
+                    // Query API timeout/error nhưng callback đã verify signature thành công
+                    // Tin tưởng callback vì đã verify HMAC signature
+                    _logger.LogInformation("Updating order {OrderId} status to 'Paid' (Callback signature verified, Query API unavailable)", order.OrderId);
+                    
+                    order.OrderStatus = "Paid";
+                    order.PaymentMethod = "VNPAY";
+                    
+                    // Ensure entity is tracked
+                    _context.Entry(order).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+                    
+                    _logger.LogInformation("Before SaveChanges - Order {OrderId} status: {Status}, Entity State: {State}", 
+                        order.OrderId, order.OrderStatus, _context.Entry(order).State);
+                    
+                    try
+                    {
+                        var changeCount = await _context.SaveChangesAsync();
+                        _logger.LogInformation("SaveChanges successful for Order {OrderId}. {Count} records updated.", order.OrderId, changeCount);
+                    }
+                    catch (Exception saveEx)
+                    {
+                        _logger.LogError("SaveChanges FAILED for Order {OrderId}. Error: {Error}", order.OrderId, saveEx.Message);
+                        throw;
+                    };
+                    
+                    await _context.SaveChangesAsync();
+
+                    return new
+                    {
+                        success = true,
+                        message = "Payment successful (verified by callback signature)",
+                        orderId = order.OrderId,
+                        orderCode = order.OrderCode,
+                        status = order.OrderStatus,
+                        verified = false,
+                        verificationNote = "Query API unavailable, trusted callback signature",
+                        transactionNo = vnpTransactionNo,
+                        bankCode = bankCode,
+                        payDate = vnpPayDate
+                    };
+                }
+                else
+                {
+                    // Query API phản hồi nhưng không xác nhận được giao dịch
+                    order.OrderStatus = "Payment Verification Failed";
+                    await _context.SaveChangesAsync();
+
+                    _logger.LogWarning("Payment verification failed for Order {OrderId}. Query Response: {QueryResponse}", 
+                        order.OrderId, queryResult?.ResponseCode);
+
+                    return new
+                    {
+                        success = false,
+                        message = "Payment verification failed with VNPay",
+                        orderId = order.OrderId,
+                        orderCode = order.OrderCode,
+                        status = order.OrderStatus,
+                        verified = false,
+                        vnpayQuery = queryResult != null ? new
+                        {
+                            responseCode = queryResult.ResponseCode,
+                            transactionStatus = queryResult.TransactionStatus,
+                            message = queryResult.Message
+                        } : null
+                    };
+                }
             }
             else
             {
-                // Thanh toán thất bại hoặc xác thực thất bại
-                order.OrderStatus = vnpResponseCode == "00" ? "Payment Verification Failed" : "Payment Failed";
+                // Thanh toán thất bại từ callback
+                order.OrderStatus = "Failed";
                 await _context.SaveChangesAsync();
+
+                _logger.LogWarning("Payment failed for Order {OrderId}. VNP Response Code: {ResponseCode}", 
+                    order.OrderId, vnpResponseCode);
 
                 return new
                 {
                     success = false,
-                    message = vnpResponseCode == "00" 
-                        ? "Payment verification failed with VNPay" 
-                        : "Payment failed",
+                    message = GetVnpayResponseMessage(vnpResponseCode),
                     orderId = order.OrderId,
                     orderCode = order.OrderCode,
                     status = order.OrderStatus,
-                    vnpayQuery = new
-                    {
-                        responseCode = queryResult.ResponseCode,
-                        transactionStatus = queryResult.TransactionStatus,
-                        message = queryResult.Message
-                    },
+                    transactionRef = vnpTxnRef,
+                    bankCode = bankCode,
+                    payDate = vnpPayDate,
                     callbackResponseCode = vnpResponseCode
                 };
             }
+        }
+
+        private string GetVnpayResponseMessage(string responseCode)
+        {
+            return responseCode switch
+            {
+                "00" => "Transaction successful",
+                "07" => "Transaction successful. Transaction is suspected of fraud",
+                "09" => "Transaction failed: Card/Account of customer is not registered for InternetBanking service",
+                "10" => "Transaction failed: Customer entered wrong card/account information more than 3 times",
+                "11" => "Transaction failed: Payment deadline has expired",
+                "12" => "Transaction failed: Card/Account is locked",
+                "13" => "Transaction failed: Wrong transaction authentication password (OTP)",
+                "24" => "Transaction canceled",
+                "51" => "Transaction failed: Account does not have enough balance",
+                "65" => "Transaction failed: Account has exceeded the daily transaction limit",
+                "75" => "Payment gateway is under maintenance",
+                "79" => "Transaction failed: Wrong payment password more than allowed",
+                _ => "Transaction failed"
+            };
         }
 
         private string HmacSHA512(string key, string data)
@@ -360,7 +504,7 @@ namespace BookStoresApi.Services
 
                 // Call VNPay Query API
                 using var httpClient = new HttpClient();
-                httpClient.Timeout = TimeSpan.FromSeconds(30);
+                httpClient.Timeout = TimeSpan.FromSeconds(60); // Tăng timeout lên 60 giây vì VNPay Query API chậm
                 
                 var content = new StringContent(
                     System.Text.Json.JsonSerializer.Serialize(vnpParams),

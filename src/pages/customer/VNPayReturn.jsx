@@ -57,8 +57,8 @@ const VNPayReturn = () => {
         gap: '20px'
       }}>
         <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
-        <h3>Đang xử lý kết quả thanh toán...</h3>
-        <p style={{ color: '#666' }}>Vui lòng không đóng trang này</p>
+        <h3>Processing payment result...</h3>
+        <p style={{ color: '#666' }}>Please do not close this page</p>
       </div>
     );
   }
@@ -67,14 +67,14 @@ const VNPayReturn = () => {
     return (
       <Result
         status="error"
-        title="Lỗi xử lý thanh toán"
+        title="Payment Processing Error"
         subTitle={error}
         extra={[
           <Button type="primary" key="home" onClick={() => navigate('/')}>
-            Về trang chủ
+            Go to Home
           </Button>,
           <Button key="orders" onClick={() => navigate('/orders')}>
-            Xem đơn hàng
+            View Orders
           </Button>,
         ]}
       />
@@ -88,30 +88,30 @@ const VNPayReturn = () => {
       <Result
         status="success"
         icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
-        title="Thanh toán thành công!"
+        title="Payment Successful!"
         subTitle={
           <div>
-            <p>Đơn hàng của bạn đã được thanh toán và xác thực thành công.</p>
+            <p>Your order has been paid and verified successfully.</p>
             {result.alreadyProcessed && (
               <p style={{ color: '#faad14', fontStyle: 'italic', fontSize: '14px' }}>
-                (Đơn hàng này đã được xử lý trước đó)
+                (This order has been processed previously)
               </p>
             )}
             <div style={{ marginTop: '20px', textAlign: 'left', display: 'inline-block', backgroundColor: '#f6ffed', padding: '16px', borderRadius: '8px', border: '1px solid #b7eb8f' }}>
-              <p><strong>Mã đơn hàng:</strong> {result.orderCode}</p>
-              <p><strong>Mã giao dịch VNPay:</strong> {vnpay.transactionNo}</p>
-              <p><strong>Số tiền:</strong> {vnpay.amount ? `${(vnpay.amount / 100).toLocaleString('vi-VN')} VNĐ` : 'N/A'}</p>
-              <p><strong>Ngân hàng:</strong> {vnpay.bankCode}</p>
-              <p><strong>Trạng thái:</strong> <span style={{ color: '#52c41a', fontWeight: 'bold' }}>{result.status}</span></p>
+              <p><strong>Order Code:</strong> {result.orderCode}</p>
+              <p><strong>VNPay Transaction ID:</strong> {vnpay.transactionNo}</p>
+              <p><strong>Amount:</strong> {vnpay.amount ? `${(vnpay.amount / 100).toLocaleString('vi-VN')} VND` : 'N/A'}</p>
+              <p><strong>Bank:</strong> {vnpay.bankCode}</p>
+              <p><strong>Status:</strong> <span style={{ color: '#52c41a', fontWeight: 'bold' }}>{result.status}</span></p>
             </div>
           </div>
         }
         extra={[
           <Button type="primary" key="orders" onClick={() => navigate('/orders')}>
-            Xem đơn hàng của tôi
+            View My Orders
           </Button>,
           <Button key="home" onClick={() => navigate('/')}>
-            Tiếp tục mua sắm
+            Continue Shopping
           </Button>,
         ]}
       />
@@ -122,28 +122,28 @@ const VNPayReturn = () => {
     <Result
       status="error"
       icon={<CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
-      title="Thanh toán thất bại"
+      title="Payment Failed"
       subTitle={
         <div>
-          <p>{result?.message || 'Giao dịch thanh toán không thành công.'}</p>
+          <p>{result?.message || 'Payment transaction was not successful.'}</p>
           {result?.vnpayQuery?.message && (
             <p style={{ color: '#ff4d4f', fontSize: '14px', marginTop: '8px' }}>
               ({result.vnpayQuery.message})
             </p>
           )}
           <div style={{ marginTop: '20px', textAlign: 'left', display: 'inline-block', backgroundColor: '#fff2f0', padding: '16px', borderRadius: '8px', border: '1px solid #ffccc7' }}>
-            {result?.orderCode && <p><strong>Mã đơn hàng:</strong> {result.orderCode}</p>}
-            {result?.callbackInfo?.txnRef && <p><strong>Mã tham chiếu:</strong> {result.callbackInfo.txnRef}</p>}
-            {result?.status && <p><strong>Trạng thái:</strong> <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>{result.status}</span></p>}
+            {result?.orderCode && <p><strong>Order Code:</strong> {result.orderCode}</p>}
+            {result?.callbackInfo?.txnRef && <p><strong>Reference Code:</strong> {result.callbackInfo.txnRef}</p>}
+            {result?.status && <p><strong>Status:</strong> <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>{result.status}</span></p>}
           </div>
         </div>
       }
       extra={[
         <Button type="primary" key="retry" onClick={() => navigate('/cart')}>
-          Thử lại
+          Try Again
         </Button>,
         <Button key="home" onClick={() => navigate('/')}>
-          Về trang chủ
+          Go to Home
         </Button>,
       ]}
     />

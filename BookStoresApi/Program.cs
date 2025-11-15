@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using System.IdentityModel.Tokens.Jwt;
 using BookStoresApi.Data;
 using BookStoresApi.Models;
 using BookStoresApi.Services;
@@ -63,6 +64,9 @@ builder
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey is not configured");
 
+// Clear default claim type mapping to preserve JWT claim names
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
 builder
     .Services.AddAuthentication(options =>
     {
@@ -80,6 +84,9 @@ builder
             ValidIssuer = jwtSettings["Issuer"],
             ValidAudience = jwtSettings["Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+            // Don't map claims to legacy ClaimTypes
+            NameClaimType = JwtRegisteredClaimNames.Sub,
+            RoleClaimType = "role"
         };
     });
 

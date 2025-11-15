@@ -22,8 +22,9 @@ namespace BookStoresApi.Controllers
         {
             return await _context.ShoppingCarts
                 .Include(sc => sc.User)
-                .Include(sc => sc.CartItems)
+                .Include(sc => sc.CartItems.Where(ci => !ci.IsDeleted))
                     .ThenInclude(ci => ci.Product)
+                    .ThenInclude(p => p.MediaFiles.Where(m => !m.IsDeleted))
                 .ToListAsync();
         }
 
@@ -33,8 +34,9 @@ namespace BookStoresApi.Controllers
         {
             var shoppingCart = await _context.ShoppingCarts
                 .Include(sc => sc.User)
-                .Include(sc => sc.CartItems)
+                .Include(sc => sc.CartItems.Where(ci => !ci.IsDeleted))
                     .ThenInclude(ci => ci.Product)
+                    .ThenInclude(p => p.MediaFiles.Where(m => !m.IsDeleted))
                 .FirstOrDefaultAsync(sc => sc.CartId == id);
 
             if (shoppingCart == null)
@@ -50,8 +52,9 @@ namespace BookStoresApi.Controllers
         public async Task<ActionResult<ShoppingCart>> GetCartByUser(int userId)
         {
             var cart = await _context.ShoppingCarts
-                .Include(sc => sc.CartItems)
+                .Include(sc => sc.CartItems.Where(ci => !ci.IsDeleted))
                     .ThenInclude(ci => ci.Product)
+                    .ThenInclude(p => p.MediaFiles.Where(m => !m.IsDeleted))
                 .FirstOrDefaultAsync(sc => sc.UserId == userId);
 
             if (cart == null)

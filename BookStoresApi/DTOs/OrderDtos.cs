@@ -4,6 +4,7 @@ namespace BookStoresApi.DTOs
     {
         public int UserId { get; set; }
         public decimal ShippingFee { get; set; } = 0;
+        public string? PaymentMethod { get; set; } = "VNPAY"; // "COD" or "VNPAY"
         public List<CreateOrderDetailDto> OrderDetails { get; set; } = new();
     }
 
