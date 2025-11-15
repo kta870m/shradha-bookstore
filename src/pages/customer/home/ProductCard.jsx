@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaStar, FaShoppingCart } from "react-icons/fa";
 import { useCart } from "../../../contexts/CartContext";
 import { message } from "antd";
@@ -8,6 +9,7 @@ const currency = (v) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
 
 const ProductCard = ({ product }) => {
+  const navigate = useNavigate();
   const { addToCart, loading } = useCart();
   const [isHovered, setIsHovered] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
@@ -17,6 +19,10 @@ const ProductCard = ({ product }) => {
     : product.thumbnailUrl || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=720&auto=format&fit=crop";
 
   const rating = product.averageRating || 0;
+
+  const handleCardClick = () => {
+    navigate(`/book/${product.productId}`);
+  };
 
   const handleAddToCart = async (e) => {
     e.preventDefault();
@@ -40,9 +46,10 @@ const ProductCard = ({ product }) => {
   return (
     <div 
       className="product-card"
+      onClick={handleCardClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={{ position: 'relative' }}
+      style={{ position: 'relative', cursor: 'pointer' }}
     >
       <div className="product-media" style={{ position: 'relative' }}>
         <img src={imageUrl} alt={product.productName} />
