@@ -17,29 +17,27 @@ const CategoryProducts = () => {
 
   useEffect(() => {
     if (categoryId) {
-      fetchCategoryProducts();
-      fetchCategoryName();
+      fetchData();
     }
   }, [categoryId, currentPage]);
 
-  const fetchCategoryName = async () => {
-    try {
-      const response = await window.$axios.get(`/categories/${categoryId}`);
-      setCategoryName(response.data.categoryName || "Category");
-    } catch (error) {
-      console.error("Error fetching category name:", error);
-      setCategoryName("Category");
-    }
-  };
-
-  const fetchCategoryProducts = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await window.$axios.get(`/products/by-category/${categoryId}`);
       
-      const allProducts = Array.isArray(response.data) 
-        ? response.data 
-        : response.data.$values || [];
+      // Fetch cả 2 cùng lúc thay vì tuần tự
+      const [productsResponse, categoryResponse] = await Promise.all([
+        window.$axios.get(`/products/by-category/${categoryId}`),
+        window.$axios.get(`/categories/${categoryId}`).catch(() => ({ data: { categoryName: "Category" } }))
+      ]);
+      
+      // Set category name
+      setCategoryName(categoryResponse.data.categoryName || "Category");
+      
+      // Process products
+      const allProducts = Array.isArray(productsResponse.data) 
+        ? productsResponse.data 
+        : productsResponse.data.$values || [];
       
       // Calculate pagination
       const total = Math.ceil(allProducts.length / productsPerPage);
@@ -52,8 +50,9 @@ const CategoryProducts = () => {
       
       setProducts(paginatedProducts);
     } catch (error) {
-      console.error("Error fetching category products:", error);
+      console.error("Error fetching data:", error);
       setProducts([]);
+      setCategoryName("Category");
     } finally {
       setLoading(false);
     }

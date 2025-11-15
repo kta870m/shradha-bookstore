@@ -435,7 +435,7 @@ namespace BookStoresApi.Controllers
 
         // GET: api/products/by-category/{categoryId}
         [HttpGet("by-category/{categoryId}")]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProductsByCategory(
+        public async Task<ActionResult<IEnumerable<object>>> GetProductsByCategory(
             int categoryId, 
             [FromQuery] int page = 1, 
             [FromQuery] int pageSize = 12)
@@ -445,16 +445,27 @@ namespace BookStoresApi.Controllers
             if (pageSize < 1) pageSize = 12;
             if (pageSize > 100) pageSize = 100; // Max 100 items per page
 
-            var query = _context
+            var products = await _context
                 .ProductCategories
-                .Where(pc => pc.CategoryId == categoryId)
-                .Include(pc => pc.Product)
-                .ThenInclude(p => p.MediaFiles.Where(m => !m.IsDeleted))
-                .Select(pc => pc.Product)
-                .Where(p => !p.IsDeleted);
-
-            // Apply pagination
-            var products = await query
+                .Where(pc => pc.CategoryId == categoryId && !pc.Product.IsDeleted)
+                .Select(pc => new
+                {
+                    pc.Product.ProductId,
+                    pc.Product.ProductName,
+                    pc.Product.Price,
+                    pc.Product.Manufacturer,
+                    pc.Product.AverageRating,
+                    pc.Product.StockQuantity,
+                    MediaFiles = pc.Product.MediaFiles
+                        .Where(m => !m.IsDeleted)
+                        .Select(m => new
+                        {
+                            m.MediaId,
+                            m.MediaUrl,
+                            m.MediaType
+                        })
+                        .ToList()
+                })
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

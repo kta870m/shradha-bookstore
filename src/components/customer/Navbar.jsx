@@ -53,29 +53,29 @@ const Navbar = () => {
 
   const menuItems = [
     { 
-      label: 'All Categories', 
+      label: 'Discover Categories', 
       path: '/categories',
       hasDropdown: true,
       dropdownType: 'all'
     },
     { 
-      label: 'Fiction', 
-      path: '/products?category=1',
+      label: 'Spaces', 
+      path: '/products?category=825',
       hasDropdown: false
     },
     { 
-      label: 'Non Fiction', 
-      path: '/products?category=2',
+      label: 'Mental Health', 
+      path: '/products?category=585',
       hasDropdown: false
     },
     { 
-      label: 'VN & Southeast Asia', 
-      path: '/products?category=3',
+      label: 'Ghosts & Horror', 
+      path: '/products?category=390',
       hasDropdown: false
     },
     { 
-      label: "Kid's & Young Adult", 
-      path: '/products?category=4',
+      label: "Epic", 
+      path: '/products?category=292',
       hasDropdown: false
     },
     { 

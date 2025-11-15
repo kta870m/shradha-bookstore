@@ -18,13 +18,20 @@ namespace BookStoresApi.Controllers
 
         // GET: api/categories
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
+        public async Task<ActionResult<IEnumerable<object>>> GetCategories()
         {
-            return await _context.Categories
+            var categories = await _context.Categories
                 .Where(c => !c.IsDeleted)
-                .Include(c => c.ParentCategory)
-                .Include(c => c.SubCategories.Where(sc => !sc.IsDeleted))
+                .Select(c => new
+                {
+                    c.CategoryId,
+                    c.CategoryName,
+                    c.ParentCategoryId
+                })
+                .OrderBy(c => c.CategoryName)
                 .ToListAsync();
+
+            return Ok(categories);
         }
 
         // GET: api/categories/featured?limit=15
