@@ -246,6 +246,47 @@ namespace BookStoresApi.Controllers
             return Ok(products);
         }
 
+        // GET: api/products/search?q=keyword&limit=20
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<object>>> SearchProducts(
+            [FromQuery] string? q = null,
+            [FromQuery] int limit = 20
+        )
+        {
+            var query = _context.Products
+                .Where(p => !p.IsDeleted && p.StockQuantity > 0);
+
+            if (!string.IsNullOrEmpty(q))
+            {
+                query = query.Where(p => 
+                    p.ProductName.Contains(q) || 
+                    p.ProductCode.Contains(q) ||
+                    (p.Description != null && p.Description.Contains(q)) ||
+                    (p.Manufacturer != null && p.Manufacturer.Contains(q))
+                );
+            }
+
+            var products = await query
+                .OrderBy(p => p.ProductName)
+                .Take(limit)
+                .Select(p => new
+                {
+                    p.ProductId,
+                    p.ProductCode,
+                    p.ProductName,
+                    p.Price,
+                    p.StockQuantity,
+                    ThumbnailUrl = p.MediaFiles
+                        .Where(m => !m.IsDeleted)
+                        .OrderBy(m => m.MediaId)
+                        .Select(m => m.MediaUrl)
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return Ok(products);
+        }
+
         // GET: api/products/new-arrivals?limit=12
         [HttpGet("new-arrivals")]
         [ResponseCache(Duration = 300)] // Cache 5 minutes

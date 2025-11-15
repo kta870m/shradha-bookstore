@@ -90,7 +90,8 @@ namespace BookStoresApi.Controllers
                     .Include(o => o.User)
                     .Include(o => o.OrderDetails)
                     .ThenInclude(od => od.Product)
-                    .OrderByDescending(o => o.OrderDate)
+                    .ThenInclude(p => p.MediaFiles)
+                    .OrderByDescending(o => o.OrderCode)
                     .ToListAsync();
                     
                 Console.WriteLine($"Found {userOrders.Count} orders for user {userId}");
@@ -104,7 +105,8 @@ namespace BookStoresApi.Controllers
                 .Include(o => o.User)
                 .Include(o => o.OrderDetails)
                 .ThenInclude(od => od.Product)
-                .OrderByDescending(o => o.OrderDate)
+                .ThenInclude(p => p.MediaFiles)
+                .OrderByDescending(o => o.OrderCode)
                 .ToListAsync();
         }
 
@@ -117,6 +119,7 @@ namespace BookStoresApi.Controllers
                 .Include(o => o.User)
                 .Include(o => o.OrderDetails)
                 .ThenInclude(od => od.Product)
+                .ThenInclude(p => p.MediaFiles)
                 .FirstOrDefaultAsync(o => o.OrderId == id);
 
             if (order == null)
@@ -135,6 +138,14 @@ namespace BookStoresApi.Controllers
                 PaymentMethod = order.PaymentMethod,
                 ShippingFee = order.ShippingFee,
                 UserId = order.UserId,
+                User = order.User != null ? new UserInfo
+                {
+                    Id = order.User.Id,
+                    FullName = order.User.FullName ?? string.Empty,
+                    Email = order.User.Email,
+                    PhoneNumber = order.User.PhoneNumber,
+                    Address = order.User.Address
+                } : null,
                 OrderDetails = order.OrderDetails.Select(od => new OrderDetailResponse
                 {
                     OrderDetailId = od.OrderDetailId,
@@ -142,7 +153,20 @@ namespace BookStoresApi.Controllers
                     ProductName = od.Product?.ProductName ?? "Unknown",
                     Quantity = od.Quantity,
                     UnitPrice = od.UnitPrice,
-                    Subtotal = od.Quantity * od.UnitPrice
+                    Subtotal = od.Quantity * od.UnitPrice,
+                    Product = od.Product != null ? new ProductInfo
+                    {
+                        ProductId = od.Product.ProductId,
+                        ProductCode = od.Product.ProductCode,
+                        ProductName = od.Product.ProductName,
+                        Price = od.Product.Price,
+                        MediaFiles = od.Product.MediaFiles?.Select(m => new MediaInfo
+                        {
+                            MediaId = m.MediaId,
+                            MediaUrl = m.MediaUrl,
+                            MediaType = m.MediaType
+                        }).ToList() ?? new List<MediaInfo>()
+                    } : null
                 }).ToList()
             };
 
@@ -156,8 +180,9 @@ namespace BookStoresApi.Controllers
             return await _context
                 .Orders.Include(o => o.OrderDetails)
                 .ThenInclude(od => od.Product)
+                .ThenInclude(p => p.MediaFiles)
                 .Where(o => o.UserId == customerId)
-                .OrderByDescending(o => o.OrderDate)
+                .OrderByDescending(o => o.OrderCode)
                 .ToListAsync();
         }
 
@@ -290,10 +315,132 @@ namespace BookStoresApi.Controllers
                 {
                     OrderDetailId = od.OrderDetailId,
                     ProductId = od.ProductId,
-                    ProductName = od.Product.ProductName,
+                    ProductName = od.Product?.ProductName ?? "Unknown",
                     Quantity = od.Quantity,
                     UnitPrice = od.UnitPrice,
-                    Subtotal = od.Quantity * od.UnitPrice
+                    Subtotal = od.Quantity * od.UnitPrice,
+                    Product = od.Product != null ? new ProductInfo
+                    {
+                        ProductId = od.Product.ProductId,
+                        ProductCode = od.Product.ProductCode,
+                        ProductName = od.Product.ProductName,
+                        Price = od.Product.Price,
+                        MediaFiles = od.Product.MediaFiles?.Select(m => new MediaInfo
+                        {
+                            MediaId = m.MediaId,
+                            MediaUrl = m.MediaUrl,
+                            MediaType = m.MediaType
+                        }).ToList() ?? new List<MediaInfo>()
+                    } : null
+                }).ToList()
+            };
+
+            return CreatedAtAction(nameof(GetOrder), new { id = order.OrderId }, response);
+        }
+
+        // POST: api/orders/admin-create (For admin to create order with custom status and date)
+        [HttpPost("admin-create")]
+        public async Task<ActionResult<OrderResponse>> AdminCreateOrder(AdminCreateOrderRequest request)
+        {
+            // Validate user exists
+            var userExists = await _context.Users.AnyAsync(u => u.Id == request.UserId);
+            if (!userExists)
+            {
+                return BadRequest(new { message = "User not found" });
+            }
+
+            // Validate products exist
+            var productIds = request.OrderDetails.Select(od => od.ProductId).ToList();
+            var products = await _context.Products
+                .Where(p => productIds.Contains(p.ProductId) && !p.IsDeleted)
+                .ToListAsync();
+
+            if (products.Count != productIds.Count)
+            {
+                return BadRequest(new { message = "One or more products not found" });
+            }
+
+            // Generate order code
+            var codeResult = await GetNewOrderCode();
+            var codeValue = (codeResult as OkObjectResult)?.Value;
+            var codeProperty = codeValue?.GetType().GetProperty("orderCode");
+            string orderCode = codeProperty?.GetValue(codeValue)?.ToString() ?? "OR000001";
+
+            // Generate unique payment transaction reference if not provided
+            string paymentTxnRef = request.PaymentTxnRef ?? Guid.NewGuid().ToString("N").Substring(0, 20);
+
+            // Create order with admin-specified status and date
+            var order = new Order
+            {
+                OrderCode = orderCode,
+                UserId = request.UserId,
+                OrderDate = request.OrderDate ?? DateTime.Now, // Use admin-specified date or current date
+                OrderStatus = request.OrderStatus ?? "Pending",
+                PaymentMethod = request.PaymentMethod,
+                ShippingFee = request.ShippingFee,
+                PaymentTxnRef = paymentTxnRef,
+                OrderDetails = new List<OrderDetail>()
+            };
+
+            // Create order details with admin-specified unit prices
+            decimal totalAmount = 0;
+            foreach (var detailDto in request.OrderDetails)
+            {
+                var detail = new OrderDetail
+                {
+                    ProductId = detailDto.ProductId,
+                    Quantity = detailDto.Quantity,
+                    UnitPrice = detailDto.UnitPrice // Use admin-specified unit price
+                };
+
+                totalAmount += detail.Quantity * detail.UnitPrice;
+                order.OrderDetails.Add(detail);
+            }
+
+            order.TotalAmount = totalAmount + order.ShippingFee;
+
+            // Save to database
+            _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
+
+            // Reload with navigation properties
+            var createdOrder = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product)
+                .FirstAsync(o => o.OrderId == order.OrderId);
+
+            // Map to response
+            var response = new OrderResponse
+            {
+                OrderId = createdOrder.OrderId,
+                OrderCode = createdOrder.OrderCode,
+                OrderDate = createdOrder.OrderDate,
+                TotalAmount = createdOrder.TotalAmount,
+                OrderStatus = createdOrder.OrderStatus,
+                PaymentMethod = createdOrder.PaymentMethod,
+                ShippingFee = createdOrder.ShippingFee,
+                UserId = createdOrder.UserId,
+                OrderDetails = createdOrder.OrderDetails.Select(od => new OrderDetailResponse
+                {
+                    OrderDetailId = od.OrderDetailId,
+                    ProductId = od.ProductId,
+                    ProductName = od.Product?.ProductName ?? "Unknown",
+                    Quantity = od.Quantity,
+                    UnitPrice = od.UnitPrice,
+                    Subtotal = od.Quantity * od.UnitPrice,
+                    Product = od.Product != null ? new ProductInfo
+                    {
+                        ProductId = od.Product.ProductId,
+                        ProductCode = od.Product.ProductCode,
+                        ProductName = od.Product.ProductName,
+                        Price = od.Product.Price,
+                        MediaFiles = od.Product.MediaFiles?.Select(m => new MediaInfo
+                        {
+                            MediaId = m.MediaId,
+                            MediaUrl = m.MediaUrl,
+                            MediaType = m.MediaType
+                        }).ToList() ?? new List<MediaInfo>()
+                    } : null
                 }).ToList()
             };
 
@@ -320,6 +467,82 @@ namespace BookStoresApi.Controllers
             existingOrder.ShippingFee = order.ShippingFee;
             existingOrder.TotalAmount = order.TotalAmount;
             existingOrder.UserId = order.UserId;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!OrderExists(id))
+                {
+                    return NotFound();
+                }
+                throw;
+            }
+
+            return NoContent();
+        }
+
+        // PUT: api/orders/{id}/full-update (For admin to update order with order details)
+        [HttpPut("{id}/full-update")]
+        public async Task<IActionResult> FullUpdateOrder(int id, FullUpdateOrderRequest request)
+        {
+            var existingOrder = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.OrderId == id);
+
+            if (existingOrder == null)
+            {
+                return NotFound();
+            }
+
+            // Validate user exists
+            var userExists = await _context.Users.AnyAsync(u => u.Id == request.UserId);
+            if (!userExists)
+            {
+                return BadRequest(new { message = "User not found" });
+            }
+
+            // Validate products exist
+            var productIds = request.OrderDetails.Select(od => od.ProductId).ToList();
+            var products = await _context.Products
+                .Where(p => productIds.Contains(p.ProductId) && !p.IsDeleted)
+                .ToListAsync();
+
+            if (products.Count != productIds.Count)
+            {
+                return BadRequest(new { message = "One or more products not found" });
+            }
+
+            // Update order properties
+            existingOrder.OrderStatus = request.OrderStatus ?? existingOrder.OrderStatus;
+            existingOrder.PaymentMethod = request.PaymentMethod ?? existingOrder.PaymentMethod;
+            existingOrder.ShippingFee = request.ShippingFee;
+            existingOrder.UserId = request.UserId;
+            existingOrder.OrderDate = request.OrderDate;
+            existingOrder.PaymentTxnRef = request.PaymentTxnRef ?? existingOrder.PaymentTxnRef;
+
+            // Remove existing order details
+            _context.OrderDetails.RemoveRange(existingOrder.OrderDetails);
+
+            // Add new order details
+            decimal totalAmount = 0;
+            foreach (var detailDto in request.OrderDetails)
+            {
+                var detail = new OrderDetail
+                {
+                    OrderId = existingOrder.OrderId,
+                    ProductId = detailDto.ProductId,
+                    Quantity = detailDto.Quantity,
+                    UnitPrice = detailDto.UnitPrice
+                };
+
+                totalAmount += detail.Quantity * detail.UnitPrice;
+                existingOrder.OrderDetails.Add(detail);
+            }
+
+            existingOrder.TotalAmount = totalAmount + existingOrder.ShippingFee;
 
             try
             {

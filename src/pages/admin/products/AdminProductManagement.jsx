@@ -44,7 +44,7 @@ function AdminProductManagement() {
     total: 0,
     showSizeChanger: true,
     showQuickJumper: true,
-    showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} sản phẩm`,
+    showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} products`,
     pageSizeOptions: ['6', '12', '18', '24'],
   });
   const [searchTerm, setSearchTerm] = useState('');
@@ -65,44 +65,44 @@ function AdminProductManagement() {
   useEffect(() => {
     const delayedSearch = setTimeout(() => {
       fetchProducts();
-    }, searchTerm ? 500 : 0); // 500ms delay cho search, ngay lập tức cho các thay đổi khác
+    }, searchTerm ? 500 : 0); // 500ms delay for search, immediate for other changes
 
     return () => clearTimeout(delayedSearch);
   }, [pagination.current, pagination.pageSize, searchTerm, sortBy]);
 
-  // Effect để detect khi có refresh query parameter (sau khi thêm/cập nhật sản phẩm)
+  // Effect to detect refresh query parameter (after adding/updating product)
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const refreshParam = urlParams.get('refresh');
     const actionParam = urlParams.get('action');
     
     if (refreshParam) {
-      // Phân biệt action: new = thêm mới, update = cập nhật
+      // Distinguish action: new = add new, update = update
       if (actionParam === 'update') {
         setIsProductUpdated(true);
       } else {
-        // Default là thêm mới
+        // Default is add new
         setIsNewProductAdded(true);
       }
 
-      // Reset về trang 1 và refresh
+      // Reset to page 1 and refresh
       setPagination(prev => ({ ...prev, current: 1 }));
 
-      // Force refresh danh sách
+      // Force refresh list
       setTimeout(() => {
         fetchProducts();
       }, 100);
 
-      // Hiển thị thông báo dựa trên action
+      // Display notification based on action
       setTimeout(() => {
         if (actionParam === 'update') {
           message.success({
             content: (
               <div>
-                <strong>Cập nhật sản phẩm thành công!</strong>
+                <strong>Product updated successfully!</strong>
                 <br />
                 <span style={{ fontSize: '12px', color: '#666' }}>
-                  Thay đổi đã được lưu và hiển thị trong danh sách
+                  Changes have been saved and displayed in the list
                 </span>
               </div>
             ),
@@ -115,10 +115,10 @@ function AdminProductManagement() {
           message.success({
             content: (
               <div>
-                <strong>Thêm sản phẩm thành công!</strong>
+                <strong>Product added successfully!</strong>
                 <br />
                 <span style={{ fontSize: '12px', color: '#666' }}>
-                  Sản phẩm mới đã được hiển thị trong danh sách
+                  New product has been displayed in the list
                 </span>
               </div>
             ),
@@ -136,7 +136,7 @@ function AdminProductManagement() {
         setIsProductUpdated(false);
       }, 5000);
 
-      // Xóa query parameter khỏi URL
+      // Remove query parameter from URL
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }
@@ -167,13 +167,13 @@ function AdminProductManagement() {
     } catch (error) {
       console.error('Error fetching products:', error);
 
-      // Xử lý lỗi chi tiết hơn
+      // Handle errors in more detail
       if (error.code === 'ECONNABORTED') {
-        message.error('Yêu cầu tìm kiếm quá lâu. Vui lòng thử với từ khóa ngắn hơn.');
+        message.error('Search request took too long. Please try with shorter keywords.');
       } else if (error.code === 'ERR_NETWORK') {
-        message.error('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.');
+        message.error('Unable to connect to server. Please check your network connection.');
       } else {
-        message.error('Không thể tải danh sách sản phẩm. Vui lòng thử lại.');
+        message.error('Unable to load product list. Please try again.');
       }
 
       // Reset products nếu có lỗi
@@ -197,13 +197,13 @@ function AdminProductManagement() {
     }
   };
 
-  // Handle search với debounce
+  // Handle search with debounce
   const handleSearch = useCallback((value) => {
     setSearchTerm(value);
     setPagination(prev => ({ ...prev, current: 1 }));
   }, []);
 
-  // Handle search input change để hiển thị loading ngay lập tức
+  // Handle search input change to show loading immediately
   const handleSearchInputChange = (e) => {
     const value = e.target.value;
     if (value.length >= 2 || value.length === 0) {
@@ -229,7 +229,7 @@ function AdminProductManagement() {
       setDetailModalVisible(true);
     } catch (error) {
       console.error('Error fetching product detail:', error);
-      message.error('Không thể tải chi tiết sản phẩm');
+      message.error('Unable to load product details');
     }
   };
 
@@ -242,21 +242,21 @@ function AdminProductManagement() {
   const handleDelete = (productId, productName) => {
     console.log('Preparing to delete product:', productId, productName);
     Modal.confirm({
-      title: 'Xác nhận xóa sản phẩm',
+      title: 'Confirm Product Deletion',
       content: (
         <div>
           <p style={{ marginBottom: 8 }}>
-            Bạn có chắc chắn muốn xóa sản phẩm <strong>"{productName}"</strong>?
+            Are you sure you want to delete product <strong>"{productName}"</strong>?
           </p>
           <p style={{ fontSize: '14px', color: '#666', marginBottom: 0 }}>
-            <em>Sản phẩm sẽ được đánh dấu là đã xóa và không hiển thị trong danh sách khách hàng. 
-            Bạn có thể khôi phục lại sau nếu cần.</em>
+            <em>The product will be marked as deleted and will not be displayed in the customer list. 
+            You can restore it later if needed.</em>
           </p>
         </div>
       ),
-      okText: 'Xóa sản phẩm',
+      okText: 'Delete Product',
       okType: 'danger',
-      cancelText: 'Hủy bỏ',
+      cancelText: 'Cancel',
       width: 500,
       icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
       onOk: async () => {
@@ -272,10 +272,10 @@ function AdminProductManagement() {
             content: (
               <div>
                 <span style={{ fontSize: '16px', marginRight: '8px' }}>✅</span>
-                <strong>Xóa sản phẩm thành công!</strong>
+                <strong>Product deleted successfully!</strong>
                 <br />
                 <span style={{ fontSize: '12px', color: '#666' }}>
-                  Sản phẩm "{productName}" đã được xóa khỏi danh sách
+                  Product "{productName}" has been removed from the list
                 </span>
               </div>
             ),
@@ -289,7 +289,7 @@ function AdminProductManagement() {
         } catch (error) {
           console.error('Error deleting product:', error);
           message.error({
-            content: `Không thể xóa sản phẩm "${productName}". Vui lòng thử lại.`,
+            content: `Unable to delete product "${productName}". Please try again.`,
             duration: 5
           });
           throw error; // Re-throw để Modal.confirm có thể handle
@@ -308,7 +308,7 @@ function AdminProductManagement() {
   // Bulk delete products
   const handleBulkDelete = () => {
     if (selectedRowKeys.length === 0) {
-      message.warning('Vui lòng chọn ít nhất một sản phẩm để xóa');
+      message.warning('Please select at least one product to delete');
       return;
     }
 
@@ -317,7 +317,7 @@ function AdminProductManagement() {
     );
 
     Modal.confirm({
-      title: `Xác nhận xóa ${selectedRowKeys.length} sản phẩm`,
+      title: `Confirm deletion of ${selectedRowKeys.length} products`,
       content: (
         <div>
           <p style={{ marginBottom: 8 }}>
@@ -361,10 +361,10 @@ function AdminProductManagement() {
             content: (
               <div>
                 <span style={{ fontSize: '16px', marginRight: '8px' }}>✅</span>
-                <strong>Xóa thành công!</strong>
+                <strong>Deleted successfully!</strong>
                 <br />
                 <span style={{ fontSize: '12px', color: '#666' }}>
-                  Đã xóa {selectedRowKeys.length} sản phẩm khỏi danh sách
+                  Deleted {selectedRowKeys.length} products from the list
                 </span>
               </div>
             ),
@@ -378,7 +378,7 @@ function AdminProductManagement() {
         } catch (error) {
           console.error('Error bulk deleting products:', error);
           message.error({
-            content: `Có lỗi xảy ra khi xóa sản phẩm. Vui lòng thử lại.`,
+            content: `An error occurred while deleting products. Please try again.`,
             duration: 5
           });
           throw error; // Re-throw để Modal.confirm có thể handle
@@ -392,7 +392,7 @@ function AdminProductManagement() {
   // Table columns configuration
   const columns = [
     {
-      title: 'Hình ảnh',
+      title: 'Image',
       dataIndex: 'thumbnailUrl',
       key: 'thumbnailUrl',
       width: 80,
@@ -424,14 +424,14 @@ function AdminProductManagement() {
       },
     },
     {
-      title: 'Mã sản phẩm',
+      title: 'Product Code',
       dataIndex: 'productCode',
       key: 'productCode',
       width: 120,
       sorter: true,
     },
     {
-      title: 'Tên sản phẩm',
+      title: 'Product Name',
       dataIndex: 'productName',
       key: 'productName',
       sorter: true,
@@ -455,7 +455,7 @@ function AdminProductManagement() {
       ),
     },
     {
-      title: 'Giá',
+      title: 'Price',
       dataIndex: 'price',
       key: 'price',
       width: 120,
@@ -467,7 +467,7 @@ function AdminProductManagement() {
       ),
     },
     {
-      title: 'Tồn kho',
+      title: 'Stock',
       dataIndex: 'stockQuantity',
       key: 'stockQuantity',
       width: 100,
@@ -478,7 +478,7 @@ function AdminProductManagement() {
       },
     },
     {
-      title: 'Đánh giá',
+      title: 'Rating',
       dataIndex: 'averageRating',
       key: 'averageRating',
       width: 120,
@@ -486,20 +486,20 @@ function AdminProductManagement() {
         <Space direction="vertical" size={0}>
           <Rate disabled value={rating} allowHalf size="small" />
           <span style={{ fontSize: 12, color: '#8c8c8c' }}>
-            ({record.totalReviews} đánh giá)
+            ({record.totalReviews} reviews)
           </span>
         </Space>
       ),
     },
     {
-      title: 'Loại',
+      title: 'Type',
       dataIndex: 'productType',
       key: 'productType',
       width: 100,
       render: (type) => <Tag>{type}</Tag>,
     },
     {
-      title: 'Danh mục',
+      title: 'Category',
       dataIndex: 'categories',
       key: 'categories',
       width: 150,
@@ -517,27 +517,27 @@ function AdminProductManagement() {
       ),
     },
     {
-      title: 'Thao tác',
+      title: 'Actions',
       key: 'actions',
       width: 120,
       fixed: 'right',
       render: (_, record) => (
         <Space size="small">
-          <Tooltip title="Xem chi tiết">
+          <Tooltip title="View Details">
             <Button
               type="text"
               icon={<EyeOutlined />}
               onClick={() => handleViewDetail(record.productId)}
             />
           </Tooltip>
-          <Tooltip title="Chỉnh sửa">
+          <Tooltip title="Edit">
             <Button
               type="text"
               icon={<EditOutlined />}
               onClick={() => handleEdit(record.productId)}
             />
           </Tooltip>
-          <Tooltip title="Xóa">
+          <Tooltip title="Delete">
             <Button
               type="text"
               danger
@@ -569,7 +569,7 @@ function AdminProductManagement() {
         <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
           <Col>
             <Title level={3} style={{ margin: 0 }}>
-              Quản lý sản phẩm
+              Product Management
             </Title>
           </Col>
           <Col>
@@ -579,13 +579,13 @@ function AdminProductManagement() {
                 icon={<PlusOutlined />}
                 onClick={() => navigate('/admin/products/add')}
               >
-                Thêm sản phẩm
+                Add Product
               </Button>
               <Button
                 icon={<ReloadOutlined />}
                 onClick={fetchProducts}
               >
-                Làm mới
+                Refresh
               </Button>
             </Space>
           </Col>
@@ -594,8 +594,8 @@ function AdminProductManagement() {
         {/* New Product Alert */}
         {isNewProductAdded && (
           <Alert
-            message="Sản phẩm mới đã được thêm!"
-            description="Sản phẩm vừa thêm đã được hiển thị trong danh sách bên dưới."
+            message="New product has been added!"
+            description="The newly added product is displayed in the list below."
             type="success"
             showIcon
             closable
@@ -611,8 +611,8 @@ function AdminProductManagement() {
         {/* Product Update Alert */}
         {isProductUpdated && (
           <Alert
-            message="Sản phẩm cập nhật thành công!"
-            description="Thay đổi đã được lưu và hiển thị trong danh sách."
+            message="Product updated successfully!"
+            description="Changes have been saved and displayed in the list."
             type="success"
             showIcon
             closable
@@ -629,7 +629,7 @@ function AdminProductManagement() {
         <Row gutter={16} style={{ marginBottom: 16 }}>
           <Col xs={24} sm={12} md={8}>
             <Search
-              placeholder="Tìm kiếm sản phẩm (tối thiểu 2 ký tự)..."
+              placeholder="Search products (minimum 2 characters)..."
               allowClear
               enterButton={<SearchOutlined />}
               onSearch={handleSearch}
@@ -639,21 +639,21 @@ function AdminProductManagement() {
           </Col>
           <Col xs={24} sm={6} md={4}>
             <Select
-              placeholder="Sắp xếp theo"
+              placeholder="Sort by"
               value={sortBy}
               onChange={setSortBy}
               style={{ width: '100%' }}
             >
-              <Option value="productName">Tên sản phẩm</Option>
-              <Option value="price">Giá</Option>
-              <Option value="stockQuantity">Tồn kho</Option>
-              <Option value="averageRating">Đánh giá</Option>
+              <Option value="productName">Product Name</Option>
+              <Option value="price">Price</Option>
+              <Option value="stockQuantity">Stock</Option>
+              <Option value="averageRating">Rating</Option>
             </Select>
           </Col>
           {selectedRowKeys.length > 0 && (
             <Col xs={24} md={12}>
               <Space>
-                <span>Đã chọn {selectedRowKeys.length} sản phẩm</span>
+                <span>Selected {selectedRowKeys.length} products</span>
                 <Button
                   danger
                   size="small"
@@ -661,13 +661,13 @@ function AdminProductManagement() {
                   onClick={handleBulkDelete}
                   icon={<DeleteOutlined />}
                 >
-                  Xóa đã chọn ({selectedRowKeys.length})
+                  Delete Selected ({selectedRowKeys.length})
                 </Button>
                 <Button
                   size="small"
                   onClick={() => setSelectedRowKeys([])}
                 >
-                  Bỏ chọn
+                  Deselect
                 </Button>
               </Space>
             </Col>
@@ -689,7 +689,7 @@ function AdminProductManagement() {
 
         {/* Product Detail Modal */}
         <Modal
-          title="Chi tiết sản phẩm"
+          title="Product Details"
           open={detailModalVisible}
           onCancel={() => setDetailModalVisible(false)}
           footer={[
@@ -697,10 +697,10 @@ function AdminProductManagement() {
               setDetailModalVisible(false);
               handleEdit(productDetail?.productId);
             }}>
-              Chỉnh sửa
+              Edit
             </Button>,
             <Button key="close" onClick={() => setDetailModalVisible(false)}>
-              Đóng
+              Close
             </Button>
           ]}
           width={800}
@@ -762,35 +762,35 @@ function AdminProductManagement() {
               </div>
 
               <Descriptions column={2} bordered>
-                <Descriptions.Item label="Mã sản phẩm" span={1}>
+                <Descriptions.Item label="Product Code" span={1}>
                   {productDetail.productCode}
                 </Descriptions.Item>
-                <Descriptions.Item label="Tên sản phẩm" span={1}>
+                <Descriptions.Item label="Product Name" span={1}>
                   {productDetail.productName}
                 </Descriptions.Item>
-                <Descriptions.Item label="Giá" span={1}>
+                <Descriptions.Item label="Price" span={1}>
                   <span style={{ fontWeight: 600, color: '#f5222d' }}>
                     {formatPrice(productDetail.price)}
                   </span>
                 </Descriptions.Item>
-                <Descriptions.Item label="Tồn kho" span={1}>
+                <Descriptions.Item label="Stock" span={1}>
                   <Tag color={productDetail.stockQuantity > 10 ? 'green' : productDetail.stockQuantity > 0 ? 'orange' : 'red'}>
                     {productDetail.stockQuantity}
                   </Tag>
                 </Descriptions.Item>
-                <Descriptions.Item label="Loại sản phẩm" span={1}>
+                <Descriptions.Item label="Product Type" span={1}>
                   {productDetail.productType}
                 </Descriptions.Item>
-                <Descriptions.Item label="Nhà sản xuất" span={1}>
-                  {productDetail.manufacturer || 'Chưa có thông tin'}
+                <Descriptions.Item label="Manufacturer" span={1}>
+                  {productDetail.manufacturer || 'No information available'}
                 </Descriptions.Item>
-                <Descriptions.Item label="Đánh giá" span={2}>
+                <Descriptions.Item label="Rating" span={2}>
                   <Space>
                     <Rate disabled value={productDetail.averageRating} allowHalf />
-                    <span>({productDetail.totalReviews} đánh giá)</span>
+                    <span>({productDetail.totalReviews} reviews)</span>
                   </Space>
                 </Descriptions.Item>
-                <Descriptions.Item label="Danh mục" span={2}>
+                <Descriptions.Item label="Categories" span={2}>
                   <Space wrap>
                     {productDetail.productCategories?.map(pc => (
                       <Tag key={pc.category.categoryId}>
@@ -799,8 +799,8 @@ function AdminProductManagement() {
                     ))}
                   </Space>
                 </Descriptions.Item>
-                <Descriptions.Item label="Mô tả" span={2}>
-                  {productDetail.description || 'Chưa có mô tả'}
+                <Descriptions.Item label="Description" span={2}>
+                  {productDetail.description || 'No description available'}
                 </Descriptions.Item>
               </Descriptions>
             </div>

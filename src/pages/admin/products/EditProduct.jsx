@@ -282,10 +282,10 @@ const EditProduct = () => {
                 icon={<ArrowLeftOutlined />}
                 onClick={() => navigate('/admin/products')}
               >
-                Quay lại
+                Back
               </Button>
               <Title level={3} style={{ margin: 0 }}>
-                Chỉnh sửa sản phẩm
+                Edit Product
               </Title>
               <Text type="secondary">ID: {productId}</Text>
             </Space>
@@ -301,42 +301,42 @@ const EditProduct = () => {
             <Row gutter={24}>
               {/* Left Column - Basic Info */}
               <Col xs={24} lg={12}>
-                <Card title="Thông tin cơ bản" size="small" style={{ marginBottom: 16 }}>
+                <Card title="Basic Information" size="small" style={{ marginBottom: 16 }}>
                   {/* Product Code */}
                   <Form.Item
-                    label="Mã sản phẩm"
+                    label="Product Code"
                     name="productCode"
                     rules={[
-                      { required: true, message: 'Vui lòng nhập mã sản phẩm' },
-                      { min: 3, message: 'Mã sản phẩm phải có ít nhất 3 ký tự' }
+                      { required: true, message: 'Please enter product code' },
+                      { min: 3, message: 'Product code must be at least 3 characters' }
                     ]}
                   >
                     <Input 
-                      placeholder="Nhập mã sản phẩm"
+                      placeholder="Enter product code"
                       disabled // Usually product code shouldn't be changed
                     />
                   </Form.Item>
 
                   {/* Product Name */}
                   <Form.Item
-                    label="Tên sản phẩm"
+                    label="Product Name"
                     name="productName"
                     rules={[
-                      { required: true, message: 'Vui lòng nhập tên sản phẩm' },
-                      { min: 3, message: 'Tên sản phẩm phải có ít nhất 3 ký tự' }
+                      { required: true, message: 'Please enter product name' },
+                      { min: 3, message: 'Product name must be at least 3 characters' }
                     ]}
                   >
-                    <Input placeholder="Nhập tên sản phẩm" />
+                    <Input placeholder="Enter product name" />
                   </Form.Item>
 
                   {/* Description */}
                   <Form.Item
-                    label="Mô tả sản phẩm"
+                    label="Product Description"
                     name="description"
                   >
                     <TextArea 
                       rows={4} 
-                      placeholder="Nhập mô tả chi tiết về sản phẩm..."
+                      placeholder="Enter detailed product description..."
                       showCount
                       maxLength={1000}
                     />
@@ -346,11 +346,11 @@ const EditProduct = () => {
                   <Row gutter={16}>
                     <Col xs={24} sm={12}>
                       <Form.Item
-                        label="Giá (USD)"
+                        label="Price (USD)"
                         name="price"
                         rules={[
-                          { required: true, message: 'Vui lòng nhập giá sản phẩm' },
-                          { type: 'number', min: 0, message: 'Giá phải lớn hơn 0' }
+                          { required: true, message: 'Please enter product price' },
+                          { type: 'number', min: 0, message: 'Price must be greater than 0' }
                         ]}
                       >
                         <InputNumber
@@ -366,11 +366,11 @@ const EditProduct = () => {
                     </Col>
                     <Col xs={24} sm={12}>
                       <Form.Item
-                        label="Số lượng tồn kho"
+                        label="Stock Quantity"
                         name="stockQuantity"
                         rules={[
-                          { required: true, message: 'Vui lòng nhập số lượng' },
-                          { type: 'number', min: 0, message: 'Số lượng không thể âm' }
+                          { required: true, message: 'Please enter quantity' },
+                          { type: 'number', min: 0, message: 'Quantity cannot be negative' }
                         ]}
                       >
                         <InputNumber
@@ -386,37 +386,37 @@ const EditProduct = () => {
                   <Row gutter={16}>
                     <Col xs={24} sm={12}>
                       <Form.Item
-                        label="Loại sản phẩm"
+                        label="Product Type"
                         name="productType"
-                        rules={[{ required: true, message: 'Vui lòng chọn loại sản phẩm' }]}
+                        rules={[{ required: true, message: 'Please select product type' }]}
                       >
-                        <Select placeholder="Chọn loại sản phẩm">
-                          <Option value="Book">Sách</Option>
-                          <Option value="EBook">Sách điện tử</Option>
-                          <Option value="AudioBook">Sách nói</Option>
-                          <Option value="Magazine">Tạp chí</Option>
-                          <Option value="Stationery">Văn phòng phẩm</Option>
+                        <Select placeholder="Select product type">
+                          <Option value="Book">Book</Option>
+                          <Option value="EBook">E-Book</Option>
+                          <Option value="AudioBook">Audio Book</Option>
+                          <Option value="Magazine">Magazine</Option>
+                          <Option value="Stationery">Stationery</Option>
                         </Select>
                       </Form.Item>
                     </Col>
                     <Col xs={24} sm={12}>
                       <Form.Item
-                        label="Nhà sản xuất"
+                        label="Manufacturer"
                         name="manufacturer"
                       >
-                        <Input placeholder="Nhập tên nhà sản xuất" />
+                        <Input placeholder="Enter manufacturer name" />
                       </Form.Item>
                     </Col>
                   </Row>
 
                   {/* Release Date */}
                   <Form.Item
-                    label="Ngày phát hành"
+                    label="Release Date"
                     name="releaseDate"
                   >
                     <DatePicker 
                       style={{ width: '100%' }}
-                      placeholder="Chọn ngày phát hành"
+                      placeholder="Select release date"
                       format="YYYY-MM-DD"
                     />
                   </Form.Item>
@@ -426,9 +426,9 @@ const EditProduct = () => {
               {/* Right Column - Images */}
               <Col xs={24} lg={12}>
                 {/* Product Images */}
-                <Card title="Hình ảnh sản phẩm" size="small" style={{ marginBottom: 16 }}>
+                <Card title="Product Images" size="small" style={{ marginBottom: 16 }}>
                   <Form.Item
-                    label="Upload ảnh sản phẩm"
+                    label="Upload Product Images"
                   >
                     <CloudinaryUpload
                       value={images}
@@ -439,7 +439,7 @@ const EditProduct = () => {
                       aspectRatio="1:1"
                     />
                     <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
-                      Ảnh hiện tại sẽ được giữ lại, ảnh mới sẽ được thêm vào
+                      Current images will be kept, new images will be added
                     </div>
                   </Form.Item>
                 </Card>
@@ -452,10 +452,10 @@ const EditProduct = () => {
             <Row justify="end">
               <Space>
                 <Button onClick={handleReset}>
-                  Khôi phục
+                  Reset
                 </Button>
                 <Button onClick={() => navigate('/admin/products')}>
-                  Hủy
+                  Cancel
                 </Button>
                 <Button 
                   type="primary" 
@@ -463,7 +463,7 @@ const EditProduct = () => {
                   icon={<SaveOutlined />}
                   loading={loading}
                 >
-                  Cập nhật sản phẩm
+                  Update Product
                 </Button>
               </Space>
             </Row>

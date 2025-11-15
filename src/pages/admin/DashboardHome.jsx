@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Button, Spin, Typography, Modal } from 'antd';
+import { Card, Row, Col, Statistic, Button, Spin, Typography } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import { 
   ShoppingOutlined, 
   ShoppingCartOutlined, 
@@ -9,9 +10,8 @@ import {
   OrderedListOutlined,
   TeamOutlined,
   BarChartOutlined,
-  LineChartOutlined,
-  PieChartOutlined,
-  UserAddOutlined
+  AppstoreOutlined,
+  StarOutlined
 } from '@ant-design/icons';
 import {
   BarChart,
@@ -21,28 +21,44 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  AreaChart,
-  Area
+  ResponsiveContainer
 } from 'recharts';
-import AdminRegister from './AdminRegister';
+import { productApi } from '../../api/admin/productApi';
+import { orderApi } from '../../api/customer/orderApi';
+import { customerApi } from '../../api/admin/customerApi';
+import '../../styles/DashboardHome.css';
 
 const { Title } = Typography;
 
-// Revenue formatter for charts
-const formatRevenue = (value) => {
-  if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M ₫`;
-  } else if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}K ₫`;
+// Custom tooltip formatter
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div style={{
+        backgroundColor: 'white',
+        padding: '12px',
+        border: '1px solid #d9d9d9',
+        borderRadius: '8px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+      }}>
+        <p style={{ margin: 0, fontWeight: 600, color: '#1f2937' }}>{`${label}`}</p>
+        {payload.map((entry, index) => (
+          <p key={index} style={{ 
+            margin: '4px 0', 
+            color: entry.color,
+            fontSize: '14px' 
+          }}>
+            {`${entry.name}: ${entry.value.toLocaleString('vi-VN')}`}
+          </p>
+        ))}
+      </div>
+    );
   }
-  return `${value} ₫`;
+  return null;
 };
 
 function DashboardHome() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
@@ -51,11 +67,8 @@ function DashboardHome() {
   });
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState({
-    salesData: [],
-    categoryData: [],
-    revenueData: []
+    salesData: []
   });
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -63,19 +76,29 @@ function DashboardHome() {
 
   const fetchStats = async () => {
     try {
-      const [productsRes, ordersRes] = await Promise.all([
-        window.$axios.get('/products'),
-        window.$axios.get('/orders')
+      console.log('Fetching dashboard stats...');
+      
+      // Fetch data from actual APIs
+      const [productsRes, ordersRes, customersRes] = await Promise.all([
+        productApi.getProducts().catch(() => ({ data: [] })),
+        orderApi.getOrders().catch(() => ({ data: [] })),
+        customerApi.getCustomers().catch(() => ({ data: [] }))
       ]);
 
+      console.log('API responses:', { productsRes, ordersRes, customersRes });
+
+      const totalRevenue = (ordersRes.data || []).reduce((sum, order) => {
+        return sum + (order.totalAmount || 0);
+      }, 0);
+
       setStats({
-        totalProducts: productsRes.data.length,
-        totalOrders: ordersRes.data.length,
-        totalCustomers: 0,
-        totalRevenue: ordersRes.data.reduce((sum, order) => sum + order.totalAmount, 0)
+        totalProducts: (productsRes.data || []).length,
+        totalOrders: (ordersRes.data || []).length,
+        totalCustomers: (customersRes.data || []).length,
+        totalRevenue: totalRevenue
       });
 
-      generateChartData(productsRes.data, ordersRes.data);
+      generateSalesData();
     } catch (error) {
       console.error('Error fetching stats:', error);
       generateMockData();
@@ -84,78 +107,51 @@ function DashboardHome() {
     }
   };
 
-  const generateChartData = (products, orders) => {
+  const generateSalesData = () => {
     const salesData = [
-      { name: 'T2', sales: Math.floor(Math.random() * 50) + 20, orders: Math.floor(Math.random() * 20) + 5 },
-      { name: 'T3', sales: Math.floor(Math.random() * 50) + 20, orders: Math.floor(Math.random() * 20) + 5 },
-      { name: 'T4', sales: Math.floor(Math.random() * 50) + 20, orders: Math.floor(Math.random() * 20) + 5 },
-      { name: 'T5', sales: Math.floor(Math.random() * 50) + 20, orders: Math.floor(Math.random() * 20) + 5 },
-      { name: 'T6', sales: Math.floor(Math.random() * 50) + 20, orders: Math.floor(Math.random() * 20) + 5 },
-      { name: 'T7', sales: Math.floor(Math.random() * 50) + 20, orders: Math.floor(Math.random() * 20) + 5 },
-      { name: 'CN', sales: Math.floor(Math.random() * 50) + 20, orders: Math.floor(Math.random() * 20) + 5 },
+      { name: 'Mon', sales: Math.floor(Math.random() * 30) + 15, orders: Math.floor(Math.random() * 15) + 5 },
+      { name: 'Tue', sales: Math.floor(Math.random() * 35) + 20, orders: Math.floor(Math.random() * 18) + 7 },
+      { name: 'Wed', sales: Math.floor(Math.random() * 28) + 18, orders: Math.floor(Math.random() * 12) + 6 },
+      { name: 'Thu', sales: Math.floor(Math.random() * 40) + 25, orders: Math.floor(Math.random() * 20) + 8 },
+      { name: 'Fri', sales: Math.floor(Math.random() * 45) + 30, orders: Math.floor(Math.random() * 25) + 10 },
+      { name: 'Sat', sales: Math.floor(Math.random() * 50) + 35, orders: Math.floor(Math.random() * 30) + 12 },
+      { name: 'Sun', sales: Math.floor(Math.random() * 60) + 40, orders: Math.floor(Math.random() * 35) + 15 },
     ];
 
-    const categoryData = [
-      { name: 'Fiction', value: 35, fill: '#0EADD5' },
-      { name: 'Non-Fiction', value: 25, fill: '#52c41a' },
-      { name: 'Educational', value: 20, fill: '#fa8c16' },
-      { name: 'Children', value: 15, fill: '#722ed1' },
-      { name: 'Other', value: 5, fill: '#f5222d' },
-    ];
-
-    const revenueData = [
-      { month: 'T6', revenue: 45000000, profit: 15000000 },
-      { month: 'T7', revenue: 52000000, profit: 18000000 },
-      { month: 'T8', revenue: 48000000, profit: 16000000 },
-      { month: 'T9', revenue: 61000000, profit: 22000000 },
-      { month: 'T10', revenue: 55000000, profit: 19000000 },
-      { month: 'T11', revenue: 67000000, profit: 25000000 },
-    ];
-
-    setChartData({ salesData, categoryData, revenueData });
+    setChartData({ salesData });
   };
 
   const generateMockData = () => {
+    setStats({
+      totalProducts: 125,
+      totalOrders: 89,
+      totalCustomers: 156,
+      totalRevenue: 45750000
+    });
+
     const salesData = [
-      { name: 'T2', sales: 35, orders: 12 },
-      { name: 'T3', sales: 42, orders: 15 },
-      { name: 'T4', sales: 38, orders: 10 },
-      { name: 'T5', sales: 55, orders: 18 },
-      { name: 'T6', sales: 48, orders: 16 },
-      { name: 'T7', sales: 62, orders: 22 },
-      { name: 'CN', sales: 45, orders: 14 },
+      { name: 'Mon', sales: 35, orders: 12 },
+      { name: 'Tue', sales: 42, orders: 15 },
+      { name: 'Wed', sales: 38, orders: 10 },
+      { name: 'Thu', sales: 55, orders: 18 },
+      { name: 'Fri', sales: 48, orders: 16 },
+      { name: 'Sat', sales: 62, orders: 22 },
+      { name: 'Sun', sales: 45, orders: 14 },
     ];
 
-    const categoryData = [
-      { name: 'Fiction', value: 35, fill: '#0EADD5' },
-      { name: 'Non-Fiction', value: 25, fill: '#52c41a' },
-      { name: 'Educational', value: 20, fill: '#fa8c16' },
-      { name: 'Children', value: 15, fill: '#722ed1' },
-      { name: 'Other', value: 5, fill: '#f5222d' },
-    ];
-
-    const revenueData = [
-      { month: 'T6', revenue: 45000000, profit: 15000000 },
-      { month: 'T7', revenue: 52000000, profit: 18000000 },
-      { month: 'T8', revenue: 48000000, profit: 16000000 },
-      { month: 'T9', revenue: 61000000, profit: 22000000 },
-      { month: 'T10', revenue: 55000000, profit: 19000000 },
-      { month: 'T11', revenue: 67000000, profit: 25000000 },
-    ];
-
-    setChartData({ salesData, categoryData, revenueData });
+    setChartData({ salesData });
   };
 
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
-        <Spin size="large" tip="Đang tải dữ liệu..." />
+        <Spin size="large" tip="Loading data..." />
       </div>
     );
   }
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="dashboard-home">
       <Title level={2} style={{ marginBottom: 24, color: '#1f2937' }}>
         Dashboard Overview
       </Title>
@@ -163,9 +159,9 @@ function DashboardHome() {
       {/* Statistics Cards */}
       <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
         <Col xs={24} sm={12} lg={6}>
-          <Card hoverable style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid #f0f0f0' }}>
+          <Card className="stats-card" hoverable style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid #f0f0f0' }}>
             <Statistic
-              title="Sản phẩm"
+              title="Products"
               value={stats.totalProducts}
               prefix={<ShoppingOutlined style={{ color: '#1890ff', fontSize: 20 }} />}
               valueStyle={{ color: '#1f2937', fontSize: 28, fontWeight: 600 }}
@@ -174,9 +170,9 @@ function DashboardHome() {
         </Col>
         
         <Col xs={24} sm={12} lg={6}>
-          <Card hoverable style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid #f0f0f0' }}>
+          <Card className="stats-card" hoverable style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid #f0f0f0' }}>
             <Statistic
-              title="Đơn hàng"
+              title="Orders"
               value={stats.totalOrders}
               prefix={<ShoppingCartOutlined style={{ color: '#52c41a', fontSize: 20 }} />}
               valueStyle={{ color: '#1f2937', fontSize: 28, fontWeight: 600 }}
@@ -185,9 +181,9 @@ function DashboardHome() {
         </Col>
         
         <Col xs={24} sm={12} lg={6}>
-          <Card hoverable style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid #f0f0f0' }}>
+          <Card className="stats-card" hoverable style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid #f0f0f0' }}>
             <Statistic
-              title="Khách hàng"
+              title="Customers"
               value={stats.totalCustomers}
               prefix={<UserOutlined style={{ color: '#722ed1', fontSize: 20 }} />}
               valueStyle={{ color: '#1f2937', fontSize: 28, fontWeight: 600 }}
@@ -196,9 +192,9 @@ function DashboardHome() {
         </Col>
         
         <Col xs={24} sm={12} lg={6}>
-          <Card hoverable style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid #f0f0f0' }}>
+          <Card className="stats-card" hoverable style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid #f0f0f0' }}>
             <Statistic
-              title="Doanh thu"
+              title="Revenue"
               value={stats.totalRevenue}
               prefix={<DollarOutlined style={{ color: '#fa8c16', fontSize: 20 }} />}
               suffix="₫"
@@ -211,169 +207,111 @@ function DashboardHome() {
 
       {/* Quick Actions */}
       <Card 
-        title={<Title level={3} style={{ margin: 0, color: '#1f2937' }}>Thao tác nhanh</Title>}
-        style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid #f0f0f0', marginBottom: 32 }}
+        title={<Title level={3} style={{ margin: 0, color: '#1f2937' }}>Quick Actions</Title>}
+        style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid #f0f0f0' }}
       >
         <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} md={6} lg={4}>
+          <Col xs={24} sm={12} lg={8}>
             <Button 
               type="primary" 
               size="large" 
               icon={<PlusOutlined />}
               block
-              style={{ height: 60, borderRadius: 8, background: 'linear-gradient(135deg, #0EADD5 0%, #0c94bb 100%)', border: 'none', boxShadow: '0 4px 12px rgba(14, 173, 213, 0.3)' }}
+              onClick={() => navigate('/admin/products')}
+              style={{ 
+                height: 60,
+                borderRadius: 8,
+                background: 'linear-gradient(135deg, #0EADD5 0%, #0c94bb 100%)',
+                border: 'none',
+                boxShadow: '0 4px 12px rgba(14, 173, 213, 0.3)'
+              }}
             >
-              Thêm sản phẩm
+              Manage Products
             </Button>
           </Col>
           
-          <Col xs={24} sm={12} md={6} lg={4}>
+          <Col xs={24} sm={12} lg={8}>
             <Button 
               type="default" 
               size="large" 
               icon={<OrderedListOutlined />}
               block
+              onClick={() => navigate('/admin/orders')}
               style={{ height: 60, borderRadius: 8, borderColor: '#d9d9d9' }}
             >
-              Xem đơn hàng
+              Manage Orders
             </Button>
           </Col>
           
-          <Col xs={24} sm={12} md={6} lg={4}>
+          <Col xs={24} sm={12} lg={8}>
             <Button 
               type="default" 
               size="large" 
               icon={<TeamOutlined />}
               block
+              onClick={() => navigate('/admin/customers')}
               style={{ height: 60, borderRadius: 8, borderColor: '#d9d9d9' }}
             >
-              Khách hàng
+              Manage Customers
             </Button>
           </Col>
           
-          <Col xs={24} sm={12} md={6} lg={4}>
+          <Col xs={24} sm={12} lg={8} offset={4}>
             <Button 
               type="default" 
               size="large" 
-              icon={<BarChartOutlined />}
+              icon={<AppstoreOutlined />}
               block
+              onClick={() => navigate('/admin/categories')}
               style={{ height: 60, borderRadius: 8, borderColor: '#d9d9d9' }}
             >
-              Báo cáo
+              Manage Categories
             </Button>
           </Col>
-
-          <Col xs={24} sm={12} md={6} lg={4}>
+          
+          <Col xs={24} sm={12} lg={8}>
             <Button 
-              type="dashed" 
+              type="default" 
               size="large" 
-              icon={<UserAddOutlined />}
+              icon={<StarOutlined />}
               block
-              onClick={() => setShowRegisterModal(true)}
-              style={{ height: 60, borderRadius: 8, borderColor: '#722ed1', color: '#722ed1' }}
+              onClick={() => navigate('/admin/reviews')}
+              style={{ height: 60, borderRadius: 8, borderColor: '#d9d9d9' }}
             >
-              Tạo Admin
+              Manage Reviews
             </Button>
           </Col>
         </Row>
       </Card>
 
       {/* Charts Section */}
-      <Row gutter={[24, 24]}>
-        <Col xs={24} lg={16}>
-          <Card
-            title={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <BarChartOutlined style={{ color: '#0EADD5', fontSize: 20 }} />
-                <Title level={4} style={{ margin: 0, color: '#1f2937' }}>Doanh số bán hàng (7 ngày qua)</Title>
-              </div>
-            }
-            style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid #f0f0f0' }}
-          >
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData.salesData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#6b7280' }} />
-                <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="sales" name="Doanh số (triệu đồng)" fill="#0EADD5" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="orders" name="Đơn hàng" fill="#52c41a" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-
-        <Col xs={24} lg={8}>
-          <Card
-            title={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <PieChartOutlined style={{ color: '#52c41a', fontSize: 20 }} />
-                <Title level={4} style={{ margin: 0, color: '#1f2937' }}>Phân loại sách</Title>
-              </div>
-            }
-            style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid #f0f0f0', height: '100%' }}
-          >
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie data={chartData.categoryData} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => percent > 8 ? `${name}` : ''} outerRadius={85} innerRadius={30} fill="#8884d8" dataKey="value" stroke="#fff" strokeWidth={2}>
-                  {chartData.categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend verticalAlign="bottom" height={36} />
-              </PieChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-      </Row>
-
-      <Row gutter={[24, 24]} style={{ marginTop: 24 }}>
+      <Row gutter={[24, 24]} style={{ marginTop: 32 }}>
         <Col xs={24}>
           <Card
             title={
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <LineChartOutlined style={{ color: '#fa8c16', fontSize: 20 }} />
-                <Title level={4} style={{ margin: 0, color: '#1f2937' }}>Xu hướng doanh thu (6 tháng qua)</Title>
+                <BarChartOutlined style={{ color: '#0EADD5', fontSize: 20 }} />
+                <Title level={4} style={{ margin: 0, color: '#1f2937' }}>
+                  Sales Performance (Last 7 Days)
+                </Title>
               </div>
             }
             style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid #f0f0f0' }}
           >
-            <ResponsiveContainer width="100%" height={350}>
-              <AreaChart data={chartData.revenueData}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0EADD5" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#0EADD5" stopOpacity={0.1}/>
-                  </linearGradient>
-                  <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#52c41a" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#52c41a" stopOpacity={0.1}/>
-                  </linearGradient>
-                </defs>
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={chartData.salesData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6b7280' }} />
-                <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} tickFormatter={formatRevenue} />
-                <Tooltip formatter={(value, name) => [`${value.toLocaleString('vi-VN')} ₫`, name === 'revenue' ? 'Doanh thu' : 'Lợi nhuận']} />
+                <XAxis dataKey="name" tick={{ fontSize: 14, fill: '#6b7280' }} tickLine={{ stroke: '#d9d9d9' }} axisLine={{ stroke: '#d9d9d9' }} />
+                <YAxis tick={{ fontSize: 14, fill: '#6b7280' }} tickLine={{ stroke: '#d9d9d9' }} axisLine={{ stroke: '#d9d9d9' }} />
+                <Tooltip />
                 <Legend />
-                <Area type="monotone" dataKey="revenue" stroke="#0EADD5" fillOpacity={1} fill="url(#colorRevenue)" name="Doanh thu" />
-                <Area type="monotone" dataKey="profit" stroke="#52c41a" fillOpacity={1} fill="url(#colorProfit)" name="Lợi nhuận" />
-              </AreaChart>
+                <Bar dataKey="sales" name="Sales (mil VND)" fill="#0EADD5" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="orders" name="Orders" fill="#52c41a" radius={[6, 6, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           </Card>
         </Col>
       </Row>
-
-      <Modal
-        title="Tạo tài khoản Admin mới"
-        open={showRegisterModal}
-        onCancel={() => setShowRegisterModal(false)}
-        footer={null}
-        width={600}
-      >
-        <AdminRegister onSuccess={() => setShowRegisterModal(false)} />
-      </Modal>
     </div>
   );
 }
