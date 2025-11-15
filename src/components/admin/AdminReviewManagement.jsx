@@ -83,7 +83,7 @@ const AdminReviewManagement = () => {
             }));
         } catch (error) {
             console.error('Error fetching reviews:', error);
-            message.error('Không thể tải danh sách đánh giá');
+            message.error('Unable to load reviews list');
         } finally {
             setLoading(false);
         }
@@ -108,7 +108,7 @@ const AdminReviewManagement = () => {
             console.log('[REVIEW MANAGEMENT] Products set:', productList);
         } catch (error) {
             console.error('Error fetching products:', error);
-            message.error('Không thể tải danh sách sản phẩm');
+            message.error('Unable to load products list');
         }
     };
 
@@ -121,7 +121,7 @@ const AdminReviewManagement = () => {
             console.log('[REVIEW MANAGEMENT] Customers set:', response.customers || []);
         } catch (error) {
             console.error('Error fetching customers:', error);
-            message.error('Không thể tải danh sách khách hàng');
+            message.error('Unable to load customers list');
         }
     };
 
@@ -168,20 +168,20 @@ const AdminReviewManagement = () => {
                     rating: values.rating,
                     comment: values.comment
                 });
-                message.success('Cập nhật đánh giá thành công!');
+                message.success('Review updated successfully!');
                 
                 // Refresh data from server to ensure consistency
                 await fetchReviews();
             } else {
                 await reviewApi.createReview(values);
-                message.success('Thêm đánh giá thành công!');
+                message.success('Review added successfully!');
                 await fetchReviews();
             }
             setModalVisible(false);
             await fetchStatistics();
         } catch (error) {
             console.error('Error saving review:', error);
-            message.error(editingReview ? 'Không thể cập nhật đánh giá' : 'Không thể thêm đánh giá');
+            message.error(editingReview ? 'Unable to update review' : 'Unable to add review');
         } finally {
             setLoading(false);
         }
@@ -190,12 +190,12 @@ const AdminReviewManagement = () => {
     const handleDelete = async (reviewId) => {
         try {
             await reviewApi.deleteReview(reviewId);
-            message.success('Xóa đánh giá thành công!');
+            message.success('Review deleted successfully!');
             // Refresh both reviews list and statistics
             await Promise.all([fetchReviews(), fetchStatistics()]);
         } catch (error) {
             console.error('Error deleting review:', error);
-            message.error('Không thể xóa đánh giá');
+            message.error('Unable to delete review');
         }
     };
 
@@ -208,7 +208,7 @@ const AdminReviewManagement = () => {
             sorter: true
         },
         {
-            title: 'Sản phẩm',
+            title: 'Product',
             key: 'product',
             width: 200,
             render: (record) => (
@@ -235,7 +235,7 @@ const AdminReviewManagement = () => {
             )
         },
         {
-            title: 'Khách hàng',
+            title: 'Customer',
             key: 'customer',
             width: 150,
             render: (record) => (
@@ -251,7 +251,7 @@ const AdminReviewManagement = () => {
             )
         },
         {
-            title: 'Đánh giá',
+            title: 'Rating',
             dataIndex: 'rating',
             key: 'rating',
             width: 120,
@@ -264,20 +264,20 @@ const AdminReviewManagement = () => {
             sorter: true
         },
         {
-            title: 'Bình luận',
+            title: 'Comment',
             dataIndex: 'comment',
             key: 'comment',
             ellipsis: true,
             render: (comment) => (
                 <Tooltip title={comment}>
                     <Text className="comment-text">
-                        {comment ? (comment.length > 50 ? `${comment.substring(0, 50)}...` : comment) : 'Không có bình luận'}
+                        {comment ? (comment.length > 50 ? `${comment.substring(0, 50)}...` : comment) : 'No comment'}
                     </Text>
                 </Tooltip>
             )
         },
         {
-            title: 'Ngày đánh giá',
+            title: 'Review Date',
             dataIndex: 'reviewDate',
             key: 'reviewDate',
             width: 130,
@@ -290,12 +290,12 @@ const AdminReviewManagement = () => {
             sorter: true
         },
         {
-            title: 'Thao tác',
+            title: 'Actions',
             key: 'actions',
             width: 120,
             render: (record) => (
                 <Space size="small">
-                    <Tooltip title="Chỉnh sửa">
+                    <Tooltip title="Edit">
                         <Button
                             type="primary"
                             size="small"
@@ -304,12 +304,12 @@ const AdminReviewManagement = () => {
                             className="edit-btn"
                         />
                     </Tooltip>
-                    <Tooltip title="Xóa">
+                    <Tooltip title="Delete">
                         <Popconfirm
-                            title="Bạn có chắc chắn muốn xóa đánh giá này?"
+                            title="Are you sure you want to delete this review?"
                             onConfirm={() => handleDelete(record.reviewId)}
-                            okText="Có"
-                            cancelText="Không"
+                            okText="Yes"
+                            cancelText="No"
                         >
                             <Button
                                 type="primary"
@@ -330,7 +330,7 @@ const AdminReviewManagement = () => {
             <div className="page-header">
                 <Title level={2} className="page-title">
                     <CommentOutlined className="title-icon" />
-                    Quản lý Đánh giá
+                    Review Management
                 </Title>
             </div>
 
@@ -339,7 +339,7 @@ const AdminReviewManagement = () => {
                 <Col xs={24} sm={12} md={6}>
                     <Card className="stat-card">
                         <Statistic
-                            title="Tổng đánh giá"
+                            title="Total Reviews"
                             value={statistics.totalReviews || 0}
                             prefix={<CommentOutlined />}
                             valueStyle={{ color: '#1890ff' }}
@@ -349,7 +349,7 @@ const AdminReviewManagement = () => {
                 <Col xs={24} sm={12} md={6}>
                     <Card className="stat-card">
                         <Statistic
-                            title="Đánh giá trung bình"
+                            title="Average Rating"
                             value={statistics.averageRating || 0}
                             precision={2}
                             prefix={<StarOutlined />}
@@ -361,7 +361,7 @@ const AdminReviewManagement = () => {
                 <Col xs={24} sm={12} md={6}>
                     <Card className="stat-card">
                         <Statistic
-                            title="Đánh giá tuần này"
+                            title="This Week's Reviews"
                             value={statistics.recentReviews || 0}
                             prefix={<BarChartOutlined />}
                             valueStyle={{ color: '#52c41a' }}
@@ -371,7 +371,7 @@ const AdminReviewManagement = () => {
                 <Col xs={24} sm={12} md={6}>
                     <Card className="stat-card">
                         <Statistic
-                            title="Đánh giá 5 sao"
+                            title="5-Star Reviews"
                             value={statistics.ratingDistribution?.find(r => r.rating === 5)?.count || 0}
                             prefix={<StarOutlined />}
                             valueStyle={{ color: '#eb2f96' }}
@@ -385,7 +385,7 @@ const AdminReviewManagement = () => {
                 <Row gutter={[16, 16]} align="middle">
                     <Col xs={24} sm={12} md={8}>
                         <Select
-                            placeholder="Chọn sản phẩm"
+                            placeholder="Select product"
                             value={selectedProduct}
                             onChange={setSelectedProduct}
                             allowClear
@@ -404,7 +404,7 @@ const AdminReviewManagement = () => {
                     </Col>
                     <Col xs={24} sm={12} md={8}>
                         <Select
-                            placeholder="Chọn số sao"
+                            placeholder="Select rating"
                             value={selectedRating}
                             onChange={setSelectedRating}
                             allowClear
@@ -412,7 +412,7 @@ const AdminReviewManagement = () => {
                         >
                             {[1, 2, 3, 4, 5].map(rating => (
                                 <Option key={rating} value={rating}>
-                                    {rating} sao
+                                    {rating} stars
                                 </Option>
                             ))}
                         </Select>
@@ -420,10 +420,10 @@ const AdminReviewManagement = () => {
                     <Col xs={24} sm={24} md={8}>
                         <Space>
                             <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
-                                Lọc
+                                Filter
                             </Button>
                             <Button onClick={handleReset}>
-                                Đặt lại
+                                Reset
                             </Button>
                         </Space>
                     </Col>
@@ -435,7 +435,7 @@ const AdminReviewManagement = () => {
                 <Row justify="space-between" align="middle">
                     <Col>
                         <Title level={4} className="table-title">
-                            Danh sách đánh giá ({pagination.total})
+                            Reviews List ({pagination.total})
                         </Title>
                     </Col>
                     <Col>
@@ -445,7 +445,7 @@ const AdminReviewManagement = () => {
                             onClick={() => showModal()}
                             className="add-btn"
                         >
-                            Thêm đánh giá
+                            Add Review
                         </Button>
                     </Col>
                 </Row>
@@ -465,7 +465,7 @@ const AdminReviewManagement = () => {
                         showSizeChanger: true,
                         showQuickJumper: true,
                         showTotal: (total, range) =>
-                            `${range[0]}-${range[1]} của ${total} đánh giá`,
+                            `${range[0]}-${range[1]} of ${total} reviews`,
                         pageSizeOptions: ['10', '20', '50', '100']
                     }}
                     onChange={handleTableChange}
@@ -476,14 +476,14 @@ const AdminReviewManagement = () => {
 
             {/* Add/Edit Modal */}
             <Modal
-                title={editingReview ? 'Chỉnh sửa đánh giá' : 'Thêm đánh giá mới'}
+                title={editingReview ? 'Edit Review' : 'Add New Review'}
                 open={modalVisible}
                 onOk={handleModalOk}
                 onCancel={() => setModalVisible(false)}
                 width={600}
                 className="review-modal"
-                okText={editingReview ? 'Cập nhật' : 'Thêm'}
-                cancelText="Hủy"
+                okText={editingReview ? 'Update' : 'Add'}
+                cancelText="Cancel"
                 confirmLoading={loading}
             >
                 <Form
@@ -493,11 +493,11 @@ const AdminReviewManagement = () => {
                 >
                     <Form.Item
                         name="productId"
-                        label="Sản phẩm"
-                        rules={[{ required: true, message: 'Vui lòng chọn sản phẩm!' }]}
+                        label="Product"
+                        rules={[{ required: true, message: 'Please select a product!' }]}
                     >
                         <Select
-                            placeholder="Chọn sản phẩm"
+                            placeholder="Select product"
                             showSearch
                             filterOption={(input, option) =>
                                 option.children.toLowerCase().includes(input.toLowerCase())
@@ -514,11 +514,11 @@ const AdminReviewManagement = () => {
 
                     <Form.Item
                         name="userId"
-                        label="Khách hàng"
-                        rules={[{ required: true, message: 'Vui lòng chọn khách hàng!' }]}
+                        label="Customer"
+                        rules={[{ required: true, message: 'Please select a customer!' }]}
                     >
                         <Select
-                            placeholder="Chọn khách hàng"
+                            placeholder="Select customer"
                             showSearch
                             filterOption={(input, option) => {
                                 const text = option.children.toLowerCase();
@@ -536,19 +536,19 @@ const AdminReviewManagement = () => {
 
                     <Form.Item
                         name="rating"
-                        label="Đánh giá"
-                        rules={[{ required: true, message: 'Vui lòng chọn số sao!' }]}
+                        label="Rating"
+                        rules={[{ required: true, message: 'Please select rating!' }]}
                     >
                         <Rate />
                     </Form.Item>
 
                     <Form.Item
                         name="comment"
-                        label="Bình luận"
+                        label="Comment"
                     >
                         <TextArea
                             rows={4}
-                            placeholder="Nhập bình luận..."
+                            placeholder="Enter comment..."
                             maxLength={500}
                             showCount
                         />

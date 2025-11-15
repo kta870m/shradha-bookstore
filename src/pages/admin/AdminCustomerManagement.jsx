@@ -66,7 +66,7 @@ const AdminCustomerManagement = () => {
             });
         } catch (error) {
             console.error('[CUSTOMERS] Error fetching customers:', error);
-            message.error('Lỗi khi tải danh sách khách hàng');
+            message.error('Error loading customer list');
         } finally {
             setLoading(false);
         }
@@ -110,12 +110,12 @@ const AdminCustomerManagement = () => {
                 }
                 
                 await axios.put(`/customers/${editingCustomer.id}`, customerData);
-                message.success('Cập nhật khách hàng thành công!');
+                message.success('Customer updated successfully!');
             } else {
                 // Create customer
                 customerData.password = values.password;
                 await axios.post('/customers', customerData);
-                message.success('Thêm khách hàng thành công!');
+                message.success('Customer added successfully!');
             }
 
             setModalVisible(false);
@@ -124,7 +124,7 @@ const AdminCustomerManagement = () => {
             fetchCustomers(pagination.current, pagination.pageSize, searchText);
         } catch (error) {
             console.error('[CUSTOMERS] Error saving customer:', error);
-            const errorMessage = error.response?.data || 'Lỗi khi lưu khách hàng';
+            const errorMessage = error.response?.data || 'Error saving customer';
             message.error(errorMessage);
         } finally {
             setLoading(false);
@@ -138,11 +138,11 @@ const AdminCustomerManagement = () => {
             console.log('[CUSTOMERS] Deleting customer:', customerId);
             
             await axios.delete(`/customers/${customerId}`);
-            message.success(`Đã xóa khách hàng ${customerName}`);
+            message.success(`Customer ${customerName} deleted successfully`);
             fetchCustomers(pagination.current, pagination.pageSize, searchText);
         } catch (error) {
             console.error('[CUSTOMERS] Error deleting customer:', error);
-            const errorMessage = error.response?.data || 'Lỗi khi xóa khách hàng';
+            const errorMessage = error.response?.data || 'Error deleting customer';
             message.error(errorMessage);
         } finally {
             setLoading(false);
@@ -186,7 +186,7 @@ const AdminCustomerManagement = () => {
             sorter: (a, b) => a.id - b.id,
         },
         {
-            title: 'Tên đăng nhập',
+            title: 'Username',
             dataIndex: 'userName',
             key: 'userName',
             render: (text) => (
@@ -197,7 +197,7 @@ const AdminCustomerManagement = () => {
             ),
         },
         {
-            title: 'Họ và tên',
+            title: 'Full Name',
             dataIndex: 'fullName',
             key: 'fullName',
             render: (text) => <strong>{text}</strong>,
@@ -210,47 +210,47 @@ const AdminCustomerManagement = () => {
                 <Space direction="vertical" size="small">
                     <span>{text}</span>
                     {record.emailConfirmed ? (
-                        <Tag color="green">Đã xác thực</Tag>
+                        <Tag color="green">Verified</Tag>
                     ) : (
-                        <Tag color="orange">Chưa xác thực</Tag>
+                        <Tag color="orange">Not Verified</Tag>
                     )}
                 </Space>
             ),
         },
         {
-            title: 'Số điện thoại',
+            title: 'Phone Number',
             dataIndex: 'phoneNumber',
             key: 'phoneNumber',
             render: (text) => text || '-',
         },
         {
-            title: 'Địa chỉ',
+            title: 'Address',
             dataIndex: 'address',
             key: 'address',
             render: (text) => text || '-',
             ellipsis: true,
         },
         {
-            title: 'Giới tính',
+            title: 'Gender',
             dataIndex: 'gender',
             key: 'gender',
             render: (text) => {
                 if (!text) return '-';
                 return (
                     <Tag color={text === 'Male' ? 'blue' : 'pink'}>
-                        {text === 'Male' ? 'Nam' : text === 'Female' ? 'Nữ' : text}
+                        {text === 'Male' ? 'Male' : text === 'Female' ? 'Female' : text}
                     </Tag>
                 );
             },
         },
         {
-            title: 'Ngày sinh',
+            title: 'Birth Date',
             dataIndex: 'birthDate',
             key: 'birthDate',
             render: (text) => text ? moment(text).format('DD/MM/YYYY') : '-',
         },
         {
-            title: 'Thao tác',
+            title: 'Actions',
             key: 'actions',
             fixed: 'right',
             width: 120,
@@ -262,14 +262,14 @@ const AdminCustomerManagement = () => {
                         onClick={() => openEditModal(record)}
                         size="small"
                     >
-                        Sửa
+                        Edit
                     </Button>
                     <Popconfirm
-                        title="Xác nhận xóa"
-                        description={`Bạn có chắc chắn muốn xóa khách hàng "${record.fullName}"?`}
+                        title="Confirm Delete"
+                        description={`Are you sure you want to delete customer "${record.fullName}"?`}
                         onConfirm={() => handleDeleteCustomer(record.id, record.fullName)}
-                        okText="Xóa"
-                        cancelText="Hủy"
+                        okText="Delete"
+                        cancelText="Cancel"
                         okType="danger"
                     >
                         <Button
@@ -278,7 +278,7 @@ const AdminCustomerManagement = () => {
                             icon={<DeleteOutlined />}
                             size="small"
                         >
-                            Xóa
+                            Delete
                         </Button>
                     </Popconfirm>
                 </Space>
@@ -292,7 +292,7 @@ const AdminCustomerManagement = () => {
                 <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
                     <Col>
                         <Title level={2} style={{ margin: 0 }}>
-                            <UserOutlined /> Quản lý khách hàng
+                            <UserOutlined /> Customer Management
                         </Title>
                     </Col>
                     <Col>
@@ -302,14 +302,14 @@ const AdminCustomerManagement = () => {
                                 onClick={handleRefresh}
                                 loading={loading}
                             >
-                                Làm mới
+                                Refresh
                             </Button>
                             <Button
                                 type="primary"
                                 icon={<PlusOutlined />}
                                 onClick={openAddModal}
                             >
-                                Thêm khách hàng
+                                Add Customer
                             </Button>
                         </Space>
                     </Col>
@@ -318,7 +318,7 @@ const AdminCustomerManagement = () => {
                 <Row gutter={16} style={{ marginBottom: 16 }}>
                     <Col xs={24} sm={12} md={8}>
                         <Input.Search
-                            placeholder="Tìm kiếm theo tên, email, số điện thoại..."
+                            placeholder="Search by name, email, phone number..."
                             allowClear
                             enterButton={<SearchOutlined />}
                             size="large"
@@ -347,7 +347,7 @@ const AdminCustomerManagement = () => {
                         showSizeChanger
                         showQuickJumper
                         showTotal={(total, range) =>
-                            `${range[0]}-${range[1]} của ${total} khách hàng`
+                            `${range[0]}-${range[1]} of ${total} customers`
                         }
                     />
                 </Row>
@@ -355,7 +355,7 @@ const AdminCustomerManagement = () => {
 
             {/* Add/Edit Customer Modal */}
             <Modal
-                title={editingCustomer ? 'Sửa thông tin khách hàng' : 'Thêm khách hàng mới'}
+                title={editingCustomer ? 'Edit Customer Information' : 'Add New Customer'}
                 open={modalVisible}
                 onCancel={() => {
                     setModalVisible(false);
@@ -376,13 +376,13 @@ const AdminCustomerManagement = () => {
                         <Col span={12}>
                             <Form.Item
                                 name="userName"
-                                label="Tên đăng nhập"
+                                label="Username"
                                 rules={[
-                                    { required: true, message: 'Vui lòng nhập tên đăng nhập!' },
-                                    { min: 3, message: 'Tên đăng nhập phải có ít nhất 3 ký tự!' }
+                                    { required: true, message: 'Please enter username!' },
+                                    { min: 3, message: 'Username must be at least 3 characters!' }
                                 ]}
                             >
-                                <Input placeholder="Nhập tên đăng nhập" />
+                                <Input placeholder="Enter username" />
                             </Form.Item>
                         </Col>
                         <Col span={12}>
@@ -390,11 +390,11 @@ const AdminCustomerManagement = () => {
                                 name="email"
                                 label="Email"
                                 rules={[
-                                    { required: true, message: 'Vui lòng nhập email!' },
-                                    { type: 'email', message: 'Email không hợp lệ!' }
+                                    { required: true, message: 'Please enter email!' },
+                                    { type: 'email', message: 'Invalid email format!' }
                                 ]}
                             >
-                                <Input placeholder="Nhập email" />
+                                <Input placeholder="Enter email" />
                             </Form.Item>
                         </Col>
                     </Row>
@@ -403,13 +403,13 @@ const AdminCustomerManagement = () => {
                         <Col span={editingCustomer ? 12 : 24}>
                             <Form.Item
                                 name="password"
-                                label={editingCustomer ? "Mật khẩu mới (để trống nếu không đổi)" : "Mật khẩu"}
+                                label={editingCustomer ? "New Password (leave blank if no change)" : "Password"}
                                 rules={editingCustomer ? [] : [
-                                    { required: true, message: 'Vui lòng nhập mật khẩu!' },
-                                    { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự!' }
+                                    { required: true, message: 'Please enter password!' },
+                                    { min: 6, message: 'Password must be at least 6 characters!' }
                                 ]}
                             >
-                                <Input.Password placeholder="Nhập mật khẩu" />
+                                <Input.Password placeholder="Enter password" />
                             </Form.Item>
                         </Col>
 
@@ -417,36 +417,36 @@ const AdminCustomerManagement = () => {
 
                     <Form.Item
                         name="fullName"
-                        label="Họ và tên"
+                        label="Full Name"
                         rules={[
-                            { required: true, message: 'Vui lòng nhập họ và tên!' },
-                            { min: 2, message: 'Họ và tên phải có ít nhất 2 ký tự!' }
+                            { required: true, message: 'Please enter full name!' },
+                            { min: 2, message: 'Full name must be at least 2 characters!' }
                         ]}
                     >
-                        <Input placeholder="Nhập họ và tên" />
+                        <Input placeholder="Enter full name" />
                     </Form.Item>
 
                     <Row gutter={16}>
                         <Col span={12}>
                             <Form.Item
                                 name="phoneNumber"
-                                label="Số điện thoại"
+                                label="Phone Number"
                                 rules={[
                                     {
                                         pattern: /^[0-9]{10,11}$/,
-                                        message: 'Số điện thoại phải có 10-11 chữ số!'
+                                        message: 'Phone number must be 10-11 digits!'
                                     }
                                 ]}
                             >
-                                <Input placeholder="Nhập số điện thoại" />
+                                <Input placeholder="Enter phone number" />
                             </Form.Item>
                         </Col>
                         <Col span={12}>
-                            <Form.Item name="gender" label="Giới tính">
-                                <Select placeholder="Chọn giới tính" allowClear>
-                                    <Option value="Male">Nam</Option>
-                                    <Option value="Female">Nữ</Option>
-                                    <Option value="Other">Khác</Option>
+                            <Form.Item name="gender" label="Gender">
+                                <Select placeholder="Select gender" allowClear>
+                                    <Option value="Male">Male</Option>
+                                    <Option value="Female">Female</Option>
+                                    <Option value="Other">Other</Option>
                                 </Select>
                             </Form.Item>
                         </Col>
@@ -454,9 +454,9 @@ const AdminCustomerManagement = () => {
 
                     <Row gutter={16}>
                         <Col span={12}>
-                            <Form.Item name="birthDate" label="Ngày sinh">
+                            <Form.Item name="birthDate" label="Birth Date">
                                 <DatePicker
-                                    placeholder="Chọn ngày sinh"
+                                    placeholder="Select birth date"
                                     style={{ width: '100%' }}
                                     format="DD/MM/YYYY"
                                 />
@@ -464,9 +464,9 @@ const AdminCustomerManagement = () => {
                         </Col>
                     </Row>
 
-                    <Form.Item name="address" label="Địa chỉ">
+                    <Form.Item name="address" label="Address">
                         <Input.TextArea
-                            placeholder="Nhập địa chỉ"
+                            placeholder="Enter address"
                             rows={3}
                             maxLength={500}
                             showCount
@@ -484,14 +484,14 @@ const AdminCustomerManagement = () => {
                                     setEditingCustomer(null);
                                 }}
                             >
-                                Hủy
+                                Cancel
                             </Button>
                             <Button
                                 type="primary"
                                 htmlType="submit"
                                 loading={loading}
                             >
-                                {editingCustomer ? 'Cập nhật' : 'Thêm mới'}
+                                {editingCustomer ? 'Update' : 'Add New'}
                             </Button>
                         </Space>
                     </Row>

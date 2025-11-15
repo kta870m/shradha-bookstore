@@ -106,7 +106,7 @@ function AdminOrderManagement() {
         setOrders(response.data);
       }
     } catch (error) {
-      message.error('Không thể tải danh sách đơn hàng');
+      message.error('Unable to load order list');
       console.error('Error fetching orders:', error);
     } finally {
       setLoading(false);
@@ -120,7 +120,7 @@ function AdminOrderManagement() {
       setSelectedOrder(response.data);
       setOrderDetails(response.data.orderDetails || []);
     } catch (error) {
-      message.error('Không thể tải chi tiết đơn hàng');
+      message.error('Unable to load order details');
       console.error('Error fetching order details:', error);
     }
   };
@@ -149,7 +149,7 @@ function AdminOrderManagement() {
       setProducts(response.data);
     } catch (error) {
       console.error('Error searching products:', error);
-      message.error('Không thể tìm kiếm sản phẩm');
+      message.error('Unable to search products');
     } finally {
       setSearchingProducts(false);
     }
@@ -164,7 +164,7 @@ function AdminOrderManagement() {
       const updatedProducts = [...selectedProducts];
       updatedProducts[existingIndex].quantity += 1;
       setSelectedProducts(updatedProducts);
-      message.success(`Đã tăng số lượng ${product.productName}`);
+      message.success(`Increased quantity of ${product.productName}`);
     } else {
       // Add new product
       setSelectedProducts([...selectedProducts, {
@@ -175,7 +175,7 @@ function AdminOrderManagement() {
         quantity: 1,
         thumbnailUrl: product.thumbnailUrl
       }]);
-      message.success(`Đã thêm ${product.productName} vào đơn hàng`);
+      message.success(`Added ${product.productName} to order`);
     }
 
     // Clear search after adding product
@@ -224,7 +224,7 @@ function AdminOrderManagement() {
       setUsers(response.data);
     } catch (error) {
       console.error('Error searching users:', error);
-      message.error('Không thể tìm kiếm khách hàng');
+      message.error('Unable to search customers');
     } finally {
       setSearchingUsers(false);
     }
@@ -236,7 +236,7 @@ function AdminOrderManagement() {
     setUserSearchValue(`${user.fullName} (ID: ${user.id})`);
     setUsers([]);
     form.setFieldsValue({ userId: user.id });
-    message.success(`Đã chọn khách hàng: ${user.fullName}`);
+    message.success(`Selected customer: ${user.fullName}`);
   };
 
   // Clear selected user
@@ -279,16 +279,16 @@ function AdminOrderManagement() {
         console.log('Sending update data:', updateData);
         const response = await axiosInstance.put(`/orders/${editingOrder.orderId}/full-update`, updateData);
         console.log('Update response:', response.data);
-        message.success('Cập nhật đơn hàng thành công!');
+        message.success('Order updated successfully!');
       } else {
         // Create new order with order details
         if (selectedProducts.length === 0) {
-          message.error('Vui lòng chọn ít nhất một sản phẩm');
+          message.error('Please select at least one product');
           return;
         }
 
         if (!selectedUser) {
-          message.error('Vui lòng chọn khách hàng');
+          message.error('Please select a customer');
           return;
         }
 
@@ -304,7 +304,7 @@ function AdminOrderManagement() {
 
         console.log('Creating new order with data:', orderData);
         await axiosInstance.post('/orders/admin-create', orderData);
-        message.success('Thêm đơn hàng mới thành công!');
+        message.success('New order added successfully!');
       }
       
       setModalVisible(false);
@@ -320,7 +320,7 @@ function AdminOrderManagement() {
     } catch (error) {
       console.error('Error submitting order:', error);
       console.error('Error response:', error.response?.data);
-      const errorMsg = error.response?.data?.message || 'Có lỗi xảy ra khi lưu đơn hàng';
+      const errorMsg = error.response?.data?.message || 'An error occurred while saving the order';
       message.error(errorMsg);
     }
   };
@@ -329,10 +329,10 @@ function AdminOrderManagement() {
   const handleDelete = async (orderId) => {
     try {
       await axiosInstance.delete(`/orders/${orderId}`);
-      message.success('Xóa đơn hàng thành công!');
+      message.success('Order deleted successfully!');
       fetchOrders();
     } catch (error) {
-      const errorMsg = error.response?.data?.message || 'Không thể xóa đơn hàng';
+      const errorMsg = error.response?.data?.message || 'Unable to delete order';
       message.error(errorMsg);
     }
   };
@@ -377,18 +377,18 @@ function AdminOrderManagement() {
           const products = fullOrder.orderDetails.map(detail => {
             // Get thumbnail URL - check different possible structures
             let thumbnailUrl = null;
-            if (detail.product.mediaFiles && detail.product.mediaFiles.length > 0) {
+            if (detail.product && detail.product.mediaFiles && detail.product.mediaFiles.length > 0) {
               thumbnailUrl = detail.product.mediaFiles[0].mediaUrl;
-            } else if (detail.product.MediaFiles && detail.product.MediaFiles.length > 0) {
+            } else if (detail.product && detail.product.MediaFiles && detail.product.MediaFiles.length > 0) {
               thumbnailUrl = detail.product.MediaFiles[0].MediaUrl || detail.product.MediaFiles[0].mediaUrl;
             }
             
-            console.log(`Product ${detail.product.productName} thumbnail:`, thumbnailUrl); // Debug log
+            console.log(`Product ${detail.productName} thumbnail:`, thumbnailUrl); // Debug log
             
             return {
-              productId: detail.product.productId,
-              productCode: detail.product.productCode,
-              productName: detail.product.productName,  
+              productId: detail.productId,
+              productCode: detail.product?.productCode || '',
+              productName: detail.productName,  
               unitPrice: detail.unitPrice,
               quantity: detail.quantity,
               thumbnailUrl: thumbnailUrl
@@ -405,7 +405,7 @@ function AdminOrderManagement() {
         }
       } catch (error) {
         console.error('Error loading order details:', error);
-        message.error('Không thể tải thông tin đơn hàng');
+        message.error('Unable to load order information');
       }
     }
   };
@@ -421,11 +421,8 @@ function AdminOrderManagement() {
     const colors = {
       'Pending': 'orange',
       'Confirmed': 'blue',
-      'Processing': 'cyan',
-      'Shipped': 'purple',
-      'Delivered': 'green',
-      'Cancelled': 'red',
-      'Completed': 'green'
+      'Paid': 'green',
+      'Successful': 'green'
     };
     return colors[status] || 'default';
   };
@@ -433,7 +430,7 @@ function AdminOrderManagement() {
   // Table columns
   const columns = [
     {
-      title: 'Mã đơn hàng',
+      title: 'Order Code',
       dataIndex: 'orderCode',
       key: 'orderCode',
       render: (text) => (
@@ -441,13 +438,13 @@ function AdminOrderManagement() {
       ),
     },
     {
-      title: 'Ngày đặt',
+      title: 'Order Date',
       dataIndex: 'orderDate',
       key: 'orderDate',
       render: (date) => moment(date).format('DD/MM/YYYY HH:mm'),
     },
     {
-      title: 'Khách hàng',
+      title: 'Customer',
       dataIndex: 'user',
       key: 'customer',
       render: (user) => (
@@ -473,7 +470,7 @@ function AdminOrderManagement() {
       width: 200,
     },
     {
-      title: 'Tổng tiền',
+      title: 'Total Amount',
       dataIndex: 'totalAmount',
       key: 'totalAmount',
       render: (amount) => (
@@ -486,7 +483,7 @@ function AdminOrderManagement() {
       ),
     },
     {
-      title: 'Trạng thái',
+      title: 'Status',
       dataIndex: 'orderStatus',
       key: 'orderStatus',
       render: (status) => (
@@ -496,7 +493,7 @@ function AdminOrderManagement() {
       ),
     },
     {
-      title: 'Phương thức TT',
+      title: 'Payment Method',
       dataIndex: 'paymentMethod',
       key: 'paymentMethod',
       render: (method) => (
@@ -504,12 +501,12 @@ function AdminOrderManagement() {
       ),
     },
     {
-      title: 'Hành động',
+      title: 'Actions',
       key: 'actions',
       width: 200,
       render: (_, record) => (
         <Space className="order-actions">
-          <Tooltip title="Xem chi tiết">
+          <Tooltip title="View Details">
             <Button
               type="primary"
               size="small"
@@ -517,7 +514,7 @@ function AdminOrderManagement() {
               onClick={() => openDetailModal(record)}
             />
           </Tooltip>
-          <Tooltip title="Chỉnh sửa">
+          <Tooltip title="Edit">
             <Button
               type="default"
               size="small"
@@ -526,14 +523,14 @@ function AdminOrderManagement() {
             />
           </Tooltip>
           <Popconfirm
-            title="Xác nhận xóa"
-            description="Bạn có chắc chắn muốn xóa đơn hàng này?"
+            title="Confirm Delete"
+            description="Are you sure you want to delete this order?"
             onConfirm={() => handleDelete(record.orderId)}
-            okText="Xóa"
-            cancelText="Hủy"
+            okText="Delete"
+            cancelText="Cancel"
             icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
           >
-            <Tooltip title="Xóa">
+            <Tooltip title="Delete">
               <Button
                 danger
                 size="small"
@@ -552,7 +549,7 @@ function AdminOrderManagement() {
         <div className="order-header">
           <Title level={2} className="order-title">
             <ShoppingCartOutlined style={{ marginRight: 8 }} />
-            Quản lý đơn hàng
+            Order Management
           </Title>
           <Button
             type="primary"
@@ -561,7 +558,7 @@ function AdminOrderManagement() {
             size="large"
             className="add-order-btn"
           >
-            Thêm đơn hàng mới
+            Add New Order
           </Button>
         </div>
 
@@ -576,7 +573,7 @@ function AdminOrderManagement() {
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) =>
-              `${range[0]}-${range[1]} của ${total} đơn hàng`,
+              `${range[0]}-${range[1]} of ${total} orders`,
             onChange: (page, pageSize) => {
               setPagination(prev => ({
                 ...prev,
@@ -592,7 +589,7 @@ function AdminOrderManagement() {
       {/* Create/Edit Modal */}
       <Modal
         key={editingOrder ? editingOrder.orderId : 'new'}
-        title={editingOrder ? 'Chỉnh sửa đơn hàng' : 'Thêm đơn hàng mới'}
+        title={editingOrder ? 'Edit Order' : 'Add New Order'}
         open={modalVisible}
         onCancel={() => {
           setModalVisible(false);
@@ -612,15 +609,15 @@ function AdminOrderManagement() {
             <Col span={12}>
               <Form.Item
                 name="orderDate"
-                label="Ngày đặt hàng"
+                label="Order Date"
                 rules={[
-                  { required: true, message: 'Vui lòng chọn ngày đặt hàng!' }
+                  { required: true, message: 'Please select order date!' }
                 ]}
               >
                 <DatePicker
                   showTime
                   style={{ width: '100%' }}
-                  placeholder="Chọn ngày đặt hàng"
+                  placeholder="Select order date"
                   format="DD/MM/YYYY HH:mm"
                 />
               </Form.Item>
@@ -631,11 +628,11 @@ function AdminOrderManagement() {
             <Col span={24}>
               <Form.Item
                 name="shippingFee"
-                label="Phí vận chuyển"
+                label="Shipping Fee"
               >
                 <InputNumber
                   style={{ width: '100%' }}
-                  placeholder="Nhập phí vận chuyển..."
+                  placeholder="Enter shipping fee..."
                   formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={value => value.replace(/\$\s?|(,*)/g, '')}
                   min={0}
@@ -648,29 +645,24 @@ function AdminOrderManagement() {
             <Col span={12}>
               <Form.Item
                 name="orderStatus"
-                label="Trạng thái đơn hàng"
+                label="Order Status"
               >
-                <Select placeholder="Chọn trạng thái đơn hàng">
-                  <Option value="Pending">Chờ xử lý</Option>
-                  <Option value="Confirmed">Đã xác nhận</Option>
-                  <Option value="Processing">Đang xử lý</Option>
-                  <Option value="Shipped">Đã giao vận</Option>
-                  <Option value="Delivered">Đã giao hàng</Option>
-                  <Option value="Completed">Hoàn thành</Option>
-                  <Option value="Cancelled">Đã hủy</Option>
+                <Select placeholder="Select order status">
+                  <Option value="Pending">Pending</Option>
+                  <Option value="Confirmed">Confirmed</Option>
+                  <Option value="Paid">Paid</Option>
+                  <Option value="Successful">Successful</Option>
                 </Select>
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="paymentMethod"
-                label="Phương thức thanh toán"
+                label="Payment Method"
               >
-                <Select placeholder="Chọn phương thức thanh toán">
-                  <Option value="Cash">Tiền mặt</Option>
-                  <Option value="VnPay">VnPay</Option>
-                  <Option value="Credit Card">Thẻ tín dụng</Option>
-                  <Option value="Bank Transfer">Chuyển khoản</Option>
+                <Select placeholder="Select payment method">
+                  <Option value="COD">Cash on Delivery (COD)</Option>
+                  <Option value="Bank Transfer">Bank Transfer</Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -679,13 +671,13 @@ function AdminOrderManagement() {
           {/* Product Selection Section */}
           {(
             <>
-              <Divider>{editingOrder ? 'Sản phẩm trong đơn hàng' : 'Chọn sản phẩm'}</Divider>
+              <Divider>{editingOrder ? 'Products in Order' : 'Select Products'}</Divider>
               
-              <Form.Item label="Tìm kiếm sản phẩm">
+              <Form.Item label="Search Products">
                 <Select
                   showSearch
                   value={productSearchValue}
-                  placeholder="Nhập tên sản phẩm để tìm kiếm..."
+                  placeholder="Enter product name to search..."
                   onSearch={(value) => {
                     setProductSearchValue(value);
                     searchProducts(value);
@@ -728,7 +720,7 @@ function AdminOrderManagement() {
 
               {/* Selected Products */}
               {selectedProducts.length > 0 && (
-                <Form.Item label="Sản phẩm đã chọn">
+                <Form.Item label="Selected Products">
                   <div style={{ border: '1px solid #d9d9d9', borderRadius: 6, padding: 16, maxHeight: 300, overflowY: 'auto' }}>
                     {selectedProducts.map((product, index) => (
                       <div key={`${product.productId}-${index}`} style={{ 
@@ -792,13 +784,13 @@ function AdminOrderManagement() {
                             onClick={() => removeProductFromOrder(product.productId)}
                             style={{ padding: 0 }}
                           >
-                            Xóa
+                            Remove
                           </Button>
                         </div>
                       </div>
                     ))}
                     <div style={{ marginTop: 12, textAlign: 'right', fontWeight: 'bold' }}>
-                      Tổng tiền sản phẩm: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(calculateTotalAmount())}
+                      Total Products: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(calculateTotalAmount())}
                     </div>
                   </div>
                 </Form.Item>
@@ -809,13 +801,13 @@ function AdminOrderManagement() {
           {/* Customer Selection Section */}
           {(
             <>
-              <Divider>{editingOrder ? 'Khách hàng' : 'Chọn khách hàng'}</Divider>
+              <Divider>{editingOrder ? 'Customer' : 'Select Customer'}</Divider>
               
-              <Form.Item label="Tìm kiếm khách hàng">
+              <Form.Item label="Search Customer">
                 <Select
                   showSearch
                   value={userSearchValue}
-                  placeholder="Nhập tên, ID, email hoặc số điện thoại khách hàng..."
+                  placeholder="Enter name, ID, email or phone number..."
                   onSearch={(value) => {
                     setUserSearchValue(value);
                     searchUsers(value);
@@ -837,11 +829,11 @@ function AdminOrderManagement() {
                         <div style={{ fontWeight: 500 }}>{user.fullName}</div>
                         <div style={{ fontSize: '12px', color: '#666' }}>
                           ID: {user.id} | Email: {user.email}
-                          {user.phoneNumber && ` | SĐT: ${user.phoneNumber}`}
+                          {user.phoneNumber && ` | Phone: ${user.phoneNumber}`}
                         </div>
                         {user.address && (
                           <div style={{ fontSize: '12px', color: '#999' }}>
-                            Địa chỉ: {user.address}
+                            Address: {user.address}
                           </div>
                         )}
                       </div>
@@ -852,7 +844,7 @@ function AdminOrderManagement() {
 
               {/* Selected Customer */}
               {selectedUser && (
-                <Form.Item label="Khách hàng đã chọn">
+                <Form.Item label="Selected Customer">
                   <div style={{ 
                     border: '1px solid #d9d9d9', 
                     borderRadius: 6, 
@@ -869,12 +861,12 @@ function AdminOrderManagement() {
                       </div>
                       {selectedUser.phoneNumber && (
                         <div style={{ fontSize: '14px', color: '#666' }}>
-                          Số điện thoại: {selectedUser.phoneNumber}
+                          Phone: {selectedUser.phoneNumber}
                         </div>
                       )}
                       {selectedUser.address && (
                         <div style={{ fontSize: '14px', color: '#666' }}>
-                          Địa chỉ: {selectedUser.address}
+                          Address: {selectedUser.address}
                         </div>
                       )}
                     </div>
@@ -883,7 +875,7 @@ function AdminOrderManagement() {
                       danger 
                       onClick={clearSelectedUser}
                     >
-                      Thay đổi
+                      Change
                     </Button>
                   </div>
                 </Form.Item>
@@ -906,10 +898,10 @@ function AdminOrderManagement() {
                 setUsers([]);
                 setUserSearchValue('');
               }}>
-                Hủy
+                Cancel
               </Button>
               <Button type="primary" htmlType="submit">
-                {editingOrder ? 'Cập nhật' : 'Thêm mới'}
+                {editingOrder ? 'Update' : 'Add New'}
               </Button>
             </Space>
           </Form.Item>
@@ -918,12 +910,12 @@ function AdminOrderManagement() {
 
       {/* Order Detail Modal */}
       <Modal
-        title={`Chi tiết đơn hàng: ${selectedOrder?.orderCode}`}
+        title={`Order Details: ${selectedOrder?.orderCode}`}
         open={detailModalVisible}
         onCancel={() => setDetailModalVisible(false)}
         footer={[
           <Button key="close" onClick={() => setDetailModalVisible(false)}>
-            Đóng
+            Close
           </Button>
         ]}
         width={900}
@@ -931,13 +923,13 @@ function AdminOrderManagement() {
         {selectedOrder && (
           <div style={{ marginTop: 16 }}>
             <Descriptions bordered column={2}>
-              <Descriptions.Item label="Mã đơn hàng">
+              <Descriptions.Item label="Order Code">
                 <Text strong>{selectedOrder.orderCode}</Text>
               </Descriptions.Item>
-              <Descriptions.Item label="Ngày đặt">
+              <Descriptions.Item label="Order Date">
                 {moment(selectedOrder.orderDate).format('DD/MM/YYYY HH:mm')}
               </Descriptions.Item>
-              <Descriptions.Item label="Khách hàng">
+              <Descriptions.Item label="Customer">
                 <div>
                   <div><Text strong>{selectedOrder.user?.fullName || 'N/A'}</Text></div>
                   <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
@@ -945,30 +937,30 @@ function AdminOrderManagement() {
                   </div>
                 </div>
               </Descriptions.Item>
-              <Descriptions.Item label="Số điện thoại">
-                {selectedOrder.user?.phoneNumber || 'Chưa cập nhật'}
+              <Descriptions.Item label="Phone Number">
+                {selectedOrder.user?.phoneNumber || 'Not updated'}
               </Descriptions.Item>
-              <Descriptions.Item label="Địa chỉ giao hàng" span={2}>
-                {selectedOrder.user?.address || 'Chưa cập nhật'}
+              <Descriptions.Item label="Delivery Address" span={2}>
+                {selectedOrder.user?.address || 'Not updated'}
               </Descriptions.Item>
-              <Descriptions.Item label="Trạng thái">
+              <Descriptions.Item label="Status">
                 <Tag color={getStatusColor(selectedOrder.orderStatus)}>
                   {selectedOrder.orderStatus}
                 </Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Phương thức TT">
+              <Descriptions.Item label="Payment Method">
                 {selectedOrder.paymentMethod || 'N/A'}
               </Descriptions.Item>
-              <Descriptions.Item label="Mã giao dịch">
+              <Descriptions.Item label="Transaction ID">
                 {selectedOrder.paymentTxnRef || 'N/A'}
               </Descriptions.Item>
-              <Descriptions.Item label="Phí vận chuyển">
+              <Descriptions.Item label="Shipping Fee">
                 {new Intl.NumberFormat('vi-VN', {
                   style: 'currency',
                   currency: 'VND'
                 }).format(selectedOrder.shippingFee)}
               </Descriptions.Item>
-              <Descriptions.Item label="Tổng tiền">
+              <Descriptions.Item label="Total Amount">
                 <Text strong style={{ color: '#52c41a', fontSize: 16 }}>
                   {new Intl.NumberFormat('vi-VN', {
                     style: 'currency',
@@ -978,7 +970,7 @@ function AdminOrderManagement() {
               </Descriptions.Item>
             </Descriptions>
 
-            <Divider>Chi tiết sản phẩm</Divider>
+            <Divider>Product Details</Divider>
             
             <Table
               dataSource={orderDetails}
@@ -987,17 +979,17 @@ function AdminOrderManagement() {
               size="small"
               columns={[
                 {
-                  title: 'Sản phẩm',
+                  title: 'Product',
                   dataIndex: 'product',
                   render: (product) => product?.productName || 'N/A',
                 },
                 {
-                  title: 'Số lượng',
+                  title: 'Quantity',
                   dataIndex: 'quantity',
                   align: 'center',
                 },
                 {
-                  title: 'Đơn giá',
+                  title: 'Unit Price',
                   dataIndex: 'unitPrice',
                   render: (price) => new Intl.NumberFormat('vi-VN', {
                     style: 'currency',
@@ -1005,7 +997,7 @@ function AdminOrderManagement() {
                   }).format(price),
                 },
                 {
-                  title: 'Thành tiền',
+                  title: 'Subtotal',
                   key: 'subtotal',
                   render: (_, record) => (
                     <Text strong>

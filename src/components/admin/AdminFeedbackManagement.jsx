@@ -88,7 +88,7 @@ const AdminFeedbackManagement = () => {
         setStatistics(response.statistics);
       }
     } catch (error) {
-      message.error('Không thể tải danh sách phản hồi');
+      message.error('Unable to load feedback list');
     } finally {
       setLoading(false);
     }
@@ -147,12 +147,12 @@ const AdminFeedbackManagement = () => {
       const response = await updateFeedback(currentFeedback.feedbackId, values);
       
       if (response.success) {
-        message.success('Cập nhật phản hồi thành công');
+        message.success('Feedback updated successfully');
         setIsEditModalVisible(false);
         fetchFeedbacks();
       }
     } catch (error) {
-      message.error('Không thể cập nhật phản hồi');
+      message.error('Unable to update feedback');
     }
   };
 
@@ -167,12 +167,12 @@ const AdminFeedbackManagement = () => {
       const response = await updateFeedback(currentFeedback.feedbackId, updateData);
       
       if (response.success) {
-        message.success('Phản hồi đã được gửi thành công');
+        message.success('Response sent successfully');
         setIsResponseModalVisible(false);
         fetchFeedbacks();
       }
     } catch (error) {
-      message.error('Không thể gửi phản hồi');
+      message.error('Unable to send response');
     }
   };
 
@@ -180,11 +180,11 @@ const AdminFeedbackManagement = () => {
     try {
       const response = await deleteFeedback(id);
       if (response.success) {
-        message.success('Xóa phản hồi thành công');
+        message.success('Feedback deleted successfully');
         fetchFeedbacks();
       }
     } catch (error) {
-      message.error('Không thể xóa phản hồi');
+      message.error('Unable to delete feedback');
     }
   };
 
@@ -216,7 +216,7 @@ const AdminFeedbackManagement = () => {
       sorter: true
     },
     {
-      title: 'Khách hàng',
+      title: 'Customer',
       key: 'customer',
       width: 200,
       render: (_, record) => (
@@ -257,14 +257,14 @@ const AdminFeedbackManagement = () => {
       )
     },
     {
-      title: 'Đánh giá',
+      title: 'Rating',
       dataIndex: 'rating',
       key: 'rating',
       width: 120,
       render: (rating) => rating ? <Rate disabled value={rating} style={{ fontSize: '14px' }} /> : '-'
     },
     {
-      title: 'Ngày tạo',
+      title: 'Created Date',
       dataIndex: 'createdDate',
       key: 'createdDate',
       width: 150,
@@ -275,15 +275,15 @@ const AdminFeedbackManagement = () => {
       )
     },
     {
-      title: 'Hành động',
+      title: 'Actions',
       key: 'actions',
       width: 200,
       render: (_, record) => (
         <Space>
-          <Tooltip title="Xem chi tiết">
+          <Tooltip title="View Details">
             <Button icon={<EyeOutlined />} size="small" onClick={() => handleView(record)} />
           </Tooltip>
-          <Tooltip title="Phản hồi">
+          <Tooltip title="Respond">
             <Button 
               icon={<MessageOutlined />} 
               size="small" 
@@ -292,15 +292,15 @@ const AdminFeedbackManagement = () => {
               disabled={record.status === 'Resolved'}
             />
           </Tooltip>
-          <Tooltip title="Chỉnh sửa">
+          <Tooltip title="Edit">
             <Button icon={<EditOutlined />} size="small" onClick={() => handleEdit(record)} />
           </Tooltip>
-          <Tooltip title="Xóa">
+          <Tooltip title="Delete">
             <Popconfirm
-              title="Bạn có chắc chắn muốn xóa phản hồi này?"
+              title="Are you sure you want to delete this feedback?"
               onConfirm={() => handleDelete(record.feedbackId)}
-              okText="Có"
-              cancelText="Không"
+              okText="Yes"
+              cancelText="No"
             >
               <Button icon={<DeleteOutlined />} size="small" danger />
             </Popconfirm>
@@ -314,7 +314,7 @@ const AdminFeedbackManagement = () => {
     <div className="admin-feedback-management">
       <div className="page-header">
         <Title level={2}>
-          <MessageOutlined /> Quản lý Phản hồi khách hàng
+          <MessageOutlined /> Customer Feedback Management
         </Title>
       </div>
 
@@ -323,7 +323,7 @@ const AdminFeedbackManagement = () => {
         <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
-              title="Tổng phản hồi"
+              title="Total Feedback"
               value={statistics.totalFeedbacks || 0}
               prefix={<MessageOutlined />}
               valueStyle={{ color: '#1890ff' }}
@@ -333,7 +333,7 @@ const AdminFeedbackManagement = () => {
         <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
-              title="Phản hồi tuần này"
+              title="This Week's Feedback"
               value={statistics.feedbacksThisWeek || 0}
               prefix={<CalendarOutlined />}
               valueStyle={{ color: '#52c41a' }}
@@ -343,7 +343,7 @@ const AdminFeedbackManagement = () => {
         <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
-              title="Đánh giá trung bình"
+              title="Average Rating"
               value={statistics.averageRating || 0}
               precision={1}
               prefix={<StarOutlined />}
@@ -355,7 +355,7 @@ const AdminFeedbackManagement = () => {
         <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
-              title="Tổng khách hàng"
+              title="Total Customers"
               value={statistics.totalUsers || 0}
               prefix={<UserOutlined />}
               valueStyle={{ color: '#722ed1' }}
@@ -369,7 +369,7 @@ const AdminFeedbackManagement = () => {
         <Row gutter={16}>
           <Col xs={24} md={8}>
             <Search
-              placeholder="Tìm kiếm theo tiêu đề, nội dung, tên khách hàng..."
+              placeholder="Search by title, content, customer name..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               onSearch={fetchFeedbacks}
@@ -378,7 +378,7 @@ const AdminFeedbackManagement = () => {
           </Col>
           <Col xs={24} md={4}>
             <Select
-              placeholder="Khách hàng"
+              placeholder="Customer"
               value={selectedUserId}
               onChange={setSelectedUserId}
               allowClear
@@ -393,7 +393,7 @@ const AdminFeedbackManagement = () => {
           </Col>
           <Col xs={24} md={3}>
             <Select
-              placeholder="Ưu tiên"
+              placeholder="Priority"
               value={selectedPriority}
               onChange={setSelectedPriority}
               allowClear
@@ -406,7 +406,7 @@ const AdminFeedbackManagement = () => {
           </Col>
           <Col xs={24} md={3}>
             <Select
-              placeholder="Trạng thái"
+              placeholder="Status"
               value={selectedStatus}
               onChange={setSelectedStatus}
               allowClear
@@ -420,22 +420,22 @@ const AdminFeedbackManagement = () => {
           </Col>
           <Col xs={24} md={3}>
             <Select
-              placeholder="Sắp xếp"
+              placeholder="Sort by"
               value={sortBy}
               onChange={setSortBy}
               style={{ width: '100%' }}
             >
-              <Option value="submittedAt">Ngày tạo</Option>
-              <Option value="subject">Tiêu đề</Option>
-              <Option value="status">Trạng thái</Option>
-              <Option value="priority">Ưu tiên</Option>
-              <Option value="rating">Đánh giá</Option>
-              <Option value="user">Khách hàng</Option>
+              <Option value="submittedAt">Created Date</Option>
+              <Option value="subject">Subject</Option>
+              <Option value="status">Status</Option>
+              <Option value="priority">Priority</Option>
+              <Option value="rating">Rating</Option>
+              <Option value="user">Customer</Option>
             </Select>
           </Col>
           <Col xs={24} md={3}>
             <Button icon={<ReloadOutlined />} onClick={fetchFeedbacks}>
-              Làm mới
+              Refresh
             </Button>
           </Col>
         </Row>
@@ -455,7 +455,7 @@ const AdminFeedbackManagement = () => {
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) => 
-              `${range[0]}-${range[1]} của ${total} phản hồi`,
+              `${range[0]}-${range[1]} of ${total} feedback`,
             onChange: (page, size) => {
               setCurrentPage(page);
               setPageSize(size);
@@ -467,32 +467,32 @@ const AdminFeedbackManagement = () => {
 
       {/* Edit Modal */}
       <Modal
-        title="Chỉnh sửa phản hồi"
+        title="Edit Feedback"
         open={isEditModalVisible}
         onOk={handleUpdate}
         onCancel={() => setIsEditModalVisible(false)}
         width={600}
-        okText="Cập nhật"
-        cancelText="Hủy"
+        okText="Update"
+        cancelText="Cancel"
       >
         <Form form={form} layout="vertical">
           <Form.Item
             name="subject"
-            label="Tiêu đề"
-            rules={[{ required: true, message: 'Vui lòng nhập tiêu đề' }]}
+            label="Subject"
+            rules={[{ required: true, message: 'Please enter subject' }]}
           >
             <Input />
           </Form.Item>
           <Form.Item
             name="message"
-            label="Nội dung"
-            rules={[{ required: true, message: 'Vui lòng nhập nội dung' }]}
+            label="Message"
+            rules={[{ required: true, message: 'Please enter message' }]}
           >
             <TextArea rows={4} />
           </Form.Item>
           <Row gutter={16}>
             <Col span={8}>
-              <Form.Item name="priority" label="Ưu tiên">
+              <Form.Item name="priority" label="Priority">
                 <Select>
                   <Option value="Low">Low</Option>
                   <Option value="Medium">Medium</Option>
@@ -501,7 +501,7 @@ const AdminFeedbackManagement = () => {
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="status" label="Trạng thái">
+              <Form.Item name="status" label="Status">
                 <Select>
                   <Option value="Pending">Pending</Option>
                   <Option value="In Progress">In Progress</Option>
@@ -511,7 +511,7 @@ const AdminFeedbackManagement = () => {
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="rating" label="Đánh giá">
+              <Form.Item name="rating" label="Rating">
                 <Rate />
               </Form.Item>
             </Col>
@@ -521,12 +521,12 @@ const AdminFeedbackManagement = () => {
 
       {/* View Modal */}
       <Modal
-        title="Chi tiết phản hồi"
+        title="Feedback Details"
         open={isViewModalVisible}
         onCancel={() => setIsViewModalVisible(false)}
         footer={[
           <Button key="close" onClick={() => setIsViewModalVisible(false)}>
-            Đóng
+            Close
           </Button>
         ]}
         width={700}
@@ -570,10 +570,10 @@ const AdminFeedbackManagement = () => {
             </Descriptions.Item>
             {currentFeedback.adminResponse && (
               <>
-                <Descriptions.Item label="Phản hồi của Admin" span={2}>
+                <Descriptions.Item label="Admin Response" span={2}>
                   {currentFeedback.adminResponse}
                 </Descriptions.Item>
-                <Descriptions.Item label="Ngày phản hồi" span={2}>
+                <Descriptions.Item label="Response Date" span={2}>
                   {moment(currentFeedback.responseDate).format('DD/MM/YYYY HH:mm')}
                 </Descriptions.Item>
               </>
@@ -584,18 +584,18 @@ const AdminFeedbackManagement = () => {
 
       {/* Response Modal */}
       <Modal
-        title="Phản hồi khách hàng"
+        title="Respond to Customer"
         open={isResponseModalVisible}
         onOk={handleUpdateResponse}
         onCancel={() => setIsResponseModalVisible(false)}
         width={600}
-        okText="Gửi phản hồi"
-        cancelText="Hủy"
+        okText="Send Response"
+        cancelText="Cancel"
       >
         {currentFeedback && (
           <>
             <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#f5f5f5', borderRadius: 4 }}>
-              <Text strong>Phản hồi từ khách hàng:</Text>
+              <Text strong>Customer Feedback:</Text>
               <div style={{ marginTop: 8 }}>
                 <Text>{currentFeedback.subject}</Text>
               </div>
@@ -606,10 +606,10 @@ const AdminFeedbackManagement = () => {
             <Form form={responseForm} layout="vertical">
               <Form.Item
                 name="adminResponse"
-                label="Phản hồi của bạn"
-                rules={[{ required: true, message: 'Vui lòng nhập phản hồi' }]}
+                label="Your Response"
+                rules={[{ required: true, message: 'Please enter your response' }]}
               >
-                <TextArea rows={6} placeholder="Nhập phản hồi cho khách hàng..." />
+                <TextArea rows={6} placeholder="Enter your response to the customer..." />
               </Form.Item>
             </Form>
           </>
