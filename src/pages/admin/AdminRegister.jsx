@@ -1,229 +1,112 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import '../../styles/AdminRegister.css';
+import { Form, Input, Button, Card, message, Space } from 'antd';
+import { UserAddOutlined } from '@ant-design/icons';
 
 function AdminRegister() {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    fullName: '',
-    password: '',
-    confirmPassword: '',
-    address: '',
-    birthDate: '',
-    gender: 'Male',
-    userType: 'Admin'
-  });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [form] = Form.useForm();
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-    setError('');
-    setSuccess('');
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-
-    // Validate password
-    if (formData.password !== formData.confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Mật khẩu phải có ít nhất 6 ký tự');
-      return;
-    }
-
+  const onFinish = async (values) => {
     setLoading(true);
-
     try {
-      // Sử dụng window.$axios
-      const response = await window.$axios.post('/auth/register', {
-        username: formData.username,
-        email: formData.email,
-        fullName: formData.fullName,
-        password: formData.password,
-        address: formData.address,
-        birthDate: formData.birthDate,
-        gender: formData.gender,
-        userType: formData.userType
+      await window.$axios.post('/auth/register', {
+        fullName: values.fullName,
+        email: values.email,
+        password: values.password,
+        userType: 'Admin'
       });
-      console.log('Register response:', response.data);
 
-      setSuccess('Đăng ký thành công! Đang chuyển đến trang đăng nhập...');
-      
-      // Redirect sau 2 giây
-      setTimeout(() => {
-        navigate('/admin/login');
-      }, 2000);
-
+      message.success('Tạo tài khoản admin thành công!');
+      form.resetFields();
     } catch (err) {
       console.error('Register error:', err);
-      if (err.response) {
-        setError(err.response.data.message || 'Đăng ký thất bại');
-      } else if (err.request) {
-        setError('Không thể kết nối đến server');
+      if (err?.response) {
+        message.error(err.response.data?.message || 'Có lỗi xảy ra khi tạo tài khoản');
+      } else if (err?.request) {
+        message.error('Không thể kết nối đến server');
       } else {
-        setError('Có lỗi xảy ra. Vui lòng thử lại');
+        message.error('Có lỗi xảy ra. Vui lòng thử lại');
       }
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="admin-register-container">
-      <div className="admin-register-box">
-        <h1>Đăng ký Admin</h1>
-        <p className="subtitle">Tạo tài khoản quản trị viên mới</p>
+    <div style={{ padding: 24 }}>
+      <Card 
+        title={
+          <Space>
+            <UserAddOutlined />
+            <span>Tạo tài khoản Admin mới</span>
+          </Space>
+        }
+        style={{ maxWidth: 600 }}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={onFinish}
+        >
+          <Form.Item
+            name="fullName"
+            label="Họ và tên"
+            rules={[
+              { required: true, message: 'Vui lòng nhập họ tên' },
+              { min: 2, message: 'Họ tên phải có ít nhất 2 ký tự' }
+            ]}
+          >
+            <Input placeholder="Nhập họ và tên" disabled={loading} />
+          </Form.Item>
 
-        {error && <div className="error-message">{error}</div>}
-        {success && <div className="success-message">{success}</div>}
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[
+              { required: true, message: 'Vui lòng nhập email' },
+              { type: 'email', message: 'Email không hợp lệ' }
+            ]}
+          >
+            <Input placeholder="Nhập email" disabled={loading} />
+          </Form.Item>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="username">Username *</label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                disabled={loading}
-              />
-            </div>
+          <Form.Item
+            name="password"
+            label="Mật khẩu"
+            rules={[
+              { required: true, message: 'Vui lòng nhập mật khẩu' },
+              { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' }
+            ]}
+          >
+            <Input.Password placeholder="Nhập mật khẩu" disabled={loading} />
+          </Form.Item>
 
-            <div className="form-group">
-              <label htmlFor="email">Email *</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                disabled={loading}
-              />
-            </div>
-          </div>
+          <Form.Item
+            name="confirmPassword"
+            label="Xác nhận mật khẩu"
+            dependencies={['password']}
+            rules={[
+              { required: true, message: 'Vui lòng xác nhận mật khẩu' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('password') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
+                },
+              }),
+            ]}
+          >
+            <Input.Password placeholder="Nhập lại mật khẩu" disabled={loading} />
+          </Form.Item>
 
-          <div className="form-group">
-            <label htmlFor="fullName">Họ và tên *</label>
-            <input
-              type="text"
-              id="fullName"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="password">Mật khẩu *</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                minLength="6"
-                disabled={loading}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="confirmPassword">Xác nhận mật khẩu *</label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-                minLength="6"
-                disabled={loading}
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="address">Địa chỉ</label>
-            <input
-              type="text"
-              id="address"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              disabled={loading}
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="birthDate">Ngày sinh</label>
-              <input
-                type="date"
-                id="birthDate"
-                name="birthDate"
-                value={formData.birthDate}
-                onChange={handleChange}
-                disabled={loading}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="gender">Giới tính</label>
-              <select
-                id="gender"
-                name="gender"
-                value={formData.gender}
-                onChange={handleChange}
-                disabled={loading}
-              >
-                <option value="Male">Nam</option>
-                <option value="Female">Nữ</option>
-                <option value="Other">Khác</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="userType">Loại tài khoản</label>
-            <select
-              id="userType"
-              name="userType"
-              value={formData.userType}
-              onChange={handleChange}
-              disabled={loading}
-            >
-              <option value="Admin">Admin</option>
-            </select>
-          </div>
-
-          <button type="submit" className="btn-register" disabled={loading}>
-            {loading ? 'Đang đăng ký...' : 'Đăng ký'}
-          </button>
-        </form>
-
-        <div className="register-footer">
-          <p>Đã có tài khoản? <a href="/admin/login">Đăng nhập ngay</a></p>
-        </div>
-      </div>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" block loading={loading}>
+              Tạo tài khoản Admin
+            </Button>
+          </Form.Item>
+        </Form>
+      </Card>
     </div>
   );
 }
