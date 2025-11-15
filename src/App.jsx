@@ -250,6 +250,34 @@ function App() {
       </Routes>
     </BrowserRouter>
     </CartProvider>
+import BookDetail from './pages/customer/book/BookDetail';
+import CategoryProducts from './pages/customer/book/CategoryProducts';
+import Cart from './pages/customer/cart/Cart';
+import Orders from './pages/customer/orders/Orders';
+import PaymentReturn from './pages/customer/payment/PaymentReturn';
+      <CartProvider>
+        <BrowserRouter>
+        <Routes>
+        
+        <Route path="/book/:id" element={
+          <CustomerLayout>
+            <BookDetail />
+          </CustomerLayout>
+        } />
+            <Cart />
+          </CustomerLayout>
+        } />
+        
+        <Route path="/orders" element={
+          <CustomerLayout>
+            <Orders />
+            <CategoryProducts />
+        <Route path="/payment-return" element={
+          <CustomerLayout>
+            <PaymentReturn />
+          </CustomerLayout>
+        } />
+    </CartProvider>
     </ConfigProvider>
   );
 }
