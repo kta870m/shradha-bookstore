@@ -8,15 +8,20 @@ const CategoryBadges = ({ categories }) => {
     <div className="category-badges-section">
       <h2 className="section-title">Browse by Category</h2>
       <div className="category-badges">
-        {categories.map((category) => (
-          <div
-            key={category.categoryId}
-            className="category-badge"
-            onClick={() => navigate(`/products?category=${category.categoryId}`)}
-          >
-            {category.categoryName}
-          </div>
-        ))}
+        {categories.map((category) => {
+          // API featured endpoint trả về camelCase
+          const id = category.categoryId;
+          const name = category.categoryName;
+          return (
+            <div
+              key={id}
+              className="category-badge"
+              onClick={() => navigate(`/products?category=${id}`)}
+            >
+              {name}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

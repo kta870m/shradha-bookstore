@@ -339,14 +339,14 @@ namespace BookStoresApi.Controllers
 
         // GET: api/products/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(int id)
+        public async Task<ActionResult<object>> GetProduct(int id)
         {
             // Sử dụng IgnoreQueryFilters để có thể lấy product cho edit (admin)
             var product = await _context
                 .Products.IgnoreQueryFilters()
                 .Include(p => p.ProductCategories)
                 .ThenInclude(pc => pc.Category)
-                .Include(p => p.MediaFiles.Where(m => !m.IsDeleted)) // Chỉ lấy media chưa bị xóa
+                .Include(p => p.MediaFiles.Where(m => !m.IsDeleted))
                 .Include(p => p.Reviews)
                 .FirstOrDefaultAsync(p => p.ProductId == id);
 
@@ -357,9 +357,39 @@ namespace BookStoresApi.Controllers
 
             Console.WriteLine($"[PRODUCTS] Product {id} has {product.MediaFiles?.Count ?? 0} active media files");
 
-            // Chỉ trả về product chưa bị xóa cho customer
-            // Admin có thể xem để edit
-            return product;
+            // Trả về với thông tin đầy đủ cho customer
+            var primaryCategory = product.ProductCategories.FirstOrDefault()?.Category;
+            
+            var result = new
+            {
+                product.ProductId,
+                product.ProductCode,
+                product.ProductName,
+                product.Description,
+                product.Price,
+                product.Manufacturer,
+                product.ProductType,
+                product.ReleaseDate,
+                product.StockQuantity,
+                product.AverageRating,
+                product.TotalReviews,
+                product.IsDeleted,
+                MediaFiles = product.MediaFiles.Select(m => new
+                {
+                    m.MediaId,
+                    m.MediaUrl,
+                    m.MediaType
+                }).ToList(),
+                CategoryId = primaryCategory?.CategoryId,
+                CategoryName = primaryCategory?.CategoryName,
+                // Thêm các thông tin mở rộng (có thể lấy từ Description hoặc fields khác)
+                Author = product.Manufacturer, // Tạm dùng Manufacturer làm Author
+                Publisher = product.Manufacturer,
+                Isbn = product.ProductCode,
+                PublicationDate = product.ReleaseDate?.ToString("yyyy")
+            };
+
+            return Ok(result);
         }
 
         // GET: api/products/by-category/{categoryId}
