@@ -1,6 +1,8 @@
 .navbar {
   background: #0EADD5;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1000;
 }
 
 .navbar-container {
@@ -22,6 +24,7 @@
 .navbar-item {
   flex: 1;
   text-align: center;
+  position: relative;
 }
 
 .navbar-link {
@@ -45,11 +48,101 @@
   background-color: rgba(255, 255, 255, 0.25);
 }
 
+/* Dropdown Menu */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  min-width: 250px;
+  max-width: 350px;
+  padding: 10px 0;
+  margin-top: 5px;
+  z-index: 1100;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.dropdown-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.dropdown-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.dropdown-list::-webkit-scrollbar-thumb {
+  background: #0EADD5;
+  border-radius: 10px;
+}
+
+.dropdown-list::-webkit-scrollbar-thumb:hover {
+  background: #0c8fb8;
+}
+
+.dropdown-item {
+  padding: 10px 20px;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  border-left: 3px solid transparent;
+}
+
+.dropdown-item:hover {
+  background-color: #E7F1FF;
+  color: #0056D2;
+  border-left-color: #0056D2;
+}
+
+.dropdown-loading,
+.dropdown-empty {
+  padding: 15px 20px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.dropdown-loading {
+  color: #0056D2;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   .navbar-link {
     font-size: 13px;
     padding: 12px 8px;
+  }
+
+  .dropdown-menu {
+    min-width: 220px;
+  }
+
+  .dropdown-item {
+    font-size: 13px;
+    padding: 9px 18px;
   }
 }
 
@@ -71,6 +164,10 @@
     font-size: 13px;
     padding: 10px 12px;
   }
+
+  .dropdown-menu {
+    min-width: 200px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -90,6 +187,11 @@
   .navbar-link {
     font-size: 12px;
     padding: 10px 10px;
+  }
+
+  /* Disable dropdown on mobile */
+  .dropdown-menu {
+    display: none;
   }
 }
 

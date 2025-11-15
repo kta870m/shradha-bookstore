@@ -3,8 +3,6 @@
  * Handles all category-related API calls for customers
  */
 
-// Không cần define API_BASE_URL vì window.$axios đã có baseURL rồi
-
 export const categoryApi = {
     /**
      * Get all categories
@@ -48,6 +46,24 @@ export const categoryApi = {
         return response.data;
         } catch (error) {
         console.error("Error fetching featured categories:", error);
+        throw error;
+        }
+    },
+
+    /**
+     * Get categories by parent name (subcategories)
+     * @param {string} parentName - Parent category name (e.g., "Fiction", "Non Fiction")
+     * @param {number} limit - Number of categories to fetch
+     * @returns {Promise} Array of subcategories
+     */
+    getByParentName: async (parentName, limit = 15) => {
+        try {
+        const response = await window.$axios.get('/categories/by-parent-name', {
+            params: { parentName, limit },
+        });
+        return response.data;
+        } catch (error) {
+        console.error(`Error fetching categories for parent ${parentName}:`, error);
         throw error;
         }
     },
