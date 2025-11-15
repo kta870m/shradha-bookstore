@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Modal, Form, Input, Button, message, Tabs } from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
+import { Modal, Form, Input, Button, message, Tabs, DatePicker, Select } from 'antd';
+import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined, CalendarOutlined, ManOutlined } from '@ant-design/icons';
 import { login, register } from '../../api/auth';
+
+const { Option } = Select;
 
 const LoginModal = ({ visible, onClose, onLoginSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -38,10 +40,11 @@ const LoginModal = ({ visible, onClose, onLoginSuccess }) => {
         password: values.password,
         email: values.email,
         fullName: values.fullName,
+        phoneNumber: values.phoneNumber || null,
         userType: 'Customer',
         address: values.address || null,
-        birthDate: null,
-        gender: null
+        birthDate: values.birthDate ? values.birthDate.toISOString() : null,
+        gender: values.gender || null
       });
       
       message.success('Registration successful! Please login.');
@@ -162,13 +165,54 @@ const LoginModal = ({ visible, onClose, onLoginSuccess }) => {
       </Form.Item>
 
       <Form.Item
+        name="phoneNumber"
+        rules={[
+          { required: false },
+          { pattern: /^[0-9]{10,11}$/, message: 'Please enter a valid phone number (10-11 digits)!' }
+        ]}
+      >
+        <Input
+          prefix={<PhoneOutlined />}
+          placeholder="Phone Number (optional)"
+          size="large"
+        />
+      </Form.Item>
+
+      <Form.Item
+        name="birthDate"
+        rules={[{ required: false }]}
+      >
+        <DatePicker
+          placeholder="Birth Date (optional)"
+          size="large"
+          style={{ width: '100%' }}
+          format="DD/MM/YYYY"
+        />
+      </Form.Item>
+
+      <Form.Item
+        name="gender"
+        rules={[{ required: false }]}
+      >
+        <Select
+          placeholder="Gender (optional)"
+          size="large"
+          suffixIcon={<ManOutlined />}
+        >
+          <Option value="Male">Male</Option>
+          <Option value="Female">Female</Option>
+          <Option value="Other">Other</Option>
+        </Select>
+      </Form.Item>
+
+      <Form.Item
         name="address"
         rules={[{ required: false }]}
       >
-        <Input
-          prefix={<MailOutlined />}
+        <Input.TextArea
           placeholder="Address (optional)"
           size="large"
+          rows={2}
         />
       </Form.Item>
 
