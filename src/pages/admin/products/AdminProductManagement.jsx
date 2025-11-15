@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Table, 
-  Button, 
-  Space, 
-  Tag, 
-  Input, 
-  Select, 
-  Card, 
-  Typography, 
-  Row, 
+import {
+  Table,
+  Button,
+  Space,
+  Tag,
+  Input,
+  Select,
+  Card,
+  Typography,
+  Row,
   Col,
   message,
   Image,
@@ -18,13 +18,14 @@ import {
   Rate,
   Alert
 } from 'antd';
-import { 
-  EditOutlined, 
-  DeleteOutlined, 
-  EyeOutlined, 
+import {
+  EditOutlined,
+  DeleteOutlined,
+  EyeOutlined,
   PlusOutlined,
   SearchOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../../../api/axios';
@@ -33,7 +34,6 @@ import { CloudinaryImage, getCloudinaryImageUrl, extractPublicIdFromUrl } from '
 const { Title } = Typography;
 const { Search } = Input;
 const { Option } = Select;
-const { confirm } = Modal;
 
 function AdminProductManagement() {
   const [products, setProducts] = useState([]);
@@ -54,7 +54,10 @@ function AdminProductManagement() {
   const [productDetail, setProductDetail] = useState(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [isNewProductAdded, setIsNewProductAdded] = useState(false);
-  
+  const [isProductUpdated, setIsProductUpdated] = useState(false);
+  const [deletingProductIds, setDeletingProductIds] = useState(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -67,46 +70,72 @@ function AdminProductManagement() {
     return () => clearTimeout(delayedSearch);
   }, [pagination.current, pagination.pageSize, searchTerm, sortBy]);
 
-  // Effect để detect khi có refresh query parameter (sau khi thêm sản phẩm)
+  // Effect để detect khi có refresh query parameter (sau khi thêm/cập nhật sản phẩm)
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
-    if (urlParams.get('refresh')) {
-      // Set flag để biết có sản phẩm mới
-      setIsNewProductAdded(true);
-      
+    const refreshParam = urlParams.get('refresh');
+    const actionParam = urlParams.get('action');
+    
+    if (refreshParam) {
+      // Phân biệt action: new = thêm mới, update = cập nhật
+      if (actionParam === 'update') {
+        setIsProductUpdated(true);
+      } else {
+        // Default là thêm mới
+        setIsNewProductAdded(true);
+      }
+
       // Reset về trang 1 và refresh
       setPagination(prev => ({ ...prev, current: 1 }));
-      
+
       // Force refresh danh sách
       setTimeout(() => {
         fetchProducts();
       }, 100);
-      
-      // Hiển thị thông báo đặc biệt với icon và style
+
+      // Hiển thị thông báo dựa trên action
       setTimeout(() => {
-        message.success({
-          content: (
-            <div>
-              <span style={{ fontSize: '16px', marginRight: '8px' }}>🎉</span>
-              <strong>Thêm sản phẩm thành công!</strong>
-              <br />
-              <span style={{ fontSize: '12px', color: '#666' }}>
-                Sản phẩm mới đã được hiển thị trong danh sách
-              </span>
-            </div>
-          ),
-          duration: 5,
-          style: {
-            marginTop: '20px'
-          }
-        });
+        if (actionParam === 'update') {
+          message.success({
+            content: (
+              <div>
+                <strong>Cập nhật sản phẩm thành công!</strong>
+                <br />
+                <span style={{ fontSize: '12px', color: '#666' }}>
+                  Thay đổi đã được lưu và hiển thị trong danh sách
+                </span>
+              </div>
+            ),
+            duration: 5,
+            style: {
+              marginTop: '20px'
+            }
+          });
+        } else {
+          message.success({
+            content: (
+              <div>
+                <strong>Thêm sản phẩm thành công!</strong>
+                <br />
+                <span style={{ fontSize: '12px', color: '#666' }}>
+                  Sản phẩm mới đã được hiển thị trong danh sách
+                </span>
+              </div>
+            ),
+            duration: 5,
+            style: {
+              marginTop: '20px'
+            }
+          });
+        }
       }, 1000);
-      
+
       // Reset flag sau một thời gian
       setTimeout(() => {
         setIsNewProductAdded(false);
+        setIsProductUpdated(false);
       }, 5000);
-      
+
       // Xóa query parameter khỏi URL
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
@@ -137,7 +166,7 @@ function AdminProductManagement() {
       }));
     } catch (error) {
       console.error('Error fetching products:', error);
-      
+
       // Xử lý lỗi chi tiết hơn
       if (error.code === 'ECONNABORTED') {
         message.error('Yêu cầu tìm kiếm quá lâu. Vui lòng thử với từ khóa ngắn hơn.');
@@ -146,7 +175,7 @@ function AdminProductManagement() {
       } else {
         message.error('Không thể tải danh sách sản phẩm. Vui lòng thử lại.');
       }
-      
+
       // Reset products nếu có lỗi
       setProducts([]);
       setPagination(prev => ({ ...prev, total: 0 }));
@@ -209,21 +238,152 @@ function AdminProductManagement() {
     navigate(`/admin/products/edit/${productId}`);
   };
 
-  // Delete product
+  // Delete product với Modal confirmation
   const handleDelete = (productId, productName) => {
-    confirm({
+    console.log('Preparing to delete product:', productId, productName);
+    Modal.confirm({
       title: 'Xác nhận xóa sản phẩm',
-      content: `Bạn có chắc chắn muốn xóa sản phẩm "${productName}"?`,
-      okText: 'Xóa',
+      content: (
+        <div>
+          <p style={{ marginBottom: 8 }}>
+            Bạn có chắc chắn muốn xóa sản phẩm <strong>"{productName}"</strong>?
+          </p>
+          <p style={{ fontSize: '14px', color: '#666', marginBottom: 0 }}>
+            <em>Sản phẩm sẽ được đánh dấu là đã xóa và không hiển thị trong danh sách khách hàng. 
+            Bạn có thể khôi phục lại sau nếu cần.</em>
+          </p>
+        </div>
+      ),
+      okText: 'Xóa sản phẩm',
       okType: 'danger',
-      cancelText: 'Hủy',
+      cancelText: 'Hủy bỏ',
+      width: 500,
+      icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
       onOk: async () => {
+        // Thêm productId vào set đang xóa
+        setDeletingProductIds(prev => new Set(prev).add(productId));
+        
         try {
-          await axiosInstance.delete(`/products/${productId}`);
-          message.success('Xóa sản phẩm thành công');
-          fetchProducts(); // Refresh list
+          console.log('Calling delete API for product:', productId);
+          const deleteResponse = await axiosInstance.delete(`/products/${productId}`);
+          console.log('Delete response:', deleteResponse);
+          
+          message.success({
+            content: (
+              <div>
+                <span style={{ fontSize: '16px', marginRight: '8px' }}>✅</span>
+                <strong>Xóa sản phẩm thành công!</strong>
+                <br />
+                <span style={{ fontSize: '12px', color: '#666' }}>
+                  Sản phẩm "{productName}" đã được xóa khỏi danh sách
+                </span>
+              </div>
+            ),
+            duration: 4
+          });
+
+          // Refresh list after delete
+          console.log('Refreshing product list after delete...');
+          await fetchProducts();
+          console.log('Product list refreshed successfully');
         } catch (error) {
-          message.error('Không thể xóa sản phẩm');
+          console.error('Error deleting product:', error);
+          message.error({
+            content: `Không thể xóa sản phẩm "${productName}". Vui lòng thử lại.`,
+            duration: 5
+          });
+          throw error; // Re-throw để Modal.confirm có thể handle
+        } finally {
+          // Xóa productId khỏi set đang xóa
+          setDeletingProductIds(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(productId);
+            return newSet;
+          });
+        }
+      },
+    });
+  };
+
+  // Bulk delete products
+  const handleBulkDelete = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning('Vui lòng chọn ít nhất một sản phẩm để xóa');
+      return;
+    }
+
+    const selectedProducts = products.filter(product =>
+      selectedRowKeys.includes(product.productId)
+    );
+
+    Modal.confirm({
+      title: `Xác nhận xóa ${selectedRowKeys.length} sản phẩm`,
+      content: (
+        <div>
+          <p style={{ marginBottom: 8 }}>
+            Bạn có chắc chắn muốn xóa <strong>{selectedRowKeys.length} sản phẩm</strong> đã chọn?
+          </p>
+          <div style={{ maxHeight: 120, overflow: 'auto', marginBottom: 8 }}>
+            {selectedProducts.slice(0, 5).map(product => (
+              <p key={product.productId} style={{ margin: '4px 0', fontSize: '13px', color: '#666' }}>
+                • {product.productName} ({product.productCode})
+              </p>
+            ))}
+            {selectedProducts.length > 5 && (
+              <p style={{ margin: '4px 0', fontSize: '13px', color: '#999' }}>
+                ... và {selectedProducts.length - 5} sản phẩm khác
+              </p>
+            )}
+          </div>
+          <p style={{ fontSize: '14px', color: '#666', marginBottom: 0 }}>
+            <em>Các sản phẩm sẽ được đánh dấu là đã xóa và không hiển thị trong danh sách khách hàng.</em>
+          </p>
+        </div>
+      ),
+      okText: `Xóa ${selectedRowKeys.length} sản phẩm`,
+      okType: 'danger',
+      cancelText: 'Hủy bỏ',
+      width: 550,
+      icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
+      onOk: async () => {
+        setIsBulkDeleting(true);
+
+        try {
+          console.log('Calling bulk delete API for products:', selectedRowKeys);
+          // Xóa từng sản phẩm (có thể tối ưu với API batch sau)
+          const deletePromises = selectedRowKeys.map(productId =>
+            axiosInstance.delete(`/products/${productId}`)
+          );
+
+          await Promise.all(deletePromises);
+
+          message.success({
+            content: (
+              <div>
+                <span style={{ fontSize: '16px', marginRight: '8px' }}>✅</span>
+                <strong>Xóa thành công!</strong>
+                <br />
+                <span style={{ fontSize: '12px', color: '#666' }}>
+                  Đã xóa {selectedRowKeys.length} sản phẩm khỏi danh sách
+                </span>
+              </div>
+            ),
+            duration: 4
+          });
+
+          setSelectedRowKeys([]); // Clear selection
+          console.log('Refreshing product list after bulk delete...');
+          await fetchProducts(); // Refresh list
+          console.log('Product list refreshed successfully after bulk delete');
+        } catch (error) {
+          console.error('Error bulk deleting products:', error);
+          message.error({
+            content: `Có lỗi xảy ra khi xóa sản phẩm. Vui lòng thử lại.`,
+            duration: 5
+          });
+          throw error; // Re-throw để Modal.confirm có thể handle
+        } finally {
+          setIsBulkDeleting(false);
         }
       },
     });
@@ -239,35 +399,18 @@ function AdminProductManagement() {
       render: (url, record) => {
         // Tìm URL ảnh từ thumbnailUrl hoặc mediaFiles
         let imageUrl = url;
-        
+
         // Nếu không có thumbnailUrl, lấy từ mediaFiles
         if (!imageUrl && record.mediaFiles && record.mediaFiles.length > 0) {
-          const firstMedia = record.mediaFiles.find(media => 
-            media.fileType === 'Image' || 
+          const firstMedia = record.mediaFiles.find(media =>
+            media.fileType === 'Image' ||
             media.mediaUrl?.match(/\.(jpg|jpeg|png|gif|webp)$/i)
           );
-          
+
           if (firstMedia) {
             imageUrl = firstMedia.mediaUrl;
           }
         }
-        
-        // Nếu là Cloudinary URL, extract public ID và sử dụng CloudinaryImage
-        if (imageUrl && imageUrl.includes('cloudinary')) {
-          const publicId = extractPublicIdFromUrl(imageUrl);
-          return (
-            <CloudinaryImage
-              publicId={publicId}
-              alt={record.productName}
-              width={60}
-              height={60}
-              style={{ objectFit: 'cover', borderRadius: 4 }}
-              fallback="/placeholder-book.svg"
-            />
-          );
-        }
-        
-        // Fallback cho ảnh thường
         return (
           <Image
             width={60}
@@ -294,16 +437,16 @@ function AdminProductManagement() {
       sorter: true,
       render: (text, record) => (
         <Tooltip title={text}>
-          <Button 
-            type="link" 
+          <Button
+            type="link"
             style={{ padding: 0, height: 'auto', textAlign: 'left' }}
             onClick={() => handleViewDetail(record.productId)}
           >
-            <div style={{ 
-              maxWidth: 200, 
-              overflow: 'hidden', 
-              textOverflow: 'ellipsis', 
-              whiteSpace: 'nowrap' 
+            <div style={{
+              maxWidth: 200,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
             }}>
               {text}
             </div>
@@ -399,6 +542,7 @@ function AdminProductManagement() {
               type="text"
               danger
               icon={<DeleteOutlined />}
+              loading={deletingProductIds.has(record.productId)}
               onClick={() => handleDelete(record.productId, record.productName)}
             />
           </Tooltip>
@@ -430,14 +574,14 @@ function AdminProductManagement() {
           </Col>
           <Col>
             <Space>
-              <Button 
-                type="primary" 
+              <Button
+                type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => navigate('/admin/products/add')}
               >
                 Thêm sản phẩm
               </Button>
-              <Button 
+              <Button
                 icon={<ReloadOutlined />}
                 onClick={fetchProducts}
               >
@@ -456,7 +600,24 @@ function AdminProductManagement() {
             showIcon
             closable
             onClose={() => setIsNewProductAdded(false)}
-            style={{ 
+            style={{
+              marginBottom: 16,
+              border: '1px solid #52c41a',
+              backgroundColor: '#f6ffed'
+            }}
+          />
+        )}
+
+        {/* Product Update Alert */}
+        {isProductUpdated && (
+          <Alert
+            message="Sản phẩm cập nhật thành công!"
+            description="Thay đổi đã được lưu và hiển thị trong danh sách."
+            type="success"
+            showIcon
+            closable
+            onClose={() => setIsProductUpdated(false)}
+            style={{
               marginBottom: 16,
               border: '1px solid #52c41a',
               backgroundColor: '#f6ffed'
@@ -493,15 +654,20 @@ function AdminProductManagement() {
             <Col xs={24} md={12}>
               <Space>
                 <span>Đã chọn {selectedRowKeys.length} sản phẩm</span>
-                <Button 
-                  danger 
+                <Button
+                  danger
                   size="small"
-                  onClick={() => {
-                    // Handle bulk delete
-                    console.log('Delete selected:', selectedRowKeys);
-                  }}
+                  loading={isBulkDeleting}
+                  onClick={handleBulkDelete}
+                  icon={<DeleteOutlined />}
                 >
-                  Xóa đã chọn
+                  Xóa đã chọn ({selectedRowKeys.length})
+                </Button>
+                <Button
+                  size="small"
+                  onClick={() => setSelectedRowKeys([])}
+                >
+                  Bỏ chọn
                 </Button>
               </Space>
             </Col>
@@ -546,52 +712,34 @@ function AdminProductManagement() {
                 {(() => {
                   const thumbnailUrl = productDetail.thumbnailUrl;
                   const mediaFiles = productDetail.mediaFiles || [];
-                  
+
                   console.log('Rendering image for:', productDetail.productName);
                   console.log('Thumbnail URL:', thumbnailUrl);
                   console.log('Media Files:', mediaFiles);
-                  
+
                   // Tìm URL ảnh từ thumbnailUrl hoặc mediaFiles
                   let imageUrl = thumbnailUrl;
-                  
+
                   // Nếu không có thumbnailUrl, lấy từ mediaFiles
                   if (!imageUrl && mediaFiles.length > 0) {
                     // Tìm ảnh đầu tiên trong mediaFiles
-                    const firstMedia = mediaFiles.find(media => 
-                      media.fileType === 'Image' || 
+                    const firstMedia = mediaFiles.find(media =>
+                      media.fileType === 'Image' ||
                       media.mediaUrl?.match(/\.(jpg|jpeg|png|gif|webp)$/i)
                     );
-                    
+
                     if (firstMedia) {
                       imageUrl = firstMedia.mediaUrl;
                       console.log('Using image from mediaFiles:', imageUrl);
                     }
                   }
-                  
+
                   console.log('Final image URL:', imageUrl);
                   console.log('Is Cloudinary URL:', imageUrl && imageUrl.includes('cloudinary'));
-                  
+
                   // Nếu là Cloudinary URL
-                  if (imageUrl && imageUrl.includes('cloudinary')) {
-                    const publicId = extractPublicIdFromUrl(imageUrl);
-                    console.log('Extracted Public ID:', publicId);
-                    
-                    return (
-                      <CloudinaryImage
-                        publicId={publicId}
-                        alt={productDetail.productName}
-                        width={200}
-                        height={200}
-                        style={{ 
-                          objectFit: 'cover', 
-                          borderRadius: 8,
-                          border: '1px solid #d9d9d9'
-                        }}
-                        fallback="/placeholder-book.svg"
-                      />
-                    );
-                  }
-                  
+                
+
                   // Sử dụng Image component thường
                   console.log('Using regular Image component');
                   return (
@@ -600,9 +748,9 @@ function AdminProductManagement() {
                       height={200}
                       src={imageUrl || '/placeholder-book.svg'}
                       alt={productDetail.productName}
-                      style={{ 
-                        objectFit: 'cover', 
-                        borderRadius: 8 
+                      style={{
+                        objectFit: 'cover',
+                        borderRadius: 8
                       }}
                       fallback="/placeholder-book.svg"
                       onError={(e) => {
@@ -612,7 +760,7 @@ function AdminProductManagement() {
                   );
                 })()}
               </div>
-              
+
               <Descriptions column={2} bordered>
                 <Descriptions.Item label="Mã sản phẩm" span={1}>
                   {productDetail.productCode}

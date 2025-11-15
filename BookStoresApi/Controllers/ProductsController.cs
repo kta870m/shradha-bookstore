@@ -175,7 +175,7 @@ namespace BookStoresApi.Controllers
                     p.Manufacturer,
                     p.ReleaseDate,
                     ThumbnailUrl = p
-                        .MediaFiles.OrderBy(m => m.MediaId)
+                        .MediaFiles.Where(m => !m.IsDeleted).OrderBy(m => m.MediaId)
                         .Select(m => m.MediaUrl)
                         .FirstOrDefault(),
                     Categories = p
@@ -270,7 +270,7 @@ namespace BookStoresApi.Controllers
                         p.ReleaseDate,
                         p.StockQuantity,
                         ThumbnailUrl = p
-                            .MediaFiles.OrderBy(m => m.MediaId)
+                            .MediaFiles.Where(m => !m.IsDeleted).OrderBy(m => m.MediaId)
                             .Select(m => m.MediaUrl)
                             .FirstOrDefault(),
                         MainCategory = p
@@ -341,18 +341,24 @@ namespace BookStoresApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Product>> GetProduct(int id)
         {
+            // Sử dụng IgnoreQueryFilters để có thể lấy product cho edit (admin)
             var product = await _context
-                .Products.Include(p => p.ProductCategories)
+                .Products.IgnoreQueryFilters()
+                .Include(p => p.ProductCategories)
                 .ThenInclude(pc => pc.Category)
-                .Include(p => p.MediaFiles)
+                .Include(p => p.MediaFiles.Where(m => !m.IsDeleted)) // Chỉ lấy media chưa bị xóa
                 .Include(p => p.Reviews)
-                .FirstOrDefaultAsync(p => p.ProductId == id && !p.IsDeleted);
+                .FirstOrDefaultAsync(p => p.ProductId == id);
 
             if (product == null)
             {
                 return NotFound();
             }
 
+            Console.WriteLine($"[PRODUCTS] Product {id} has {product.MediaFiles?.Count ?? 0} active media files");
+
+            // Chỉ trả về product chưa bị xóa cho customer
+            // Admin có thể xem để edit
             return product;
         }
 
@@ -363,7 +369,7 @@ namespace BookStoresApi.Controllers
             var products = await _context
                 .ProductCategories.Where(pc => pc.CategoryId == categoryId)
                 .Include(pc => pc.Product)
-                .ThenInclude(p => p.MediaFiles)
+                .ThenInclude(p => p.MediaFiles.Where(m => !m.IsDeleted))
                 .Include(pc => pc.Product)
                 .ThenInclude(p => p.ProductCategories)
                 .ThenInclude(pcat => pcat.Category)
@@ -397,39 +403,76 @@ namespace BookStoresApi.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProduct(int id, Product product)
         {
+            Console.WriteLine($"[UPDATE] Attempting to update product with ID: {id}");
+            Console.WriteLine($"[UPDATE] Product data received: {System.Text.Json.JsonSerializer.Serialize(product)}");
+            
             if (id != product.ProductId)
             {
-                return BadRequest();
+                Console.WriteLine($"[UPDATE] ID mismatch: URL ID {id} != Product ID {product.ProductId}");
+                return BadRequest("ID mismatch");
             }
 
-            var existingProduct = await _context.Products.FindAsync(id);
+            // Sử dụng IgnoreQueryFilters để tìm product kể cả khi IsDeleted = true
+            var existingProduct = await _context.Products
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(p => p.ProductId == id);
+                
             if (existingProduct == null)
             {
+                Console.WriteLine($"[UPDATE] Product with ID {id} not found");
                 return NotFound();
             }
 
-            existingProduct.ProductCode = product.ProductCode;
-            existingProduct.ProductName = product.ProductName;
-            existingProduct.Description = product.Description;
-            existingProduct.Price = product.Price;
-            existingProduct.Manufacturer = product.Manufacturer;
-            existingProduct.ProductType = product.ProductType;
-            existingProduct.ReleaseDate = product.ReleaseDate;
-            existingProduct.StockQuantity = product.StockQuantity;
+            Console.WriteLine($"[UPDATE] Found existing product: {existingProduct.ProductName} (IsDeleted: {existingProduct.IsDeleted})");
 
+            // Không cho phép edit product đã bị xóa
+            if (existingProduct.IsDeleted)
+            {
+                Console.WriteLine($"[UPDATE] Cannot edit deleted product {id}");
+                return BadRequest("Cannot edit deleted product");
+            }
+
+            Console.WriteLine($"[UPDATE] Using direct SQL update to bypass EF tracking issues...");
+            
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ProductExists(id))
+                var rowsAffected = await _context.Database.ExecuteSqlRawAsync(@"
+                    UPDATE Products 
+                    SET product_code = {0}, 
+                        product_name = {1}, 
+                        description = {2}, 
+                        price = {3}, 
+                        manufacturer = {4}, 
+                        product_type = {5}, 
+                        release_date = {6}, 
+                        stock_quantity = {7}
+                    WHERE product_id = {8}",
+                    product.ProductCode,
+                    product.ProductName,
+                    product.Description ?? (object)DBNull.Value,
+                    product.Price,
+                    product.Manufacturer ?? (object)DBNull.Value,
+                    product.ProductType,
+                    product.ReleaseDate?.ToString("yyyy-MM-dd") ?? (object)DBNull.Value,
+                    product.StockQuantity,
+                    id);
+                
+                Console.WriteLine($"[UPDATE] Direct SQL update completed. Rows affected: {rowsAffected}");
+                
+                if (rowsAffected == 0)
                 {
+                    Console.WriteLine($"[UPDATE] Warning: No rows were updated in database");
                     return NotFound();
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[UPDATE] Exception during direct SQL update: {ex.Message}");
+                Console.WriteLine($"[UPDATE] Stack trace: {ex.StackTrace}");
                 throw;
             }
 
+            Console.WriteLine($"[UPDATE] Product {id} updated successfully");
             return NoContent();
         }
 
@@ -437,15 +480,42 @@ namespace BookStoresApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            Console.WriteLine($"[DELETE] Attempting to delete product with ID: {id}");
+            
+            // Sử dụng IgnoreQueryFilters để tìm product kể cả khi IsDeleted = true
+            var product = await _context.Products
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(p => p.ProductId == id);
+                
             if (product == null)
             {
+                Console.WriteLine($"[DELETE] Product with ID {id} not found");
                 return NotFound();
             }
 
-            // Soft delete
-            product.IsDeleted = true;
-            await _context.SaveChangesAsync();
+            Console.WriteLine($"[DELETE] Found product: {product.ProductName} (IsDeleted: {product.IsDeleted})");
+
+            // Kiểm tra nếu đã bị xóa
+            if (product.IsDeleted)
+            {
+                Console.WriteLine($"[DELETE] Product {id} is already deleted");
+                return NoContent(); // Trả về thành công vì sản phẩm đã bị xóa rồi
+            }
+
+            // Soft delete bằng cách update trực tiếp
+            Console.WriteLine($"[DELETE] Setting IsDeleted = true for product {id}");
+            
+            var rowsAffected = await _context.Database.ExecuteSqlRawAsync(
+                "UPDATE Products SET is_deleted = 1 WHERE product_id = {0}",
+                id);
+                
+            Console.WriteLine($"[DELETE] Direct SQL update completed. Rows affected: {rowsAffected}");
+
+            if (rowsAffected == 0)
+            {
+                Console.WriteLine($"[DELETE] No rows were updated for product {id}");
+                return NotFound();
+            }
 
             return NoContent();
         }
