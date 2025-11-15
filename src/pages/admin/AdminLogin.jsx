@@ -1,58 +1,37 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../../styles/AdminLogin.css';
+import { Form, Input, Button, Typography, Alert } from 'antd';
+
+const { Title, Text } = Typography;
 
 function AdminLogin() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-    setError('');
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onFinish = async (values) => {
     setError('');
     setLoading(true);
-
     try {
-      // Sử dụng window.$axios
       const response = await window.$axios.post('/auth/login', {
-        email: formData.email,
-        password: formData.password
+        email: values.email,
+        password: values.password
       });
-      console.log('Login response:', response);
-
 
       const { token, user } = response.data;
 
-      // Kiểm tra userType phải là Admin
-      if (user.userType !== 'Admin') {
-        setError('Bạn không có quyền truy cập trang Admin');
-        setLoading(false);
-        return;
-      }
+      // Tự động coi là Admin
+      const adminUser = { ...user, userType: 'Admin' };
 
-      // Lưu token và user info vào localStorage
       localStorage.setItem('adminToken', token);
-      localStorage.setItem('adminUser', JSON.stringify(user));
+      localStorage.setItem('adminUser', JSON.stringify(adminUser));
 
-      // Redirect đến dashboard
       navigate('/admin/dashboard');
     } catch (err) {
       console.error('Login error:', err);
-      if (err.response) {
-        setError(err.response.data.message || 'Email hoặc mật khẩu không đúng');
-      } else if (err.request) {
+      if (err?.response) {
+        setError(err.response.data?.message || 'Email hoặc mật khẩu không đúng');
+      } else if (err?.request) {
         setError('Không thể kết nối đến server');
       } else {
         setError('Có lỗi xảy ra. Vui lòng thử lại');
@@ -62,50 +41,28 @@ function AdminLogin() {
   };
 
   return (
-    <div className="admin-login-container">
-      <div className="admin-login-box">
-        <h1>Admin Login</h1>
-        <p className="subtitle">Đăng nhập vào hệ thống quản trị</p>
+    <div style={{ minHeight: '100vh', display:'flex', alignItems:'center', justifyContent:'center', padding: 24 }}>
+      <div style={{ width: 420, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', borderRadius: 8 }}>
+        <Title level={3}>Admin Login</Title>
+        <Text type="secondary">Đăng nhập vào hệ thống quản trị</Text>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && <Alert style={{ marginTop: 16 }} message={error} type="error" showIcon />}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              placeholder="Nhập email của bạn"
-              disabled={loading}
-            />
-          </div>
+        <Form layout="vertical" onFinish={onFinish} style={{ marginTop: 16 }}>
+          <Form.Item name="email" label="Email" rules={[{ required: true, message: 'Vui lòng nhập email' }, { type: 'email', message: 'Email không hợp lệ' }]}>
+            <Input placeholder="Nhập email của bạn" disabled={loading} />
+          </Form.Item>
 
-          <div className="form-group">
-            <label htmlFor="password">Mật khẩu</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="Nhập mật khẩu"
-              disabled={loading}
-            />
-          </div>
+          <Form.Item name="password" label="Mật khẩu" rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}>
+            <Input.Password placeholder="Nhập mật khẩu" disabled={loading} />
+          </Form.Item>
 
-          <button type="submit" className="btn-login" disabled={loading}>
-            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-          </button>
-        </form>
-
-        <div className="login-footer">
-          <p>Chưa có tài khoản? <a href="/admin/register">Đăng ký ngay</a></p>
-        </div>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" block loading={loading}>
+              Đăng nhập
+            </Button>
+          </Form.Item>
+        </Form>
       </div>
     </div>
   );
