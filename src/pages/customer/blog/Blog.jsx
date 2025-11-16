@@ -5,18 +5,23 @@ const { Title, Text } = Typography;
 
 const Blog = () => {
   const [submitting, setSubmitting] = useState(false);
+  const [form] = Form.useForm();
 
   const onFinish = async (values) => {
     setSubmitting(true);
     try {
-      // Uncomment and adapt the API endpoint when backend is ready
-      // await window.$axios.post('/feedback', values);
-      // For now, just show success message
-      message.success('Feedback submitted — thank you!');
-      // reset handled by form instance when used; we will rely on form.resetFields in the Form render
+      const response = await window.$axios.post('/FeedbackQueries/submit', values);
+      
+      if (response.data.success) {
+        message.success('Feedback submitted successfully — thank you!');
+        form.resetFields();
+      } else {
+        message.error(response.data.message || 'Unable to submit feedback');
+      }
     } catch (err) {
       console.error('Feedback submit error:', err);
-      message.error('Unable to send feedback. Please try again later.');
+      const errorMsg = err?.response?.data?.message || 'Unable to send feedback. Please try again later.';
+      message.error(errorMsg);
     } finally {
       setSubmitting(false);
     }
@@ -32,7 +37,7 @@ const Blog = () => {
       <Row justify="center">
         <Col xs={24} sm={20} md={16} lg={12}>
           <Card style={{ borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}>
-            <Form layout="vertical" onFinish={onFinish}>
+            <Form form={form} layout="vertical" onFinish={onFinish}>
               <Form.Item name="name" label="Your name" rules={[{ required: true, message: 'Please enter your name' }]}>
                 <Input placeholder="Enter your name" />
               </Form.Item>
