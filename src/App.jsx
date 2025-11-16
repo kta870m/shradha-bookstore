@@ -27,6 +27,7 @@ import Orders from './pages/customer/orders/Orders';
 
 import BookDetail from './pages/customer/book/BookDetail';
 import CategoryProducts from './pages/customer/book/CategoryProducts';
+import SearchResults from './pages/customer/search/SearchResults';
 
 import SellBooks from './pages/customer/sell/SellBooks';
 import Membership from './pages/customer/membership/Membership';
@@ -180,7 +181,7 @@ function App() {
             } />
 
             <Route path="/search" element={
-              <CustomerLayout><div>Search Results Page</div></CustomerLayout>
+              <CustomerLayout><SearchResults /></CustomerLayout>
             } />
 
             <Route path="/sell-books" element={
