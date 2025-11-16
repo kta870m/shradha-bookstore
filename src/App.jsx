@@ -43,7 +43,6 @@ import ShippingPolicy from './pages/customer/policy/ShippingPolicy';
 import ReturnPolicy from './pages/customer/policy/ReturnPolicy';
 import Faqs from './pages/customer/faqs/Faqs';
 
-import VNPayReturn from './pages/customer/VNPayReturn';
 import PaymentReturn from './pages/customer/payment/PaymentReturn';
 import MyAccount from './pages/customer/account/MyAccount';
 
@@ -199,14 +198,6 @@ function App() {
             {/* VNPay return */}
             <Route path="/payment-return" element={
               <CustomerLayout><PaymentReturn /></CustomerLayout>
-            } />
-
-            <Route path="/vnpay-return" element={
-              <CustomerLayout><VNPayReturn /></CustomerLayout>
-            } />
-
-            <Route path="/payment-result" element={
-              <CustomerLayout><VNPayReturn /></CustomerLayout>
             } />
 
             {/* 404 */}
