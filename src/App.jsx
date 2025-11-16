@@ -5,7 +5,6 @@ import { CartProvider } from './contexts/CartContext';
 
 // Admin pages
 import AdminLogin from './pages/admin/AdminLogin';
-import AdminRegister from './pages/admin/AdminRegister';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import DashboardHome from './pages/admin/DashboardHome';
 
@@ -61,7 +60,6 @@ function App() {
 
             {/* ================= ADMIN ROUTES ================= */}
             <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin/register" element={<AdminRegister />} />
 
             <Route path="/admin" element={
               <ProtectedRoute>
