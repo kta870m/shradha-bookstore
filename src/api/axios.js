@@ -27,12 +27,22 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Nếu lỗi 401 (Unauthorized), redirect về login
+    // Nếu lỗi 401 (Unauthorized)
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('adminUser');
-      localStorage.removeItem('token');
-      window.location.href = '/admin/login';
+      // Check if user is in admin area
+      const isAdminArea = window.location.pathname.startsWith('/admin');
+      
+      if (isAdminArea) {
+        // Admin area: clear admin tokens and redirect to admin login
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminUser');
+        window.location.href = '/admin/login';
+      } else {
+        // Customer area: clear customer token but don't redirect
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        // Let the component handle the UI (show login modal, etc.)
+      }
     }
     return Promise.reject(error);
   }
