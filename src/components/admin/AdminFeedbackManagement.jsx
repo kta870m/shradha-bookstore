@@ -318,52 +318,6 @@ const AdminFeedbackManagement = () => {
         </Title>
       </div>
 
-      {/* Statistics Cards */}
-      <Row gutter={16} className="statistics-row">
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Total Feedback"
-              value={statistics.totalFeedbacks || 0}
-              prefix={<MessageOutlined />}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="This Week's Feedback"
-              value={statistics.feedbacksThisWeek || 0}
-              prefix={<CalendarOutlined />}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Average Rating"
-              value={statistics.averageRating || 0}
-              precision={1}
-              prefix={<StarOutlined />}
-              suffix="/ 5"
-              valueStyle={{ color: '#faad14' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Total Customers"
-              value={statistics.totalUsers || 0}
-              prefix={<UserOutlined />}
-              valueStyle={{ color: '#722ed1' }}
-            />
-          </Card>
-        </Col>
-      </Row>
-
       {/* Filters */}
       <Card className="filters-card">
         <Row gutter={16}>
