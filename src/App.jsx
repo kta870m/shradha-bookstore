@@ -124,7 +124,7 @@ function App() {
               <CustomerLayout><About /></CustomerLayout>
             } />
 
-            <Route path="/blog" element={
+            <Route path="/feedback" element={
               <CustomerLayout><Blog /></CustomerLayout>
             } />
 
