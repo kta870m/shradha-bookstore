@@ -16,7 +16,8 @@ import {
     Pagination,
     Tag,
     Typography,
-    Divider
+    Divider,
+    Alert
 } from 'antd';
 import {
     PlusOutlined,
@@ -24,7 +25,8 @@ import {
     DeleteOutlined,
     UserOutlined,
     SearchOutlined,
-    ReloadOutlined
+    ReloadOutlined,
+    CrownOutlined
 } from '@ant-design/icons';
 import moment from 'moment';
 import axios from '../../api/axios';
@@ -33,147 +35,153 @@ import '../../styles/AdminCustomerManagement.css';
 const { Title } = Typography;
 const { Option } = Select;
 
-const AdminCustomerManagement = () => {
-    const [customers, setCustomers] = useState([]);
+const AdminUserManagement = () => {
+    const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
-    const [editingCustomer, setEditingCustomer] = useState(null);
+    const [editingUser, setEditingUser] = useState(null);
     const [form] = Form.useForm();
     const [searchText, setSearchText] = useState('');
+    const [selectedRole, setSelectedRole] = useState(''); // For form role
     const [pagination, setPagination] = useState({
         current: 1,
         pageSize: 10,
         total: 0
     });
 
-    // Fetch customers
-    const fetchCustomers = async (page = 1, pageSize = 10, search = '') => {
+    // Fetch users
+    const fetchUsers = async (page = 1, pageSize = 10, search = '') => {
         try {
             setLoading(true);
-            console.log('[CUSTOMERS] Fetching customers:', { page, pageSize, search });
+            console.log('[USERS] Fetching users:', { page, pageSize, search });
             
-            const response = await axios.get('/customers', {
+            const response = await axios.get('/auth/users', {
                 params: { page, pageSize, search }
             });
             
-            console.log('[CUSTOMERS] Response:', response.data);
+            console.log('[USERS] Response:', response.data);
             
-            setCustomers(response.data.customers || []);
+            setUsers(response.data.users || []);
             setPagination({
                 current: response.data.pagination.currentPage,
                 pageSize: response.data.pagination.pageSize,
                 total: response.data.pagination.totalCount
             });
         } catch (error) {
-            console.error('[CUSTOMERS] Error fetching customers:', error);
-            message.error('Error loading customer list');
+            console.error('[USERS] Error fetching users:', error);
+            message.error('Error loading user list');
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchCustomers();
+        fetchUsers();
     }, []);
 
     // Handle search
     const handleSearch = (value) => {
         setSearchText(value);
-        fetchCustomers(1, pagination.pageSize, value);
+        fetchUsers(1, pagination.pageSize, value);
     };
 
     // Handle pagination change
     const handlePaginationChange = (page, pageSize) => {
-        fetchCustomers(page, pageSize, searchText);
+        fetchUsers(page, pageSize, searchText);
     };
 
-    // Handle add/edit customer
-    const handleSaveCustomer = async (values) => {
+    // Handle add/edit user
+    const handleSaveUser = async (values) => {
         try {
             setLoading(true);
-            console.log('[CUSTOMERS] Saving customer:', values);
+            console.log('[USERS] Saving user:', values);
 
-            const customerData = {
+            const userData = {
                 userName: values.userName,
                 email: values.email,
                 fullName: values.fullName,
                 phoneNumber: values.phoneNumber || null,
                 address: values.address || null,
                 birthDate: values.birthDate ? values.birthDate.format('YYYY-MM-DD') : null,
-                gender: values.gender || null
+                gender: values.gender || null,
+                userType: values.userType // Include role selection
             };
 
-            if (editingCustomer) {
-                // Update customer
+            if (editingUser) {
+                // Update user
                 if (values.password) {
-                    customerData.newPassword = values.password;
+                    userData.newPassword = values.password;
                 }
                 
-                await axios.put(`/customers/${editingCustomer.id}`, customerData);
-                message.success('Customer updated successfully!');
+                await axios.put(`/auth/users/${editingUser.id}`, userData);
+                message.success('User updated successfully!');
             } else {
-                // Create customer
-                customerData.password = values.password;
-                await axios.post('/customers', customerData);
-                message.success('Customer added successfully!');
+                // Create user
+                userData.password = values.password;
+                await axios.post('/auth/users', userData);
+                message.success(`${values.userType} account created successfully!`);
             }
 
             setModalVisible(false);
             form.resetFields();
-            setEditingCustomer(null);
-            fetchCustomers(pagination.current, pagination.pageSize, searchText);
+            setEditingUser(null);
+            setSelectedRole('');
+            fetchUsers(pagination.current, pagination.pageSize, searchText);
         } catch (error) {
-            console.error('[CUSTOMERS] Error saving customer:', error);
-            const errorMessage = error.response?.data || 'Error saving customer';
+            console.error('[USERS] Error saving user:', error);
+            const errorMessage = error.response?.data?.message || error.response?.data || 'Error saving user';
             message.error(errorMessage);
         } finally {
             setLoading(false);
         }
     };
 
-    // Handle delete customer
-    const handleDeleteCustomer = async (customerId, customerName) => {
+    // Handle delete user
+    const handleDeleteUser = async (userId, userName) => {
         try {
             setLoading(true);
-            console.log('[CUSTOMERS] Deleting customer:', customerId);
+            console.log('[USERS] Deleting user:', userId);
             
-            await axios.delete(`/customers/${customerId}`);
-            message.success(`Customer ${customerName} deleted successfully`);
-            fetchCustomers(pagination.current, pagination.pageSize, searchText);
+            await axios.delete(`/auth/users/${userId}`);
+            message.success(`User ${userName} deleted successfully`);
+            fetchUsers(pagination.current, pagination.pageSize, searchText);
         } catch (error) {
-            console.error('[CUSTOMERS] Error deleting customer:', error);
-            const errorMessage = error.response?.data || 'Error deleting customer';
+            console.error('[USERS] Error deleting user:', error);
+            const errorMessage = error.response?.data?.message || error.response?.data || 'Error deleting user';
             message.error(errorMessage);
         } finally {
             setLoading(false);
         }
     };
 
-    // Open add customer modal
+    // Open add user modal
     const openAddModal = () => {
-        setEditingCustomer(null);
+        setEditingUser(null);
         form.resetFields();
+        setSelectedRole('');
         setModalVisible(true);
     };
 
-    // Open edit customer modal
-    const openEditModal = (customer) => {
-        setEditingCustomer(customer);
+    // Open edit user modal
+    const openEditModal = (user) => {
+        setEditingUser(user);
+        setSelectedRole(user.userType);
         form.setFieldsValue({
-            userName: customer.userName,
-            email: customer.email,
-            fullName: customer.fullName,
-            phoneNumber: customer.phoneNumber,
-            address: customer.address,
-            birthDate: customer.birthDate ? moment(customer.birthDate) : null,
-            gender: customer.gender
+            userName: user.userName,
+            email: user.email,
+            fullName: user.fullName,
+            phoneNumber: user.phoneNumber,
+            address: user.address,
+            birthDate: user.birthDate ? moment(user.birthDate) : null,
+            gender: user.gender,
+            userType: user.userType
         });
         setModalVisible(true);
     };
 
     // Refresh data
     const handleRefresh = () => {
-        fetchCustomers(pagination.current, pagination.pageSize, searchText);
+        fetchUsers(pagination.current, pagination.pageSize, searchText);
     };
 
     // Table columns
@@ -218,17 +226,29 @@ const AdminCustomerManagement = () => {
             ),
         },
         {
+            title: 'Role',
+            dataIndex: 'userType',
+            key: 'userType',
+            width: 120,
+            render: (text) => {
+                const isAdmin = text?.toLowerCase() === 'admin';
+                return (
+                    <Tag icon={isAdmin ? <CrownOutlined /> : <UserOutlined />} color={isAdmin ? 'gold' : 'blue'}>
+                        {text || 'Customer'}
+                    </Tag>
+                );
+            },
+            filters: [
+                { text: 'Admin', value: 'Admin' },
+                { text: 'Customer', value: 'Customer' },
+            ],
+            onFilter: (value, record) => record.userType?.toLowerCase() === value.toLowerCase(),
+        },
+        {
             title: 'Phone Number',
             dataIndex: 'phoneNumber',
             key: 'phoneNumber',
             render: (text) => text || '-',
-        },
-        {
-            title: 'Address',
-            dataIndex: 'address',
-            key: 'address',
-            render: (text) => text || '-',
-            ellipsis: true,
         },
         {
             title: 'Gender',
@@ -238,7 +258,7 @@ const AdminCustomerManagement = () => {
                 if (!text) return '-';
                 return (
                     <Tag color={text === 'Male' ? 'blue' : 'pink'}>
-                        {text === 'Male' ? 'Male' : text === 'Female' ? 'Female' : text}
+                        {text}
                     </Tag>
                 );
             },
@@ -266,8 +286,8 @@ const AdminCustomerManagement = () => {
                     </Button>
                     <Popconfirm
                         title="Confirm Delete"
-                        description={`Are you sure you want to delete customer "${record.fullName}"?`}
-                        onConfirm={() => handleDeleteCustomer(record.id, record.fullName)}
+                        description={`Are you sure you want to delete user "${record.fullName}"?`}
+                        onConfirm={() => handleDeleteUser(record.id, record.fullName)}
                         okText="Delete"
                         cancelText="Cancel"
                         okType="danger"
@@ -292,7 +312,7 @@ const AdminCustomerManagement = () => {
                 <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
                     <Col>
                         <Title level={2} style={{ margin: 0 }}>
-                            <UserOutlined /> Customer Management
+                            <UserOutlined /> User Management
                         </Title>
                     </Col>
                     <Col>
@@ -309,7 +329,7 @@ const AdminCustomerManagement = () => {
                                 icon={<PlusOutlined />}
                                 onClick={openAddModal}
                             >
-                                Add Customer
+                                Add User
                             </Button>
                         </Space>
                     </Col>
@@ -330,11 +350,11 @@ const AdminCustomerManagement = () => {
 
                 <Table
                     columns={columns}
-                    dataSource={customers}
+                    dataSource={users}
                     rowKey="id"
                     loading={loading}
                     pagination={false}
-                    scroll={{ x: 1200 }}
+                    scroll={{ x: 1300 }}
                     size="middle"
                 />
 
@@ -347,20 +367,21 @@ const AdminCustomerManagement = () => {
                         showSizeChanger
                         showQuickJumper
                         showTotal={(total, range) =>
-                            `${range[0]}-${range[1]} of ${total} customers`
+                            `${range[0]}-${range[1]} of ${total} users`
                         }
                     />
                 </Row>
             </Card>
 
-            {/* Add/Edit Customer Modal */}
+            {/* Add/Edit User Modal */}
             <Modal
-                title={editingCustomer ? 'Edit Customer Information' : 'Add New Customer'}
+                title={editingUser ? 'Edit User Information' : 'Add New User'}
                 open={modalVisible}
                 onCancel={() => {
                     setModalVisible(false);
                     form.resetFields();
-                    setEditingCustomer(null);
+                    setEditingUser(null);
+                    setSelectedRole('');
                 }}
                 footer={null}
                 width={600}
@@ -369,9 +390,56 @@ const AdminCustomerManagement = () => {
                 <Form
                     form={form}
                     layout="vertical"
-                    onFinish={handleSaveCustomer}
+                    onFinish={handleSaveUser}
                     autoComplete="off"
                 >
+                    {/* Role Selection - Important Field */}
+                    <Alert
+                        message="Role Selection"
+                        description="Only administrators can create Admin accounts. Regular users will be created as Customers."
+                        type="info"
+                        showIcon
+                        icon={<CrownOutlined />}
+                        style={{ marginBottom: 16 }}
+                    />
+
+                    <Form.Item
+                        name="userType"
+                        label="User Role"
+                        rules={[{ required: true, message: 'Please select user role!' }]}
+                    >
+                        <Select 
+                            placeholder="Select user role" 
+                            size="large"
+                            onChange={(value) => setSelectedRole(value)}
+                        >
+                            <Option value="Customer">
+                                <Space>
+                                    <UserOutlined />
+                                    Customer
+                                </Space>
+                            </Option>
+                            <Option value="Admin">
+                                <Space>
+                                    <CrownOutlined />
+                                    Administrator
+                                </Space>
+                            </Option>
+                        </Select>
+                    </Form.Item>
+
+                    {selectedRole === 'Admin' && (
+                        <Alert
+                            message="Creating Admin Account"
+                            description="You are creating an administrator account with full system access. Please ensure this is intended."
+                            type="warning"
+                            showIcon
+                            style={{ marginBottom: 16 }}
+                        />
+                    )}
+
+                    <Divider />
+
                     <Row gutter={16}>
                         <Col span={12}>
                             <Form.Item
@@ -400,11 +468,11 @@ const AdminCustomerManagement = () => {
                     </Row>
 
                     <Row gutter={16}>
-                        <Col span={editingCustomer ? 12 : 24}>
+                        <Col span={12}>
                             <Form.Item
                                 name="password"
-                                label={editingCustomer ? "New Password (leave blank if no change)" : "Password"}
-                                rules={editingCustomer ? [] : [
+                                label={editingUser ? "New Password (leave blank if no change)" : "Password"}
+                                rules={editingUser ? [] : [
                                     { required: true, message: 'Please enter password!' },
                                     { min: 6, message: 'Password must be at least 6 characters!' }
                                 ]}
@@ -412,19 +480,19 @@ const AdminCustomerManagement = () => {
                                 <Input.Password placeholder="Enter password" />
                             </Form.Item>
                         </Col>
-
+                        <Col span={12}>
+                            <Form.Item
+                                name="fullName"
+                                label="Full Name"
+                                rules={[
+                                    { required: true, message: 'Please enter full name!' },
+                                    { min: 2, message: 'Full name must be at least 2 characters!' }
+                                ]}
+                            >
+                                <Input placeholder="Enter full name" />
+                            </Form.Item>
+                        </Col>
                     </Row>
-
-                    <Form.Item
-                        name="fullName"
-                        label="Full Name"
-                        rules={[
-                            { required: true, message: 'Please enter full name!' },
-                            { min: 2, message: 'Full name must be at least 2 characters!' }
-                        ]}
-                    >
-                        <Input placeholder="Enter full name" />
-                    </Form.Item>
 
                     <Row gutter={16}>
                         <Col span={12}>
@@ -481,7 +549,8 @@ const AdminCustomerManagement = () => {
                                 onClick={() => {
                                     setModalVisible(false);
                                     form.resetFields();
-                                    setEditingCustomer(null);
+                                    setEditingUser(null);
+                                    setSelectedRole('');
                                 }}
                             >
                                 Cancel
@@ -491,7 +560,7 @@ const AdminCustomerManagement = () => {
                                 htmlType="submit"
                                 loading={loading}
                             >
-                                {editingCustomer ? 'Update' : 'Add New'}
+                                {editingUser ? 'Update' : 'Create Account'}
                             </Button>
                         </Space>
                     </Row>
@@ -501,4 +570,4 @@ const AdminCustomerManagement = () => {
     );
 };
 
-export default AdminCustomerManagement;
+export default AdminUserManagement;

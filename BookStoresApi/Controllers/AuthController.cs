@@ -268,6 +268,217 @@ namespace BookStoresApi.Controllers
 
             return BadRequest(new { message = "Failed to change password", errors = result.Errors });
         }
+
+        // GET: api/auth/users - Get all users (Admin only)
+        [HttpGet("users")]
+        [Authorize]
+        public async Task<ActionResult<object>> GetAllUsers(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? search = null)
+        {
+            // Check if requester is admin
+            var userType = User.FindFirst("user_type")?.Value;
+            if (userType?.ToLower() != "admin")
+            {
+                return Forbid();
+            }
+
+            var query = _userManager.Users.Where(u => !u.IsDeleted);
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(u =>
+                    u.FullName.Contains(search) ||
+                    u.Email.Contains(search) ||
+                    (u.PhoneNumber != null && u.PhoneNumber.Contains(search)) ||
+                    u.UserName.Contains(search)
+                );
+            }
+
+            var totalCount = query.Count();
+            var users = query
+                .OrderBy(u => u.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(u => new
+                {
+                    u.Id,
+                    u.UserName,
+                    u.Email,
+                    u.FullName,
+                    u.PhoneNumber,
+                    u.Address,
+                    u.BirthDate,
+                    u.Gender,
+                    u.UserType,
+                    u.EmailConfirmed
+                })
+                .ToList();
+
+            return Ok(new
+            {
+                users = users,
+                pagination = new
+                {
+                    currentPage = page,
+                    pageSize = pageSize,
+                    totalCount = totalCount,
+                    totalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+                }
+            });
+        }
+
+        // POST: api/auth/users - Create user (Admin can create Admin accounts)
+        [HttpPost("users")]
+        [Authorize]
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest model)
+        {
+            // Check if requester is admin
+            var userType = User.FindFirst("user_type")?.Value;
+            var isAdmin = userType?.ToLower() == "admin";
+
+            // Only admin can create admin accounts
+            if (model.UserType?.ToLower() == "admin" && !isAdmin)
+            {
+                return Forbid();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = new ApplicationUser
+            {
+                UserName = model.UserName ?? model.Email,
+                Email = model.Email,
+                FullName = model.FullName,
+                PhoneNumber = model.PhoneNumber,
+                Address = model.Address,
+                BirthDate = model.BirthDate,
+                Gender = model.Gender,
+                UserType = model.UserType ?? "Customer",
+            };
+
+            var result = await _userManager.CreateAsync(user, model.Password);
+
+            if (result.Succeeded)
+            {
+                return Ok(new { message = $"{user.UserType} account created successfully", userId = user.Id });
+            }
+
+            return BadRequest(result.Errors);
+        }
+
+        // PUT: api/auth/users/{id} - Update user (Admin only)
+        [HttpPut("users/{id}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest model)
+        {
+            // Check if requester is admin
+            var userType = User.FindFirst("user_type")?.Value;
+            if (userType?.ToLower() != "admin")
+            {
+                return Forbid();
+            }
+
+            var user = await _userManager.FindByIdAsync(id.ToString());
+            if (user == null || user.IsDeleted)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            // Update fields
+            if (!string.IsNullOrEmpty(model.UserName))
+                user.UserName = model.UserName;
+            if (!string.IsNullOrEmpty(model.Email))
+                user.Email = model.Email;
+            if (!string.IsNullOrEmpty(model.FullName))
+                user.FullName = model.FullName;
+            if (!string.IsNullOrEmpty(model.PhoneNumber))
+                user.PhoneNumber = model.PhoneNumber;
+            if (!string.IsNullOrEmpty(model.Address))
+                user.Address = model.Address;
+            if (model.BirthDate.HasValue)
+                user.BirthDate = model.BirthDate;
+            if (!string.IsNullOrEmpty(model.Gender))
+                user.Gender = model.Gender;
+            if (!string.IsNullOrEmpty(model.UserType))
+                user.UserType = model.UserType;
+
+            var result = await _userManager.UpdateAsync(user);
+
+            // Update password if provided
+            if (!string.IsNullOrEmpty(model.NewPassword))
+            {
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                await _userManager.ResetPasswordAsync(user, token, model.NewPassword);
+            }
+
+            if (result.Succeeded)
+            {
+                return Ok(new { message = "User updated successfully" });
+            }
+
+            return BadRequest(new { message = "Failed to update user", errors = result.Errors });
+        }
+
+        // DELETE: api/auth/users/{id} - Delete user (Admin only)
+        [HttpDelete("users/{id}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            // Check if requester is admin
+            var userType = User.FindFirst("user_type")?.Value;
+            if (userType?.ToLower() != "admin")
+            {
+                return Forbid();
+            }
+
+            var user = await _userManager.FindByIdAsync(id.ToString());
+            if (user == null || user.IsDeleted)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            // Soft delete
+            user.IsDeleted = true;
+            var result = await _userManager.UpdateAsync(user);
+
+            if (result.Succeeded)
+            {
+                return Ok(new { message = "User deleted successfully" });
+            }
+
+            return BadRequest(new { message = "Failed to delete user", errors = result.Errors });
+        }
+    }
+
+    public class CreateUserRequest
+    {
+        public string? UserName { get; set; }
+        public required string Password { get; set; }
+        public required string Email { get; set; }
+        public required string FullName { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? Address { get; set; }
+        public DateTime? BirthDate { get; set; }
+        public string? Gender { get; set; }
+        public string? UserType { get; set; }
+    }
+
+    public class UpdateUserRequest
+    {
+        public string? UserName { get; set; }
+        public string? Email { get; set; }
+        public string? FullName { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? Address { get; set; }
+        public DateTime? BirthDate { get; set; }
+        public string? Gender { get; set; }
+        public string? UserType { get; set; }
+        public string? NewPassword { get; set; }
     }
 
     public class RegisterRequest

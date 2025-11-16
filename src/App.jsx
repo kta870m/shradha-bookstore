@@ -13,7 +13,7 @@ import AddProduct from './pages/admin/products/AddProduct';
 import EditProduct from './pages/admin/products/EditProduct';
 import AdminCategoryManagement from './pages/admin/categories/AdminCategoryManagement';
 import AdminOrderManagement from './pages/admin/orders/AdminOrderManagement';
-import AdminCustomerManagement from './pages/admin/AdminCustomerManagement';
+import AdminUserManagement from './pages/admin/AdminUserManagement';
 import AdminReviewManagement from './components/admin/AdminReviewManagement';
 import AdminFeedbackManagement from './components/admin/AdminFeedbackManagement';
 
@@ -74,7 +74,7 @@ function App() {
 
               <Route path="categories" element={<AdminCategoryManagement />} />
               <Route path="orders" element={<AdminOrderManagement />} />
-              <Route path="customers" element={<AdminCustomerManagement />} />
+              <Route path="users" element={<AdminUserManagement />} />
               <Route path="reviews" element={<AdminReviewManagement />} />
               <Route path="feedback" element={<AdminFeedbackManagement />} />
             </Route>

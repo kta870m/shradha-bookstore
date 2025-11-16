@@ -141,7 +141,7 @@ const AddProduct = () => {
       
       const response = await axiosInstance.post('/media', testPayload);
       console.log('Test success:', response.data);
-      message.success('Test upload thành công!');
+      message.success('Test upload successful!');
       
     } catch (error) {
       console.error('Test error:', error);

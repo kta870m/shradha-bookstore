@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Input, Button, Typography, Alert } from 'antd';
+import { isAdmin, getUserFromToken } from '../../utils/jwtHelper';
 
 const { Title, Text } = Typography;
 
@@ -18,23 +19,30 @@ function AdminLogin() {
         password: values.password
       });
 
-      const { token, user } = response.data;
+      const { token } = response.data;
 
-      // Automatically treat as Admin
-      const adminUser = { ...user, userType: 'Admin' };
+      // Check if user is Admin from JWT token (case insensitive)
+      if (!isAdmin(token)) {
+        setError('Access denied. Only administrators can login here.');
+        setLoading(false);
+        return;
+      }
+
+      // Get user info from token
+      const userInfo = getUserFromToken(token);
 
       localStorage.setItem('adminToken', token);
-      localStorage.setItem('adminUser', JSON.stringify(adminUser));
+      localStorage.setItem('adminUser', JSON.stringify(userInfo));
 
       navigate('/admin/dashboard');
     } catch (err) {
       console.error('Login error:', err);
       if (err?.response) {
-        setError(err.response.data?.message || 'Email hoặc mật khẩu không đúng');
+        setError(err.response.data?.message || 'Incorrect email or password');
       } else if (err?.request) {
-        setError('Không thể kết nối đến server');
+        setError('Unable to connect to server');
       } else {
-        setError('Có lỗi xảy ra. Vui lòng thử lại');
+        setError('An error occurred. Please try again');
       }
       setLoading(false);
     }

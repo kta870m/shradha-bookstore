@@ -321,7 +321,7 @@ function AdminProductManagement() {
       content: (
         <div>
           <p style={{ marginBottom: 8 }}>
-            Bạn có chắc chắn muốn xóa <strong>{selectedRowKeys.length} sản phẩm</strong> đã chọn?
+            Are you sure you want to delete <strong>{selectedRowKeys.length} products</strong>?
           </p>
           <div style={{ maxHeight: 120, overflow: 'auto', marginBottom: 8 }}>
             {selectedProducts.slice(0, 5).map(product => (
@@ -331,18 +331,18 @@ function AdminProductManagement() {
             ))}
             {selectedProducts.length > 5 && (
               <p style={{ margin: '4px 0', fontSize: '13px', color: '#999' }}>
-                ... và {selectedProducts.length - 5} sản phẩm khác
+                ... and {selectedProducts.length - 5} more products
               </p>
             )}
           </div>
           <p style={{ fontSize: '14px', color: '#666', marginBottom: 0 }}>
-            <em>Các sản phẩm sẽ được đánh dấu là đã xóa và không hiển thị trong danh sách khách hàng.</em>
+            <em>Products will be marked as deleted and hidden from customer view.</em>
           </p>
         </div>
       ),
-      okText: `Xóa ${selectedRowKeys.length} sản phẩm`,
+      okText: `Delete ${selectedRowKeys.length} products`,
       okType: 'danger',
-      cancelText: 'Hủy bỏ',
+      cancelText: 'Cancel',
       width: 550,
       icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
       onOk: async () => {
