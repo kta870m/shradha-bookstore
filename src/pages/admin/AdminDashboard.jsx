@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
-import { Layout, Menu, Button, Avatar, Dropdown, Badge, Typography } from 'antd';
+import { Layout, Menu, Button, Avatar, Dropdown, Typography } from 'antd';
 import {
     DashboardOutlined,
     ShoppingOutlined,
@@ -12,8 +12,6 @@ import {
     MessageOutlined,
     MenuFoldOutlined,
     MenuUnfoldOutlined,
-    BellOutlined,
-    SettingOutlined,
     LogoutOutlined,
     BookOutlined
 } from '@ant-design/icons';
@@ -110,11 +108,6 @@ const AdminDashboard = () => {
             key: 'profile',
             label: 'Profile',
             icon: <UserOutlined />,
-        },
-        {
-            key: 'settings',
-            label: 'Settings',
-            icon: <SettingOutlined />,
         },
         {
             type: 'divider',
@@ -229,28 +222,6 @@ const AdminDashboard = () => {
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                        <Badge count={3} size="small">
-                            <Button
-                                type="text"
-                                icon={<BellOutlined />}
-                                style={{
-                                    width: 40,
-                                    height: 40,
-                                    border: '1px solid #d9d9d9'
-                                }}
-                            />
-                        </Badge>
-
-                        <Button
-                            type="text"
-                            icon={<SettingOutlined />}
-                            style={{
-                                width: 40,
-                                height: 40,
-                                border: '1px solid #d9d9d9'
-                            }}
-                        />
-
                         <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
                             <Button
                                 type="text"
