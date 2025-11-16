@@ -278,7 +278,7 @@ const LoginModal = ({ visible, onClose, onLoginSuccess }) => {
       footer={null}
       width={450}
       centered
-      destroyOnClose
+      destroyOnHidden
     >
       <div style={{ padding: '20px 0' }}>
         <h2 style={{ textAlign: 'center', marginBottom: '30px', fontSize: '24px', fontWeight: 'bold' }}>

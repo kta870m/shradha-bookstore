@@ -24,19 +24,11 @@ const Home = () => {
     useEffect(() => {
         const fetchCategories = async () => {
         try {
-            console.log('[Categories] Starting fetch...');
             const data = await categoryApi.getFeatured(15);
-            console.log('[Categories] Raw API response:', data);
-            console.log('[Categories] Response type:', typeof data);
-            console.log('[Categories] Is Array?', Array.isArray(data));
-            
             let categoriesData = Array.isArray(data) ? data : data.$values || [];
-            console.log('[Categories] After array extraction:', categoriesData);
-            console.log('[Categories] Array length:', categoriesData.length);
-            
             setCategories(categoriesData);
         } catch (error) {
-            console.error('[Categories] Error fetching categories:', error);
+            console.error('Error fetching categories:', error);
             setCategories([]);
         }
         };

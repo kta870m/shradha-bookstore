@@ -26,8 +26,11 @@ const CategoryProducts = () => {
       setLoading(true);
       
       // Fetch cả 2 cùng lúc thay vì tuần tự
+      // Lấy pageSize lớn để có tất cả products (hoặc có thể dùng 1000)
       const [productsResponse, categoryResponse] = await Promise.all([
-        window.$axios.get(`/products/by-category/${categoryId}`),
+        window.$axios.get(`/products/by-category/${categoryId}`, {
+          params: { pageSize: 1000 } // Lấy tất cả products của category
+        }),
         window.$axios.get(`/categories/${categoryId}`).catch(() => ({ data: { categoryName: "Category" } }))
       ]);
       
@@ -182,8 +185,8 @@ const CategoryProducts = () => {
           <div className="products-grid">
             {products.map((product) => {
               const imageUrl = product.mediaFiles?.[0]?.mediaUrl || 
-                             product.mediaFiles?.$values?.[0]?.mediaUrl || 
-                             "/placeholder.jpg";
+                              product.mediaFiles?.$values?.[0]?.mediaUrl || 
+                              "/placeholder.jpg";
               
               return (
                 <div
