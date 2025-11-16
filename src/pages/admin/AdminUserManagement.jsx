@@ -385,7 +385,7 @@ const AdminUserManagement = () => {
                 }}
                 footer={null}
                 width={600}
-                destroyOnClose
+                destroyOnHidden
             >
                 <Form
                     form={form}

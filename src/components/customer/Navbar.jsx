@@ -79,23 +79,23 @@ const Navbar = () => {
       hasDropdown: false
     },
     { 
-      label: 'Discount Deals', 
-      path: '/deals',
+      label: "Women's", 
+      path: '/products?category=955',
+      hasDropdown: false
+    },
+    { 
+      label: "School", 
+      path: '/products?category=738',
+      hasDropdown: false
+    },
+    { 
+      label: "Economics", 
+      path: '/products?category=276',
       hasDropdown: false
     },
     { 
       label: 'Sell Your Books', 
       path: '/sell-books',
-      hasDropdown: false
-    },
-    { 
-      label: 'Gifts & Others', 
-      path: '/gifts',
-      hasDropdown: false
-    },
-    { 
-      label: 'Events', 
-      path: '/events',
       hasDropdown: false
     },
     { 
@@ -107,9 +107,6 @@ const Navbar = () => {
 
   const handleMenuHover = (item, index) => {
     setHoveredMenu(index);
-    
-    // Chỉ fetch cho "All Categories" dropdown
-    // Các menu khác không có dropdown nữa
   };
 
   const handleCategoryClick = (categoryId) => {
