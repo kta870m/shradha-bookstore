@@ -227,7 +227,7 @@ const AdminFeedbackManagement = () => {
       )
     },
     {
-      title: 'Tiêu đề',
+      title: 'Title',
       dataIndex: 'subject',
       key: 'subject',
       width: 250,
@@ -239,7 +239,7 @@ const AdminFeedbackManagement = () => {
       )
     },
     {
-      title: 'Ưu tiên',
+      title: 'Priority',
       dataIndex: 'priority',
       key: 'priority',
       width: 100,
@@ -248,7 +248,7 @@ const AdminFeedbackManagement = () => {
       )
     },
     {
-      title: 'Trạng thái',
+      title: 'Status',
       dataIndex: 'status',
       key: 'status',
       width: 120,
@@ -291,9 +291,6 @@ const AdminFeedbackManagement = () => {
               onClick={() => handleResponse(record)}
               disabled={record.status === 'Resolved'}
             />
-          </Tooltip>
-          <Tooltip title="Edit">
-            <Button icon={<EditOutlined />} size="small" onClick={() => handleEdit(record)} />
           </Tooltip>
           <Tooltip title="Delete">
             <Popconfirm
