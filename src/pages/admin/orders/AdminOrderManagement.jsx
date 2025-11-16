@@ -253,12 +253,12 @@ function AdminOrderManagement() {
       if (editingOrder) {
         // Update order validation
         if (selectedProducts.length === 0) {
-          message.error('Vui lòng chọn ít nhất một sản phẩm');
+          message.error('Please select at least one product');
           return;
         }
 
         if (!selectedUser) {
-          message.error('Vui lòng chọn khách hàng');
+          message.error('Please select a customer');
           return;
         }
 

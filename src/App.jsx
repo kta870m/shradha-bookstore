@@ -5,7 +5,6 @@ import { CartProvider } from './contexts/CartContext';
 
 // Admin pages
 import AdminLogin from './pages/admin/AdminLogin';
-import AdminRegister from './pages/admin/AdminRegister';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import DashboardHome from './pages/admin/DashboardHome';
 
@@ -14,7 +13,7 @@ import AddProduct from './pages/admin/products/AddProduct';
 import EditProduct from './pages/admin/products/EditProduct';
 import AdminCategoryManagement from './pages/admin/categories/AdminCategoryManagement';
 import AdminOrderManagement from './pages/admin/orders/AdminOrderManagement';
-import AdminCustomerManagement from './pages/admin/AdminCustomerManagement';
+import AdminUserManagement from './pages/admin/AdminUserManagement';
 import AdminReviewManagement from './components/admin/AdminReviewManagement';
 import AdminFeedbackManagement from './components/admin/AdminFeedbackManagement';
 
@@ -44,7 +43,6 @@ import ShippingPolicy from './pages/customer/policy/ShippingPolicy';
 import ReturnPolicy from './pages/customer/policy/ReturnPolicy';
 import Faqs from './pages/customer/faqs/Faqs';
 
-import VNPayReturn from './pages/customer/VNPayReturn';
 import PaymentReturn from './pages/customer/payment/PaymentReturn';
 import MyAccount from './pages/customer/account/MyAccount';
 
@@ -61,7 +59,6 @@ function App() {
 
             {/* ================= ADMIN ROUTES ================= */}
             <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin/register" element={<AdminRegister />} />
 
             <Route path="/admin" element={
               <ProtectedRoute>
@@ -77,7 +74,7 @@ function App() {
 
               <Route path="categories" element={<AdminCategoryManagement />} />
               <Route path="orders" element={<AdminOrderManagement />} />
-              <Route path="customers" element={<AdminCustomerManagement />} />
+              <Route path="users" element={<AdminUserManagement />} />
               <Route path="reviews" element={<AdminReviewManagement />} />
               <Route path="feedback" element={<AdminFeedbackManagement />} />
             </Route>
@@ -126,7 +123,7 @@ function App() {
               <CustomerLayout><About /></CustomerLayout>
             } />
 
-            <Route path="/blog" element={
+            <Route path="/feedback" element={
               <CustomerLayout><Blog /></CustomerLayout>
             } />
 
@@ -201,14 +198,6 @@ function App() {
             {/* VNPay return */}
             <Route path="/payment-return" element={
               <CustomerLayout><PaymentReturn /></CustomerLayout>
-            } />
-
-            <Route path="/vnpay-return" element={
-              <CustomerLayout><VNPayReturn /></CustomerLayout>
-            } />
-
-            <Route path="/payment-result" element={
-              <CustomerLayout><VNPayReturn /></CustomerLayout>
             } />
 
             {/* 404 */}

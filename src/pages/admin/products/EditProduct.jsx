@@ -48,7 +48,7 @@ const EditProduct = () => {
     const fetchProductData = async () => {
       if (!productId) {
         message.error({
-          content: 'Không tìm thấy ID sản phẩm',
+          content: 'Product ID not found',
           icon: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
         });
         navigate('/admin/products');
@@ -92,7 +92,7 @@ const EditProduct = () => {
       } catch (error) {
         console.error('Error fetching product:', error);
         message.error({
-          content: 'Không thể tải thông tin sản phẩm',
+          content: 'Unable to load product information',
           icon: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
         });
         navigate('/admin/products');
@@ -172,19 +172,19 @@ const EditProduct = () => {
         
         message.destroy(); // Clear loading message
         message.success({
-          content: 'Cập nhật sản phẩm thành công!',
+          content: 'Product updated successfully!',
           icon: <CheckCircleOutlined style={{ color: '#52c41a' }} />
         });
         
         // Refresh the product data to show updated images
-        await fetchProductData();
+        // await fetchProductData();
         
       } catch (mediaError) {
         message.destroy(); // Clear loading message
         
-        let errorMsg = 'Sản phẩm đã được cập nhật nhưng có lỗi khi cập nhật ảnh.';
+        let errorMsg = 'Product updated but there was an error updating images.';
         if (mediaError.message) {
-          errorMsg += ` Chi tiết: ${mediaError.message}`;
+          errorMsg += ` Details: ${mediaError.message}`;
         }
         
         message.warning({
@@ -205,12 +205,12 @@ const EditProduct = () => {
         // Handle validation errors
         const errorMessages = Object.values(error.response.data.errors).flat();
         message.error({
-          content: `Lỗi: ${errorMessages.join(', ')}`,
+          content: `Error: ${errorMessages.join(', ')}`,
           icon: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
         });
       } else {
         message.error({
-          content: 'Không thể cập nhật sản phẩm. Vui lòng thử lại.',
+          content: 'Unable to update product. Please try again.',
           icon: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
         });
       }
@@ -263,9 +263,9 @@ const EditProduct = () => {
   if (!productData) {
     return (
       <div style={{ padding: 24, textAlign: 'center' }}>
-        <Title level={4}>Không tìm thấy sản phẩm</Title>
+        <Title level={4}>Product not found</Title>
         <Button onClick={() => navigate('/admin/products')}>
-          Quay lại danh sách
+          Back to list
         </Button>
       </div>
     );

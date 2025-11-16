@@ -7,6 +7,7 @@ import {
     UnorderedListOutlined,
     ShoppingCartOutlined,
     UserOutlined,
+    TeamOutlined,
     StarOutlined,
     MessageOutlined,
     MenuFoldOutlined,
@@ -16,6 +17,7 @@ import {
     LogoutOutlined,
     BookOutlined
 } from '@ant-design/icons';
+import { isAdmin, getUserFromToken, isTokenExpired } from '../../utils/jwtHelper';
 import DashboardHome from './DashboardHome';
 import '../../styles/AdminDashboard.css';
 import '../../styles/AntdOverrides.css';
@@ -30,12 +32,34 @@ const AdminDashboard = () => {
     const location = useLocation();
 
     useEffect(() => {
-        // Get user info from localStorage
-        const userStr = localStorage.getItem('adminUser');
-        if (userStr) {
-            setUser(JSON.parse(userStr));
+        // Get token and verify admin access
+        const token = localStorage.getItem('adminToken');
+        
+        if (!token) {
+            navigate('/admin/login');
+            return;
         }
-    }, []);
+
+        // Check if token is expired
+        if (isTokenExpired(token)) {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminUser');
+            navigate('/admin/login');
+            return;
+        }
+
+        // Check if user is admin (case insensitive)
+        if (!isAdmin(token)) {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminUser');
+            navigate('/admin/login');
+            return;
+        }
+
+        // Get user info from token
+        const userInfo = getUserFromToken(token);
+        setUser(userInfo);
+    }, [navigate]);
 
     const handleLogout = () => {
         localStorage.removeItem('adminToken');
@@ -65,9 +89,9 @@ const AdminDashboard = () => {
             label: 'Orders',
         },
         {
-            key: '/admin/customers',
-            icon: <UserOutlined />,
-            label: 'Customers',
+            key: '/admin/users',
+            icon: <TeamOutlined />,
+            label: 'User Management',
         },
         {
             key: '/admin/reviews',

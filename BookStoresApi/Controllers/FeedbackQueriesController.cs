@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BookStoresApi.Data;
 using BookStoresApi.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace BookStoresApi.Controllers
 {
@@ -427,6 +428,78 @@ namespace BookStoresApi.Controllers
                 return StatusCode(500, new { success = false, message = "Error retrieving feedbacks" });
             }
         }
+
+        // POST: api/FeedbackQueries/submit
+        [HttpPost("submit")]
+        public async Task<ActionResult<object>> SubmitPublicFeedback([FromBody] PublicFeedbackDto feedbackDto)
+        {
+            Console.WriteLine($"[FEEDBACK] Submitting public feedback from {feedbackDto.Name} ({feedbackDto.Email})");
+
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new { success = false, message = "Invalid feedback data" });
+                }
+
+                // Check if user exists by email
+                var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == feedbackDto.Email && !u.IsDeleted);
+                int userId;
+
+                if (existingUser != null)
+                {
+                    userId = existingUser.Id;
+                }
+                else
+                {
+                    // Create a guest user account
+                    var guestUser = new ApplicationUser
+                    {
+                        FullName = feedbackDto.Name,
+                        Email = feedbackDto.Email,
+                        PasswordHash = "", // No password for guest feedback
+                        UserType = "Guest",
+                        IsDeleted = false
+                    };
+
+                    _context.Users.Add(guestUser);
+                    await _context.SaveChangesAsync();
+                    userId = guestUser.Id;
+                    Console.WriteLine($"[FEEDBACK] Created guest user with ID {userId}");
+                }
+
+                // Create feedback entry with subject and message combined
+                var feedback = new FeedbackQuery
+                {
+                    UserId = userId,
+                    Content = $"Subject: {feedbackDto.Subject}\n\n{feedbackDto.Message}",
+                    SubmittedAt = DateTime.Now,
+                    FeedbackStatus = "Pending",
+                    IsDeleted = false
+                };
+
+                _context.FeedbackQueries.Add(feedback);
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine($"[FEEDBACK] Successfully created feedback with ID {feedback.FeedbackId}");
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Feedback submitted successfully",
+                    data = new
+                    {
+                        feedbackId = feedback.FeedbackId,
+                        submittedAt = feedback.SubmittedAt
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[FEEDBACK] Error submitting feedback: {ex.Message}");
+                return StatusCode(500, new { success = false, message = "Error submitting feedback. Please try again later." });
+            }
+        }
     }
 
     // DTOs
@@ -440,5 +513,25 @@ namespace BookStoresApi.Controllers
     {
         public string? Content { get; set; }
         public string? Status { get; set; }
+    }
+
+    public class PublicFeedbackDto
+    {
+        [Required]
+        [MaxLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [EmailAddress]
+        [MaxLength(100)]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(200)]
+        public string Subject { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(2000)]
+        public string Message { get; set; } = string.Empty;
     }
 }

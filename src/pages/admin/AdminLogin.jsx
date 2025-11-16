@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Input, Button, Typography, Alert } from 'antd';
+import { isAdmin, getUserFromToken } from '../../utils/jwtHelper';
 
 const { Title, Text } = Typography;
 
@@ -18,23 +19,30 @@ function AdminLogin() {
         password: values.password
       });
 
-      const { token, user } = response.data;
+      const { token } = response.data;
 
-      // Tự động coi là Admin
-      const adminUser = { ...user, userType: 'Admin' };
+      // Check if user is Admin from JWT token (case insensitive)
+      if (!isAdmin(token)) {
+        setError('Access denied. Only administrators can login here.');
+        setLoading(false);
+        return;
+      }
+
+      // Get user info from token
+      const userInfo = getUserFromToken(token);
 
       localStorage.setItem('adminToken', token);
-      localStorage.setItem('adminUser', JSON.stringify(adminUser));
+      localStorage.setItem('adminUser', JSON.stringify(userInfo));
 
       navigate('/admin/dashboard');
     } catch (err) {
       console.error('Login error:', err);
       if (err?.response) {
-        setError(err.response.data?.message || 'Email hoặc mật khẩu không đúng');
+        setError(err.response.data?.message || 'Incorrect email or password');
       } else if (err?.request) {
-        setError('Không thể kết nối đến server');
+        setError('Unable to connect to server');
       } else {
-        setError('Có lỗi xảy ra. Vui lòng thử lại');
+        setError('An error occurred. Please try again');
       }
       setLoading(false);
     }
@@ -44,22 +52,22 @@ function AdminLogin() {
     <div style={{ minHeight: '100vh', display:'flex', alignItems:'center', justifyContent:'center', padding: 24 }}>
       <div style={{ width: 420, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', borderRadius: 8 }}>
         <Title level={3}>Admin Login</Title>
-        <Text type="secondary">Đăng nhập vào hệ thống quản trị</Text>
+        <Text type="secondary">Sign in to the admin dashboard</Text>
 
         {error && <Alert style={{ marginTop: 16 }} message={error} type="error" showIcon />}
 
         <Form layout="vertical" onFinish={onFinish} style={{ marginTop: 16 }}>
-          <Form.Item name="email" label="Email" rules={[{ required: true, message: 'Vui lòng nhập email' }, { type: 'email', message: 'Email không hợp lệ' }]}>
-            <Input placeholder="Nhập email của bạn" disabled={loading} />
+          <Form.Item name="email" label="Email" rules={[{ required: true, message: 'Please enter your email' }, { type: 'email', message: 'Please enter a valid email' }]}>
+            <Input placeholder="Enter your email" disabled={loading} />
           </Form.Item>
 
-          <Form.Item name="password" label="Mật khẩu" rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}>
-            <Input.Password placeholder="Nhập mật khẩu" disabled={loading} />
+          <Form.Item name="password" label="Password" rules={[{ required: true, message: 'Please enter your password' }]}>
+            <Input.Password placeholder="Enter your password" disabled={loading} />
           </Form.Item>
 
           <Form.Item>
             <Button type="primary" htmlType="submit" block loading={loading}>
-              Đăng nhập
+              Sign In
             </Button>
           </Form.Item>
         </Form>

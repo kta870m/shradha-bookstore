@@ -1,31 +1,26 @@
 import { Navigate } from 'react-router-dom';
+import { isAdmin, isTokenExpired } from '../utils/jwtHelper';
 
 const ProtectedRoute = ({ children }) => {
     const token = localStorage.getItem('adminToken');
-    const userStr = localStorage.getItem('adminUser');
 
     // Check if token exists
     if (!token) {
         return <Navigate to="/admin/login" replace />;
     }
 
-    // Check if user info exists and user is admin
-    if (userStr) {
-        try {
-            const user = JSON.parse(userStr);
-            if (user.userType !== 'Admin') {
-                // Not an admin, redirect to login
-                localStorage.removeItem('adminToken');
-                localStorage.removeItem('adminUser');
-                return <Navigate to="/admin/login" replace />;
-            }
-        } catch (error) {
-            // Invalid user data, redirect to login
-            localStorage.removeItem('adminToken');
-            localStorage.removeItem('adminUser');
-            return <Navigate to="/admin/login" replace />;
-        }
-    } else {
+    // Check if token is expired
+    if (isTokenExpired(token)) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminUser');
+        return <Navigate to="/admin/login" replace />;
+    }
+
+    // Check if user is admin (case insensitive check)
+    if (!isAdmin(token)) {
+        // Not an admin, redirect to login
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminUser');
         return <Navigate to="/admin/login" replace />;
     }
 

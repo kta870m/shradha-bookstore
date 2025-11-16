@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Result, Button, Spin, Card, Descriptions, Typography } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, HomeOutlined, ShoppingOutlined } from '@ant-design/icons';
@@ -15,9 +15,16 @@ const PaymentReturn = () => {
   const [paymentResult, setPaymentResult] = useState(null);
   const [error, setError] = useState(null);
   const [urlParams, setUrlParams] = useState({});
+  const hasProcessed = useRef(false); // Prevent multiple executions
 
   useEffect(() => {
     const verifyPayment = async () => {
+      // Prevent running multiple times
+      if (hasProcessed.current) {
+        return;
+      }
+      hasProcessed.current = true;
+
       try {
         // Get full query string from URL
         const queryString = location.search;
@@ -79,7 +86,8 @@ const PaymentReturn = () => {
     };
 
     verifyPayment();
-  }, [location.search, removeFromCart, fetchCart]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - only run once
 
   if (loading) {
     return (
@@ -212,11 +220,6 @@ const PaymentReturn = () => {
                 {isSuccess ? 'SUCCESS' : 'FAILED'}
               </Text>
             </Descriptions.Item>
-            {paymentResult.message && (
-              <Descriptions.Item label="Message">
-                {paymentResult.message}
-              </Descriptions.Item>
-            )}
           </Descriptions>
         </Card>
       </Result>
