@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import "./Faqs.css"; // 🔹 import file CSS riêng
+import "./Faqs.css"; //  import file CSS riêng để styling giao diện
 
+//  Dữ liệu FAQ: mỗi phần gồm câu hỏi và câu trả lời
 const faqsData = [
   {
     question: "How can I place an order?",
@@ -30,32 +31,34 @@ const faqsData = [
 ];
 
 const Faqs = () => {
+  //  openIndex lưu lại mục FAQ nào đang được mở; null nghĩa là tất cả đều đóng
   const [openIndex, setOpenIndex] = useState(null);
 
+  //  Hàm toggleFAQ: nếu click vào mục đang mở → đóng lại; nếu click mục khác → mở mục đó
   const toggleFAQ = (index) => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
   return (
-    <div className="faqs-container">
+    <div className="faqs-container"> {/*  Container tổng của phần FAQs */}
       <h1 className="faqs-title">Frequently Asked Questions</h1>
 
-      <div className="faqs-list">
+      <div className="faqs-list"> {/*  Danh sách các FAQ */}
         {faqsData.map((faq, index) => (
-          <div key={index} className="faq-item">
+          <div key={index} className="faq-item"> {/*  Mỗi câu hỏi FAQ */}
             <button
-              className="faq-question"
-              onClick={() => toggleFAQ(index)}
+              className="faq-question" //  Nút bấm hiển thị câu hỏi
+              onClick={() => toggleFAQ(index)} //  Khi click sẽ mở/đóng trả lời
             >
               <span>{faq.question}</span>
               <span className="faq-icon">
-                {openIndex === index ? "−" : "+"}
+                {openIndex === index ? "−" : "+"} {/*  Icon thay đổi khi mở/đóng */}
               </span>
             </button>
+
+            {/*  Phần câu trả lời: nếu openIndex === index → thêm class "open" để hiện */}
             <div
-              className={`faq-answer ${
-                openIndex === index ? "open" : ""
-              }`}
+              className={`faq-answer ${openIndex === index ? "open" : ""}`}
             >
               <p>{faq.answer}</p>
             </div>
