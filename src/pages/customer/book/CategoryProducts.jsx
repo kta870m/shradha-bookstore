@@ -3,11 +3,15 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { bookApi, categoryApi } from "../../../api/customer";
 import "./CategoryProducts.css";
 
+// Cache để lưu products đã fetch
+const productsCache = {};
+
 const CategoryProducts = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const categoryId = searchParams.get("category");
   
+  const [allProducts, setAllProducts] = useState([]);
   const [products, setProducts] = useState([]);
   const [categoryName, setCategoryName] = useState("");
   const [loading, setLoading] = useState(true);
@@ -25,31 +29,45 @@ const CategoryProducts = () => {
     try {
       setLoading(true);
       
-      // Fetch cả 2 cùng lúc thay vì tuần tự
-      // Lấy pageSize lớn để có tất cả products (hoặc có thể dùng 1000)
-      const [productsResponse, categoryResponse] = await Promise.all([
-        window.$axios.get(`/products/by-category/${categoryId}`, {
-          params: { pageSize: 1000 } // Lấy tất cả products của category
-        }),
-        window.$axios.get(`/categories/${categoryId}`).catch(() => ({ data: { categoryName: "Category" } }))
-      ]);
+      // Check cache first
+      let allProductsData;
+      if (productsCache[categoryId]) {
+        allProductsData = productsCache[categoryId].products;
+        setCategoryName(productsCache[categoryId].categoryName);
+      } else {
+        // Fetch cả 2 cùng lúc
+        const [productsResponse, categoryResponse] = await Promise.all([
+          window.$axios.get(`/products/by-category/${categoryId}`, {
+            params: { pageSize: 200 } // Giảm xuống 200 để load nhanh hơn
+          }),
+          window.$axios.get(`/categories/${categoryId}`).catch(() => ({ data: { categoryName: "Category" } }))
+        ]);
+        
+        const categoryNameData = categoryResponse.data.categoryName || "Category";
+        setCategoryName(categoryNameData);
+        
+        // Process products
+        allProductsData = Array.isArray(productsResponse.data) 
+          ? productsResponse.data 
+          : productsResponse.data.$values || [];
+        
+        // Cache the data
+        productsCache[categoryId] = {
+          products: allProductsData,
+          categoryName: categoryNameData
+        };
+      }
       
-      // Set category name
-      setCategoryName(categoryResponse.data.categoryName || "Category");
-      
-      // Process products
-      const allProducts = Array.isArray(productsResponse.data) 
-        ? productsResponse.data 
-        : productsResponse.data.$values || [];
+      setAllProducts(allProductsData);
       
       // Calculate pagination
-      const total = Math.ceil(allProducts.length / productsPerPage);
+      const total = Math.ceil(allProductsData.length / productsPerPage);
       setTotalPages(total);
       
       // Get products for current page
       const startIndex = (currentPage - 1) * productsPerPage;
       const endIndex = startIndex + productsPerPage;
-      const paginatedProducts = allProducts.slice(startIndex, endIndex);
+      const paginatedProducts = allProductsData.slice(startIndex, endIndex);
       
       setProducts(paginatedProducts);
     } catch (error) {
@@ -169,7 +187,7 @@ const CategoryProducts = () => {
       <div className="category-header">
         <h1 className="category-title">{categoryName}</h1>
         <p className="category-subtitle">
-          Showing {products.length} of {products.length + (totalPages - 1) * productsPerPage} books
+          Showing {products.length} of {allProducts.length} books
         </p>
       </div>
 
