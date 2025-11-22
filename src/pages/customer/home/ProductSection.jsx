@@ -4,7 +4,7 @@ import ProductCard from "./ProductCard";
 
 const ProductSection = ({ title, products, isExpanded, onToggle }) => {
   const carouselRef = React.useRef(null);
-  const displayProducts = isExpanded ? products : products.slice(0, 6);
+  const displayProducts = isExpanded ? products : products.slice(0, 10);
 
   return (
     <div className="product-section">
