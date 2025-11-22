@@ -15,6 +15,7 @@
     margin-bottom: 20px;
 }
 
+
 .breadcrumb a {
     color: #0056D2;
     text-decoration: none;
@@ -331,6 +332,85 @@
     font-size: 16px;
     line-height: 1.8;
     color: #333;
+}
+
+/* Review section */
+.reviews-section {
+    margin-top: 60px;
+    padding: 40px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+}
+
+.reviews-section h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0056D2;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    border-bottom: 3px solid #0056D2;
+    padding-bottom: 10px;
+}
+
+/* Review Form */
+.review-form {
+    margin-bottom: 30px;
+}
+
+.review-form h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.review-form textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 14px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.submit-review-btn {
+    margin-top: 12px;
+    padding: 12px 26px;
+    background-color: #0056D2;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.25s ease;
+}
+
+.submit-review-btn:hover {
+    background-color: #003d99;
+}
+
+/* Review List */
+.review-item {
+    padding: 18px 0;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.review-header strong {
+    font-size: 16px;
+    color: #333;
+}
+
+.review-comment {
+    margin-top: 4px;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #444;
 }
 
 /* Related Products Section */
