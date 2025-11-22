@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { FaStar, FaHeart, FaMinus, FaPlus, FaTruck, FaExchangeAlt, FaUndo, FaShippingFast, FaFacebookF } from "react-icons/fa";
 import { DollarOutlined, CreditCardOutlined } from '@ant-design/icons';
 import { Modal, Radio, Card, Space, Typography, Divider, Statistic } from "antd";
-import { bookApi } from "../../../api/customer";
+import { bookApi, reviewApi } from "../../../api/customer";
 import { useCart } from "../../../contexts/CartContext";
 import { message } from "antd";
 import { createOrder } from '../../../api/orders';
@@ -31,6 +31,12 @@ const BookDetail = () => {
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('online');
     const [checkoutLoading, setCheckoutLoading] = useState(false);
+    const [reviews, setReviews] = useState([]);
+    const [reviewRating, setReviewRating] = useState(5);
+    const [reviewComment, setReviewComment] = useState("");
+    const [loadingReviews, setLoadingReviews] = useState(false);
+    const [refreshReview, setRefreshReview] = useState(false);
+
 
     // Get userId from JWT token
     const getUserId = () => {
@@ -91,6 +97,53 @@ const BookDetail = () => {
         fetchProductDetail();
         window.scrollTo(0, 0); // Scroll to top khi chuyển trang
     }, [id]);
+
+    useEffect(() => {
+        if (!product?.productId) return;
+        loadReviews();
+    }, [product?.productId, refreshReview]);
+
+    const loadReviews = async () => {
+        try {
+            setLoadingReviews(true);
+            const data = await reviewApi.getByProduct(product.productId);
+            console.log("Loaded reviews:", data);
+            setReviews(data.reviews || data); 
+        } catch (err) {
+            console.log("Load review failed:", err);
+        } finally {
+            setLoadingReviews(false);
+        }
+    };
+
+    const handleSubmitReview = async () => {
+        const userId = getUserId();
+        if (!userId) {
+            message.error("Please login to submit a review!");
+            return navigate("/login");
+        }
+
+        if (!reviewComment.trim()) {
+            return message.error("Comment cannot be empty!");
+        }
+
+        try {
+            await reviewApi.submitReview({
+                userId: userId,
+                productId: product.productId,
+                rating: reviewRating,
+                comment: reviewComment
+            });
+
+            message.success("Review submitted!");
+            setReviewComment("");
+            setReviewRating(5);
+            setRefreshReview(prev => !prev); // reload
+        } catch (error) {
+            message.error("Failed to submit review");
+        }
+    };
+
 
     const handleQuantityChange = (action) => {
         if (action === "increase") {
@@ -379,6 +432,74 @@ const BookDetail = () => {
             <div className="overview-content">
             <p>{product.description || "No description available for this book."}</p>
             </div>
+        </div>
+
+        <div className="reviews-section">
+            <h2>CUSTOMER REVIEWS</h2>
+
+            {/* Review Form */}
+            <div className="review-form">
+                <h3>Write a Review</h3>
+
+                <div className="rating-stars">
+                    {[1,2,3,4,5].map(star => (
+                        <FaStar
+                            key={star}
+                            onClick={() => setReviewRating(star)}
+                            style={{
+                                cursor: "pointer",
+                                color: reviewRating >= star ? "#fbbf24" : "#ccc",
+                                fontSize: "22px",
+                                marginRight: "4px"
+                            }}
+                        />
+                    ))}
+                </div>
+
+                <textarea
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="Share your thoughts about this book..."
+                />
+
+                <button className="submit-review-btn" onClick={handleSubmitReview}>
+                    Submit Review
+                </button>
+            </div>
+
+            <Divider />
+
+            {/* Review List */}
+            {loadingReviews ? (
+                <p>Loading reviews...</p>
+            ) : reviews.length === 0 ? (
+                <p>No reviews yet. Be the first to review!</p>
+            ) : (
+                <div className="review-list">
+                    {reviews.map(review => (
+                        <div key={review.reviewId} className="review-item">
+                            <div className="review-header">
+                                <strong>{review.userName}</strong>
+                                <span>{new Date(review.reviewDate).toLocaleDateString()}</span>
+                            </div>
+
+                            <div className="review-stars-small">
+                                {[1,2,3,4,5].map(star => (
+                                    <FaStar
+                                        key={star}
+                                        style={{
+                                            color: star <= review.rating ? "#fbbf24" : "#ccc",
+                                            fontSize: "16px"
+                                        }}
+                                    />
+                                ))}
+                            </div>
+
+                            <p className="review-comment">{review.comment}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
 
         {/* Same Category Books Section */}
