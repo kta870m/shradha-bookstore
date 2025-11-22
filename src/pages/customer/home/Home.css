@@ -78,7 +78,7 @@
 .banner {
   position: relative;
   width: 100%;
-  height: 350px; /* adjust height as needed */
+  height: 500px; /* adjust height as needed */
   overflow: hidden;
   border-radius: 10px;
   margin-bottom: 1.5rem;
@@ -89,6 +89,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   opacity: 0;
   transition: opacity 1s ease-in-out;
 }
