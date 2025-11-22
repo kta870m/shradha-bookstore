@@ -121,19 +121,27 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Cập nhật số lượng
+  // Cập nhật số lượng (optimistic update)
   const updateQuantity = async (cartItemId, quantity) => {
+    // Optimistic update - update UI immediately
+    const previousItems = [...cartItems];
+    setCartItems(prevItems => 
+      prevItems.map(item => 
+        item.cartItemId === cartItemId 
+          ? { ...item, quantity } 
+          : item
+      )
+    );
+
     try {
-      setLoading(true);
       await updateCartItemQuantity(cartItemId, quantity);
-      await loadCart();
       return true;
     } catch (error) {
       console.error('Error updating quantity:', error);
+      // Revert on error
+      setCartItems(previousItems);
       message.error('Failed to update quantity');
       return false;
-    } finally {
-      setLoading(false);
     }
   };
 

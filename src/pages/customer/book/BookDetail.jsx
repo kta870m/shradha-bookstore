@@ -119,8 +119,8 @@ const BookDetail = () => {
     const handleSubmitReview = async () => {
         const userId = getUserId();
         if (!userId) {
-            message.error("Please login to submit a review!");
-            return navigate("/login");
+            message.error("Please login to submit a review");
+            return;
         }
 
         if (!reviewComment.trim()) {
@@ -174,8 +174,7 @@ const BookDetail = () => {
     const handleBuyNow = () => {
         const userId = getUserId();
         if (!userId) {
-            message.error('Please login to buy');
-            navigate('/login');
+            message.error('Please login to buy products');
             return;
         }
 

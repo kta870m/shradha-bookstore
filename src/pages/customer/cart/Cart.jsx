@@ -32,7 +32,7 @@ const Cart = () => {
   };
 
   const handleQuantityChange = async (cartItemId, newQuantity) => {
-    if (newQuantity < 1) return;
+    if (newQuantity < 1 || !newQuantity) return;
     await updateQuantity(cartItemId, newQuantity);
   };
 
@@ -71,7 +71,6 @@ const Cart = () => {
     const userId = getUserId();
     if (!userId) {
       message.error('Please login to checkout');
-      navigate('/login');
       return;
     }
 
